@@ -8,13 +8,6 @@ from jax import random
 jax.config.update("jax_enable_x64", True)
 
 def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
-    # Cast inputs to float64 for numerical stability
-    probs = np.asarray(probs, dtype=np.float64)
-    mc_g_i = np.asarray(mc_g_i, dtype=np.float64)
-    mv_d_j = np.asarray(mv_d_j, dtype=np.float64)
-    g_i_bar = np.asarray(g_i_bar, dtype=np.float64)
-    d_j_bar = np.asarray(d_j_bar, dtype=np.float64)
-    
     num_g = len(mc_g_i)
     num_d = len(mv_d_j)
 
@@ -53,13 +46,7 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 
     # Define the problem and solve it
     prob = cp.Problem(objective, constraints)
-    
-    # Try to solve with tight tolerances, using whatever solver is available
-    try:
-        prob.solve(abstol=1e-8, reltol=1e-8, feastol=1e-8)
-    except:
-        # Fallback to default solver if tolerance setting fails
-        prob.solve()
+    prob.solve()
     
     # Print solver statistics for debugging
     print(f"Solver: {prob.solver_stats.solver_name}, Status: {prob.status}, Iterations: {prob.solver_stats.num_iters}")
@@ -113,3 +100,93 @@ def expected_cumulative_regret(probs, g_i, d_j, pi, mc_g_i, mv_d_j, g_i_bar, d_j
         if regret is not None:
             expected_regret += probs[p] * regret
     return expected_regret
+
+# === NEW: deterministic DA (energy-only, no network) =========================
+def zavala_deterministic_da(mc_g_i, mv_d_j, g_i_bar_det, d_j_bar_det):
+    """
+    Solve Zavala §3.1 deterministic day-ahead formulation (energy-only, no network).
+    min   sum_i α^g_i g_i  - sum_j α^d_j d_j
+    s.t.  sum_j d_j = sum_i g_i
+          0 ≤ g_i ≤ ḡ_i,  0 ≤ d_j ≤ d̄_j
+
+    Returns:
+        g_i (jnp.ndarray), d_j (jnp.ndarray), pi (float scalar dual of balance)
+    """
+
+    num_g = mc_g_i.size
+    num_d = mv_d_j.size
+
+    # Vector variables (nonnegative)
+    g = cp.Variable(num_g, nonneg=True)
+    d = cp.Variable(num_d, nonneg=True)
+
+    # Objective: negative social surplus (linear)
+    obj = cp.Minimize(mc_g_i @ g - mv_d_j @ d)
+
+    # Single-bus energy balance
+    balance_con = cp.sum(d) - cp.sum(g) == 0
+
+    # Bounds
+    cons = [
+        balance_con,
+        g <= g_i_bar_det,
+        d <= d_j_bar_det,
+    ]
+
+    prob = cp.Problem(obj, cons)
+    prob.solve()
+
+    if prob.status not in ("optimal", "optimal_inaccurate"):
+        raise RuntimeError(f"Deterministic DA solve failed: status={prob.status}")
+
+    # Dual of the balance is the (single) day-ahead price π
+    pi = float(balance_con.dual_value) if balance_con.dual_value is not None else np.nan
+
+    return jnp.array(g.value), jnp.array(d.value), pi
+
+
+# === NEW: real-time energy-only per scenario (to get Π(ω)) ===================
+def zavala_rt_energy_only(mc_g_i, mv_d_j, g_i_bar_rt, d_j_bar_rt):
+    """
+    Real-time energy-only clearing for a single scenario ω (no network):
+    min   sum_i α^g_i G_i(ω) - sum_j α^d_j D_j(ω)
+    s.t.  sum_j D_j(ω) = sum_i G_i(ω)
+          0 ≤ G_i(ω) ≤ Ḡ_i(ω),  0 ≤ D_j(ω) ≤ D̄_j(ω)
+
+    Returns:
+        G (jnp.ndarray), D (jnp.ndarray), Pi (float scalar dual of balance)
+    """
+    num_g = mc_g_i.size
+    num_d = mv_d_j.size
+
+    G = cp.Variable(num_g, nonneg=True)
+    D = cp.Variable(num_d, nonneg=True)
+
+    obj = cp.Minimize(mc_g_i @ G - mv_d_j @ D)
+    balance_con = cp.sum(D) - cp.sum(G) == 0
+    cons = [balance_con, G <= g_i_bar_rt, D <= d_j_bar_rt]
+
+    prob = cp.Problem(obj, cons)
+    prob.solve()
+
+    if prob.status not in ("optimal", "optimal_inaccurate"):
+        raise RuntimeError(f"RT solve failed: status={prob.status}")
+
+    Pi = float(balance_con.dual_value) if balance_con.dual_value is not None else np.nan
+    return jnp.array(G.value), jnp.array(D.value), Pi
+
+
+# === NEW: helper to convert scenarios → deterministic capacities = E[·] =======
+def expected_caps_from_scenarios(probs, g_i_bar_scn, d_j_bar_scn):
+    """
+    probs: shape (S,)
+    g_i_bar_scn: shape (S, G)
+    d_j_bar_scn: shape (S, D)
+    Returns:
+        gbar_det (G,), dbar_det (D,)  as expectation under probs
+    """
+    import numpy as np
+    probs = np.asarray(probs, dtype=np.float64)
+    gbar = np.tensordot(probs, np.asarray(g_i_bar_scn, dtype=np.float64), axes=(0, 0))
+    dbar = np.tensordot(probs, np.asarray(d_j_bar_scn, dtype=np.float64), axes=(0, 0))
+    return gbar, dbar
