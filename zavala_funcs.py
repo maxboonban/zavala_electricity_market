@@ -190,3 +190,260 @@ def expected_caps_from_scenarios(probs, g_i_bar_scn, d_j_bar_scn):
     gbar = np.tensordot(probs, np.asarray(g_i_bar_scn, dtype=np.float64), axes=(0, 0))
     dbar = np.tensordot(probs, np.asarray(d_j_bar_scn, dtype=np.float64), axes=(0, 0))
     return gbar, dbar
+
+# =========================
+# System I (3-bus DC network) — ASCII variable names
+# =========================
+
+def build_system_1_data():
+    """
+    Nodes: 1--2--3  (index 0,1,2)
+    Lines: (1->2), (2->3)
+    Two deterministic generators at nodes 1 & 3, stochastic at node 2.
+    """
+    import numpy as np
+    num_nodes = 3
+    num_lines = 2
+    num_scenarios = 3
+
+    # bids / incremental bids
+    alpha_gen  = np.array([10.0, 1.0, 20.0])      # generator bids at nodes [1,2,3]
+    delta_gen  = np.array([1.0, 0.1, 2.0])        # incremental generator bids
+    alpha_load = np.array([0.0, 1000.0, 0.0])     # value of lost load at node 2
+    delta_load = np.array([0.0, 0.001, 0.0])      # incremental load bids (node 2)
+
+    susceptance = np.array([50.0, 50.0])          # for lines [1-2, 2-3]
+    flow_limit  = np.array([25.0, 50.0])          # thermal limits [1-2, 2-3]
+    delta_flow  = 0.001                           # deviation price for flows
+    delta_theta = 0.001                           # deviation price for angles
+
+    # generator caps per scenario: g1=50, g2 in {25,50,75}, g3=50
+    gen_cap_scenarios = np.zeros((num_scenarios, 3))
+    gen_cap_scenarios[0] = np.array([50.0, 25.0, 50.0])
+    gen_cap_scenarios[1] = np.array([50.0, 50.0, 50.0])
+    gen_cap_scenarios[2] = np.array([50.0, 75.0, 50.0])
+
+    # demand caps per scenario (only node 2 has 100; deterministic across scenarios)
+    load_cap_scenarios = np.zeros((num_scenarios, 3))
+    load_cap_scenarios[:, 1] = 100.0
+
+    scenario_probs = np.array([1/3, 1/3, 1/3], dtype=float)
+
+    # deterministic expected caps (for deterministic DA run)
+    gen_cap_det  = np.array([50.0, 50.0, 50.0])
+    load_cap_det = np.array([0.0, 100.0, 0.0])
+
+    return dict(
+        num_nodes=num_nodes, num_lines=num_lines, num_scenarios=num_scenarios,
+        alpha_gen=alpha_gen, delta_gen=delta_gen,
+        alpha_load=alpha_load, delta_load=delta_load,
+        susceptance=susceptance, flow_limit=flow_limit,
+        delta_flow=delta_flow, delta_theta=delta_theta,
+        scenario_probs=scenario_probs,
+        gen_cap_scenarios=gen_cap_scenarios,
+        load_cap_scenarios=load_cap_scenarios,
+        gen_cap_det=gen_cap_det, load_cap_det=load_cap_det
+    )
+
+
+def zavala_system_1_stochastic():
+    """
+    Two-stage STOCHASTIC clearing for System 1 with DC network and incremental bids
+    on generators, load, line flows, and phase angles.
+    Returns:
+      g_da (3,), d_da (3,), f_da (2,), theta_da (3,),
+      G_rt (S,3), D_rt (S,3), f_rt (S,2), theta_rt (S,3),
+      pi_da (3,), Pi_rt (S,3)
+    """
+    import numpy as np
+    data = build_system_1_data()
+    N, L, S = data["num_nodes"], data["num_lines"], data["num_scenarios"]
+    alpha_gen,  delta_gen  = data["alpha_gen"],  data["delta_gen"]
+    alpha_load, delta_load = data["alpha_load"], data["delta_load"]
+    B, Fbar = data["susceptance"], data["flow_limit"]
+    delta_flow, delta_theta = data["delta_flow"], data["delta_theta"]
+    probs = data["scenario_probs"]
+    Gbar_s, Dbar_s = data["gen_cap_scenarios"], data["load_cap_scenarios"]
+
+    # ----- Variables -----
+    g_da = cp.Variable(N, nonneg=True)            # day-ahead generation per node
+    d_da = cp.Variable(N, nonneg=True)            # day-ahead demand per node
+    theta_da = cp.Variable(N)                     # day-ahead phase angles
+    f_da = cp.Variable(L)                         # day-ahead line flows [1-2, 2-3]
+
+    G_rt = cp.Variable((S, N), nonneg=True)       # real-time generation
+    D_rt = cp.Variable((S, N), nonneg=True)       # real-time demand
+    theta_rt = cp.Variable((S, N))                # real-time angles
+    f_rt = cp.Variable((S, L))                    # real-time flows
+
+    cons = []
+
+    # ----- DA network constraints -----
+    cons += [theta_da[1] == 0]  # reference bus at node 2
+    cons += [f_da[0] == B[0]*(theta_da[0] - theta_da[1])]
+    cons += [f_da[1] == B[1]*(theta_da[1] - theta_da[2])]
+    cons += [ -Fbar <= f_da, f_da <= Fbar ]
+
+    # DA nodal balances (store to read duals as DA prices)
+    da_bal_1 = g_da[0] - d_da[0] - f_da[0] == 0
+    da_bal_2 = g_da[1] - d_da[1] + f_da[0] - f_da[1] == 0
+    da_bal_3 = g_da[2] - d_da[2] + f_da[1] == 0
+    cons += [da_bal_1, da_bal_2, da_bal_3]
+
+    # Optional DA caps to keep things tight
+    cons += [g_da <= np.array([50.0, 75.0, 50.0])]
+    cons += [d_da <= np.array([0.0, 100.0, 0.0])]
+
+    # ----- RT constraints per scenario -----
+    rt_bal_constraints = []  # to read duals for RT prices
+    for s in range(S):
+        cons += [theta_rt[s,1] == 0]
+        cons += [f_rt[s,0] == B[0]*(theta_rt[s,0] - theta_rt[s,1])]
+        cons += [f_rt[s,1] == B[1]*(theta_rt[s,1] - theta_rt[s,2])]
+        cons += [ -Fbar <= f_rt[s], f_rt[s] <= Fbar ]
+
+        rt_bal_1 = G_rt[s,0] - D_rt[s,0] - f_rt[s,0] == 0
+        rt_bal_2 = G_rt[s,1] - D_rt[s,1] + f_rt[s,0] - f_rt[s,1] == 0
+        rt_bal_3 = G_rt[s,2] - D_rt[s,2] + f_rt[s,1] == 0
+        cons += [rt_bal_1, rt_bal_2, rt_bal_3]
+        rt_bal_constraints.append([rt_bal_1, rt_bal_2, rt_bal_3])
+
+        cons += [G_rt[s] <= Gbar_s[s], D_rt[s] <= Dbar_s[s]]
+
+    # ----- Objective: expected RT welfare + deviation penalties -----
+    obj_terms = []
+    for s in range(S):
+        # RT linear welfare
+        rt_lin = alpha_gen @ G_rt[s] - alpha_load @ D_rt[s]
+        # deviations around DA plan
+        dev_gen   = cp.sum(cp.multiply(delta_gen,  cp.abs(G_rt[s] - g_da)))
+        dev_load  = cp.sum(cp.multiply(delta_load, cp.abs(D_rt[s] - d_da)))
+        dev_flow  = delta_flow  * cp.norm1(f_rt[s]    - f_da)
+        dev_theta = delta_theta * cp.norm1(theta_rt[s] - theta_da)
+        obj_terms.append(probs[s]*(rt_lin + dev_gen + dev_load + dev_flow + dev_theta))
+
+    prob = cp.Problem(cp.Minimize(cp.sum(obj_terms)), cons)
+    prob.solve()
+
+    if prob.status not in ("optimal", "optimal_inaccurate"):
+        raise RuntimeError(f"System 1 stochastic solve failed: status={prob.status}")
+
+    # ----- Outputs -----
+    g_da_v = jnp.array(g_da.value); d_da_v = jnp.array(d_da.value)
+    f_da_v = jnp.array(f_da.value); theta_da_v = jnp.array(theta_da.value)
+    G_rt_v = jnp.array(G_rt.value); D_rt_v = jnp.array(D_rt.value)
+    f_rt_v = jnp.array(f_rt.value); theta_rt_v = jnp.array(theta_rt.value)
+
+    # DA nodal prices from duals
+    pi_da = jnp.array([float(da_bal_1.dual_value),
+                       float(da_bal_2.dual_value),
+                       float(da_bal_3.dual_value)])
+
+    # RT nodal prices per scenario (divide duals by scenario prob)
+    Pi_rt = []
+    for s in range(S):
+        Pi_rt.append([float(c.dual_value)/float(probs[s]) for c in rt_bal_constraints[s]])
+    Pi_rt = jnp.array(Pi_rt)  # shape (S, 3)
+
+    return g_da_v, d_da_v, f_da_v, theta_da_v, G_rt_v, D_rt_v, f_rt_v, theta_rt_v, pi_da, Pi_rt
+
+
+def zavala_system_1_deterministic_da():
+    """
+    Deterministic (here-and-now) DA clearing for System 1 with DC network.
+    Uses expected wind cap (50 MWh). No deviation terms.
+    Returns:
+      g_da (3,), d_da (3,), f_da (2,), theta_da (3,), pi_da (3,)
+    """
+    import numpy as np
+    data = build_system_1_data()
+    alpha_gen, alpha_load = data["alpha_gen"], data["alpha_load"]
+    B, Fbar = data["susceptance"], data["flow_limit"]
+    gbar_det, dbar_det = data["gen_cap_det"], data["load_cap_det"]
+
+    g_da = cp.Variable(3, nonneg=True)
+    d_da = cp.Variable(3, nonneg=True)
+    theta_da = cp.Variable(3)
+    f_da = cp.Variable(2)
+
+    cons = [theta_da[1] == 0]
+    cons += [f_da[0] == B[0]*(theta_da[0]-theta_da[1])]
+    cons += [f_da[1] == B[1]*(theta_da[1]-theta_da[2])]
+    cons += [ -Fbar <= f_da, f_da <= Fbar ]
+
+    bal1 = g_da[0] - d_da[0] - f_da[0] == 0
+    bal2 = g_da[1] - d_da[1] + f_da[0] - f_da[1] == 0
+    bal3 = g_da[2] - d_da[2] + f_da[1] == 0
+    cons += [bal1, bal2, bal3]
+
+    cons += [g_da <= gbar_det, d_da <= dbar_det]
+
+    obj = cp.Minimize(alpha_gen @ g_da - alpha_load @ d_da)
+    prob = cp.Problem(obj, cons)
+    prob.solve()
+
+    if prob.status not in ("optimal", "optimal_inaccurate"):
+        raise RuntimeError(f"System 1 deterministic DA failed: status={prob.status}")
+
+    pi_da = jnp.array([float(bal1.dual_value), float(bal2.dual_value), float(bal3.dual_value)])
+    return jnp.array(g_da.value), jnp.array(d_da.value), jnp.array(f_da.value), jnp.array(theta_da.value), pi_da
+
+
+def zavala_system_1_rt_network(gen_cap_rt, load_cap_rt):
+    """
+    Single-scenario RT NETWORK clearing (used for deterministic evaluation).
+    Inputs:
+      gen_cap_rt (3,), load_cap_rt (3,)
+    Returns:
+      G (3,), D (3,), f (2,), theta (3,), Pi (3,)
+    """
+    import numpy as np
+    data = build_system_1_data()
+    alpha_gen, alpha_load = data["alpha_gen"], data["alpha_load"]
+    B, Fbar = data["susceptance"], data["flow_limit"]
+
+    gen_cap_rt = np.asarray(gen_cap_rt, float)
+    load_cap_rt = np.asarray(load_cap_rt, float)
+
+    G = cp.Variable(3, nonneg=True)
+    D = cp.Variable(3, nonneg=True)
+    theta = cp.Variable(3)
+    f = cp.Variable(2)
+
+    cons = [theta[1] == 0]
+    cons += [f[0] == B[0]*(theta[0]-theta[1])]
+    cons += [f[1] == B[1]*(theta[1]-theta[2])]
+    cons += [ -Fbar <= f, f <= Fbar ]
+
+    bal1 = G[0] - D[0] - f[0] == 0
+    bal2 = G[1] - D[1] + f[0] - f[1] == 0
+    bal3 = G[2] - D[2] + f[1] == 0
+    cons += [bal1, bal2, bal3]
+
+    cons += [G <= gen_cap_rt, D <= load_cap_rt]
+
+    obj = cp.Minimize(alpha_gen @ G - alpha_load @ D)
+    prob = cp.Problem(obj, cons)
+    prob.solve()
+
+    if prob.status not in ("optimal", "optimal_inaccurate"):
+        raise RuntimeError(f"System 1 RT solve failed: status={prob.status}")
+
+    Pi = jnp.array([float(bal1.dual_value), float(bal2.dual_value), float(bal3.dual_value)])
+    return jnp.array(G.value), jnp.array(D.value), jnp.array(f.value), jnp.array(theta.value), Pi
+
+
+def price_distortion_system_1(pi_da, rt_prices, probs):
+    """
+    Node-wise price distortion metrics for System 1:
+      M_avg = mean_n |pi_da[n] - E[rt_prices[:,n]]|
+      M_max = max_n  |pi_da[n] - E[rt_prices[:,n]]|
+    """
+    import numpy as np
+    pi_da = np.asarray(pi_da, float)
+    rt_prices = np.asarray(rt_prices, float)
+    probs = np.asarray(probs, float)
+
+    exp_rt = probs @ rt_prices
+    diff = np.abs(pi_da - exp_rt)
+    return float(diff.mean()), float(diff.max())

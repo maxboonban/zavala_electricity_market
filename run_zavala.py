@@ -19,7 +19,7 @@ from zavala_funcs import (
 # Run Zavala baseline (stochastic) + deterministic
 # =========================
 num_instances = 10
-key = random.key(2)
+key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
 for key in keys:
