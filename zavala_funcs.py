@@ -141,6 +141,10 @@ def zavala_deterministic_da(mc_g_i, mv_d_j, g_i_bar_det, d_j_bar_det):
 
     # Dual of the balance is the (single) day-ahead price π
     pi = float(balance_con.dual_value) if balance_con.dual_value is not None else np.nan
+    
+    # # Print Energy-Only Deterministic DA price
+    # print("\n=== Energy-Only Deterministic Day-Ahead Price ===")
+    # print(f"Single Bus Price: ${pi:.3f}/MWh")
 
     return jnp.array(g.value), jnp.array(d.value), pi
 
@@ -173,6 +177,14 @@ def zavala_rt_energy_only(mc_g_i, mv_d_j, g_i_bar_rt, d_j_bar_rt):
         raise RuntimeError(f"RT solve failed: status={prob.status}")
 
     Pi = float(balance_con.dual_value) if balance_con.dual_value is not None else np.nan
+    
+    # # Print Energy-Only Real-Time price
+    # print("\n=== Energy-Only Real-Time Price (Single Scenario) ===")
+    # print(f"Single Bus Price: ${Pi:.3f}/MWh")
+    # print(f"(No network constraints - energy balance only)")
+    # print(f"Generation Capacity: {g_i_bar_rt}")
+    # print(f"Load Capacity: {d_j_bar_rt}")
+    
     return jnp.array(G.value), jnp.array(D.value), Pi
 
 
@@ -290,7 +302,7 @@ def zavala_system_1_stochastic():
     da_bal_3 = g_da[2] - d_da[2] + f_da[1] == 0
     cons += [da_bal_1, da_bal_2, da_bal_3]
 
-    # Optional DA caps to keep things tight
+    # # Optional DA caps to keep things tight
     cons += [g_da <= np.array([50.0, 75.0, 50.0])]
     cons += [d_da <= np.array([0.0, 100.0, 0.0])]
 
@@ -338,12 +350,39 @@ def zavala_system_1_stochastic():
     pi_da = jnp.array([float(da_bal_1.dual_value),
                        float(da_bal_2.dual_value),
                        float(da_bal_3.dual_value)])
+#    # Print DA prices
+#     print("=== Day-Ahead (DA) Nodal Prices ===")
+#     print(f"Node 1: ${pi_da[0]:.3f}/MWh")
+#     print(f"Node 2: ${pi_da[1]:.3f}/MWh") 
+#     print(f"Node 3: ${pi_da[2]:.3f}/MWh")
 
     # RT nodal prices per scenario (divide duals by scenario prob)
     Pi_rt = []
     for s in range(S):
         Pi_rt.append([float(c.dual_value)/float(probs[s]) for c in rt_bal_constraints[s]])
     Pi_rt = jnp.array(Pi_rt)  # shape (S, 3)
+
+    #     # Print RT prices
+    # print("\n=== Real-Time (RT) Nodal Prices by Scenario ===")
+    # for s in range(S):
+    #     print(f"Scenario {s+1} (prob={probs[s]:.3f}):")
+    #     print(f"  Node 1: ${Pi_rt[s,0]:.3f}/MWh")
+    #     print(f"  Node 2: ${Pi_rt[s,1]:.3f}/MWh")
+    #     print(f"  Node 3: ${Pi_rt[s,2]:.3f}/MWh")
+    
+        # Print expected RT prices
+    expected_rt_prices = jnp.sum(Pi_rt * probs[:, jnp.newaxis], axis=0)
+    # print(f"\n=== Expected RT Prices ===")
+    # print(f"Node 1: ${expected_rt_prices[0]:.3f}/MWh")
+    # print(f"Node 2: ${expected_rt_prices[1]:.3f}/MWh")
+    # print(f"Node 3: ${expected_rt_prices[2]:.3f}/MWh")
+    
+    # Print price differences
+    price_diff = pi_da - expected_rt_prices
+    # print(f"\n=== DA vs Expected RT Price Differences ===")
+    # print(f"Node 1: ${price_diff[0]:.3f}/MWh")
+    # print(f"Node 2: ${price_diff[1]:.3f}/MWh")
+    # print(f"Node 3: ${price_diff[2]:.3f}/MWh")
 
     return g_da_v, d_da_v, f_da_v, theta_da_v, G_rt_v, D_rt_v, f_rt_v, theta_rt_v, pi_da, Pi_rt
 
@@ -385,7 +424,14 @@ def zavala_system_1_deterministic_da():
     if prob.status not in ("optimal", "optimal_inaccurate"):
         raise RuntimeError(f"System 1 deterministic DA failed: status={prob.status}")
 
-    pi_da = jnp.array([float(bal1.dual_value), float(bal2.dual_value), float(bal3.dual_value)])
+    pi_da = -jnp.array([float(bal1.dual_value), float(bal2.dual_value), float(bal3.dual_value)])
+    
+    # Print Deterministic DA prices
+    print("\n=== Deterministic Day-Ahead (DA) Nodal Prices ===")
+    print(f"Node 1: ${pi_da[0]:.3f}/MWh")
+    print(f"Node 2: ${pi_da[1]:.3f}/MWh")
+    print(f"Node 3: ${pi_da[2]:.3f}/MWh")
+    
     return jnp.array(g_da.value), jnp.array(d_da.value), jnp.array(f_da.value), jnp.array(theta_da.value), pi_da
 
 
@@ -429,7 +475,16 @@ def zavala_system_1_rt_network(gen_cap_rt, load_cap_rt):
     if prob.status not in ("optimal", "optimal_inaccurate"):
         raise RuntimeError(f"System 1 RT solve failed: status={prob.status}")
 
-    Pi = jnp.array([float(bal1.dual_value), float(bal2.dual_value), float(bal3.dual_value)])
+    Pi = -jnp.array([float(bal1.dual_value), float(bal2.dual_value), float(bal3.dual_value)])
+    
+    # Print RT Network prices
+    print("\n=== Deterministic Real-Time Network Nodal Prices ===")
+    print(f"Node 1: ${Pi[0]:.3f}/MWh")
+    print(f"Node 2: ${Pi[1]:.3f}/MWh")
+    print(f"Node 3: ${Pi[2]:.3f}/MWh")
+    print(f"Generation Capacity: {gen_cap_rt}")
+    print(f"Load Capacity: {load_cap_rt}")
+    
     return jnp.array(G.value), jnp.array(D.value), jnp.array(f.value), jnp.array(theta.value), Pi
 
 

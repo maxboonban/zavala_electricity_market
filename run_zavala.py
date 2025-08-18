@@ -66,8 +66,8 @@ for i in range(len(instances)):
     det_regrets.append(expected_cumulative_regret(probs, g_det, d_det, pi_det, mc_g_i, mv_d_j, g_i_bar, d_j_bar))
 
 # ============== Prints =================
-print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
-print(f'Stochastic Zavala mean regret: {np.mean(zavala_regrets)}')
+# print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
+# print(f'Stochastic Zavala mean regret: {np.mean(zavala_regrets)}')
 
-print(f'Deterministic Zavala mean distortion: {np.mean(det_distortions)}')
-print(f'Deterministic Zavala mean regret: {np.mean(det_regrets)}')
+# print(f'Deterministic Zavala mean distortion: {np.mean(det_distortions)}')
+# print(f'Deterministic Zavala mean regret: {np.mean(det_regrets)}')

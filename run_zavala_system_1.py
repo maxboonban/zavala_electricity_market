@@ -81,10 +81,10 @@ def main():
         probs, g_da_d, d_da_d, pi_da_d, alpha_gen, alpha_load, gen_cap_scn, load_cap_scn
     )
 
-    # ===== Prints =====
-    print("=== System 1: Stochastic vs Deterministic ===")
-    print(f"Stochastic   →  M_avg_distortion={M_avg_s:.3f}, M_max_distortion={M_max_s:.3f}, Expected_Regret={regret_s:.3f}")
-    print(f"Deterministic→  M_avg_distortion={M_avg_d:.3f}, M_max_distortion={M_max_d:.3f}, Expected_Regret={regret_d:.3f}")
+    # # ===== Prints =====
+    # print("=== System 1: Stochastic vs Deterministic ===")
+    # print(f"Stochastic   →  M_avg_distortion={M_avg_s:.3f}, M_max_distortion={M_max_s:.3f}, Expected_Regret={regret_s:.3f}")
+    # print(f"Deterministic→  M_avg_distortion={M_avg_d:.3f}, M_max_distortion={M_max_d:.3f}, Expected_Regret={regret_d:.3f}")
 
 if __name__ == "__main__":
     main()
