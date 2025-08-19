@@ -3,6 +3,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import random
+import gurobipy as gp
 
 # Enable 64-bit precision for better numerical stability
 jax.config.update("jax_enable_x64", True)
@@ -46,10 +47,19 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 
     # Define the problem and solve it
     prob = cp.Problem(objective, constraints)
-    prob.solve()
-    
-    # Print solver statistics for debugging
-    print(f"Solver: {prob.solver_stats.solver_name}, Status: {prob.status}, Iterations: {prob.solver_stats.num_iters}")
+    # prob.solve()
+    prob.solve(
+        solver=cp.GUROBI,
+        Method=2,        # barrier
+        Crossover=0,     # no crossover → central duals
+        FeasibilityTol=1e-9,
+        OptimalityTol=1e-9,
+        BarConvTol=1e-12,
+        # OutputFlag=0,  # uncomment to silence GUROBI logs
+    )
+
+    # # Print solver statistics for debugging
+    # print(f"Solver: {prob.solver_stats.solver_name}, Status: {prob.status}, Iterations: {prob.solver_stats.num_iters}")
 
     g_i_jax = jnp.array([g_i[i].value for i in range(num_g)])
     d_j_jax = jnp.array([d_j[j].value for j in range(num_d)])
@@ -134,7 +144,16 @@ def zavala_deterministic_da(mc_g_i, mv_d_j, g_i_bar_det, d_j_bar_det):
     ]
 
     prob = cp.Problem(obj, cons)
-    prob.solve()
+    # prob.solve()
+    prob.solve(
+        solver=cp.GUROBI,
+        Method=2,        # barrier
+        Crossover=0,     # no crossover → central duals
+        FeasibilityTol=1e-9,
+        OptimalityTol=1e-9,
+        BarConvTol=1e-12,
+        # OutputFlag=0,  # uncomment to silence GUROBI logs
+    )
 
     if prob.status not in ("optimal", "optimal_inaccurate"):
         raise RuntimeError(f"Deterministic DA solve failed: status={prob.status}")
@@ -231,9 +250,9 @@ def build_system_1_data():
 
     # generator caps per scenario: g1=50, g2 in {25,50,75}, g3=50
     gen_cap_scenarios = np.zeros((num_scenarios, 3))
-    gen_cap_scenarios[0] = np.array([50.0, 25.0, 50.0])
-    gen_cap_scenarios[1] = np.array([50.0, 50.0, 50.0])
-    gen_cap_scenarios[2] = np.array([50.0, 75.0, 50.0])
+    gen_cap_scenarios[0] = np.array([25.0, 25.0, 50.0])
+    gen_cap_scenarios[1] = np.array([25.0, 50.0, 25.0])
+    gen_cap_scenarios[2] = np.array([25.0, 75.0, 0.0])
 
     # demand caps per scenario (only node 2 has 100; deterministic across scenarios)
     load_cap_scenarios = np.zeros((num_scenarios, 3))
@@ -302,9 +321,9 @@ def zavala_system_1_stochastic():
     da_bal_3 = g_da[2] - d_da[2] + f_da[1] == 0
     cons += [da_bal_1, da_bal_2, da_bal_3]
 
-    # # Optional DA caps to keep things tight
-    cons += [g_da <= np.array([50.0, 75.0, 50.0])]
-    cons += [d_da <= np.array([0.0, 100.0, 0.0])]
+    # # # Optional DA caps to keep things tight
+    # cons += [g_da <= np.array([50.0, 75.0, 50.0])]
+    # cons += [d_da <= np.array([0.0, 100.0, 0.0])]
 
     # ----- RT constraints per scenario -----
     rt_bal_constraints = []  # to read duals for RT prices
@@ -336,6 +355,15 @@ def zavala_system_1_stochastic():
 
     prob = cp.Problem(cp.Minimize(cp.sum(obj_terms)), cons)
     prob.solve()
+    # prob.solve(
+    #     solver=cp.GUROBI,
+    #     Method=2,        # barrier
+    #     Crossover=0,     # no crossover → central duals
+    #     FeasibilityTol=1e-9,
+    #     OptimalityTol=1e-9,
+    #     BarConvTol=1e-12,
+    #     # OutputFlag=0,  # uncomment to silence GUROBI logs
+    # )
 
     if prob.status not in ("optimal", "optimal_inaccurate"):
         raise RuntimeError(f"System 1 stochastic solve failed: status={prob.status}")
@@ -347,7 +375,7 @@ def zavala_system_1_stochastic():
     f_rt_v = jnp.array(f_rt.value); theta_rt_v = jnp.array(theta_rt.value)
 
     # DA nodal prices from duals
-    pi_da = jnp.array([float(da_bal_1.dual_value),
+    pi_da = -jnp.array([float(da_bal_1.dual_value),
                        float(da_bal_2.dual_value),
                        float(da_bal_3.dual_value)])
 #    # Print DA prices
@@ -360,7 +388,7 @@ def zavala_system_1_stochastic():
     Pi_rt = []
     for s in range(S):
         Pi_rt.append([float(c.dual_value)/float(probs[s]) for c in rt_bal_constraints[s]])
-    Pi_rt = jnp.array(Pi_rt)  # shape (S, 3)
+    Pi_rt = -jnp.array(Pi_rt)  # shape (S, 3)
 
     #     # Print RT prices
     # print("\n=== Real-Time (RT) Nodal Prices by Scenario ===")
@@ -420,7 +448,15 @@ def zavala_system_1_deterministic_da():
     obj = cp.Minimize(alpha_gen @ g_da - alpha_load @ d_da)
     prob = cp.Problem(obj, cons)
     prob.solve()
-
+    # prob.solve(
+    #     solver=cp.GUROBI,
+    #     Method=2,        # barrier
+    #     Crossover=0,     # no crossover → central duals
+    #     FeasibilityTol=1e-9,
+    #     OptimalityTol=1e-9,
+    #     BarConvTol=1e-12,
+    #     # OutputFlag=0,  # uncomment to silence GUROBI logs
+    # )
     if prob.status not in ("optimal", "optimal_inaccurate"):
         raise RuntimeError(f"System 1 deterministic DA failed: status={prob.status}")
 
@@ -471,7 +507,17 @@ def zavala_system_1_rt_network(gen_cap_rt, load_cap_rt):
     obj = cp.Minimize(alpha_gen @ G - alpha_load @ D)
     prob = cp.Problem(obj, cons)
     prob.solve()
-
+    # prob.solve(cp.GUROBI, Method=3)
+    # prob.solve(
+    #     solver=cp.GUROBI,
+    #     Method=1,        # barrier
+    #     Crossover=0,     # no crossover → central duals
+    #     FeasibilityTol=1e-9,
+    #     OptimalityTol=1e-9,
+    #     BarConvTol=1e-12,
+    #     # OutputFlag=0,  # uncomment to silence GUROBI logs
+    # )
+    
     if prob.status not in ("optimal", "optimal_inaccurate"):
         raise RuntimeError(f"System 1 RT solve failed: status={prob.status}")
 

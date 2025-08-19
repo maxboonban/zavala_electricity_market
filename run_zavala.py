@@ -48,6 +48,13 @@ for i in range(len(instances)):
     zavala_distortions.append(price_distortion(probs, z_pi, z_Pi))
     zavala_regrets.append(expected_cumulative_regret(probs, z_g_i, z_d_j, z_pi, mc_g_i, mv_d_j, g_i_bar, d_j_bar))
 
+    # --- print stochastic dual prices ---
+    print(f"[inst {i}] π^DA (stochastic) = {float(z_pi):.6f}")
+    for p, Pi_p in enumerate(np.asarray(z_Pi)):
+        print(f"[inst {i}] Π^RT_stoch[ω={p}] = {float(Pi_p):.6f}")
+    print(f"[inst {i}] E[Π]_stoch = {float(np.asarray(probs) @ np.asarray(z_Pi)):.6f}")
+    print(f"[inst {i}] distortion_stoch = {float(price_distortion(probs, z_pi, z_Pi)):.6f}")
+
     # ===== Deterministic Zavala (energy-only, no network) =====
     # Use expected capacities for DA (as in §3.1 text)
     gbar_det, dbar_det = expected_caps_from_scenarios(probs, g_i_bar, d_j_bar)
@@ -55,19 +62,24 @@ for i in range(len(instances)):
     # Day-ahead deterministic solve
     g_det, d_det, pi_det = zavala_deterministic_da(mc_g_i, mv_d_j, gbar_det, dbar_det)
 
+    # --- print deterministic DA dual price ---
+    print(f"[inst {i}] π^DA (deterministic) = {pi_det:.6f}")
+
     # Real-time per scenario (to compute Π(ω) and distortion)
     Pi_det = []
     for p in range(len(probs)):
         _, _, Pi_p = zavala_rt_energy_only(mc_g_i, mv_d_j, g_i_bar[p], d_j_bar[p])
         Pi_det.append(Pi_p)
+        # --- print deterministic RT dual price for this scenario ---
+        print(f"[inst {i}] Π^RT_det[ω={p}] = {Pi_p:.6f}")
     Pi_det = np.array(Pi_det)
 
     det_distortions.append(price_distortion(probs, pi_det, Pi_det))
     det_regrets.append(expected_cumulative_regret(probs, g_det, d_det, pi_det, mc_g_i, mv_d_j, g_i_bar, d_j_bar))
 
 # ============== Prints =================
-# print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
-# print(f'Stochastic Zavala mean regret: {np.mean(zavala_regrets)}')
+print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
+print(f'Stochastic Zavala mean regret: {np.mean(zavala_regrets)}')
 
-# print(f'Deterministic Zavala mean distortion: {np.mean(det_distortions)}')
-# print(f'Deterministic Zavala mean regret: {np.mean(det_regrets)}')
+print(f'Deterministic mean distortion: {np.mean(det_distortions)}')
+print(f'Deterministic mean regret: {np.mean(det_regrets)}')
