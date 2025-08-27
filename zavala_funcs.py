@@ -71,12 +71,17 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi
 
 def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100):
-    probs_key, mc_key, mv_key, g_key, d_key = random.split(key, 5)
-    probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
-    mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
-    mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
-    g_i_bar = random.uniform(g_key, (num_scenarios, num_g), minval=minval, maxval=maxval)
-    d_j_bar = random.uniform(d_key, (num_scenarios, num_d), minval=minval, maxval=maxval)
+    input_scenario = "s_1"
+
+    if input_scenario == "s_1":
+        # Sid's original synthetic case with uniform distribution
+        probs_key, mc_key, mv_key, g_key, d_key = random.split(key, 5)
+        probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
+        mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
+        mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
+        g_i_bar = random.uniform(g_key, (num_scenarios, num_g), minval=minval, maxval=maxval)
+        d_j_bar = random.uniform(d_key, (num_scenarios, num_d), minval=minval, maxval=maxval)
+    
     return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
 
 def price_distortion(probs, pi, Pi):
@@ -462,11 +467,11 @@ def zavala_system_1_deterministic_da():
 
     pi_da = -jnp.array([float(bal1.dual_value), float(bal2.dual_value), float(bal3.dual_value)])
     
-    # Print Deterministic DA prices
-    print("\n=== Deterministic Day-Ahead (DA) Nodal Prices ===")
-    print(f"Node 1: ${pi_da[0]:.3f}/MWh")
-    print(f"Node 2: ${pi_da[1]:.3f}/MWh")
-    print(f"Node 3: ${pi_da[2]:.3f}/MWh")
+    # # Print Deterministic DA prices
+    # print("\n=== Deterministic Day-Ahead (DA) Nodal Prices ===")
+    # print(f"Node 1: ${pi_da[0]:.3f}/MWh")
+    # print(f"Node 2: ${pi_da[1]:.3f}/MWh")
+    # print(f"Node 3: ${pi_da[2]:.3f}/MWh")
     
     return jnp.array(g_da.value), jnp.array(d_da.value), jnp.array(f_da.value), jnp.array(theta_da.value), pi_da
 
@@ -523,13 +528,13 @@ def zavala_system_1_rt_network(gen_cap_rt, load_cap_rt):
 
     Pi = -jnp.array([float(bal1.dual_value), float(bal2.dual_value), float(bal3.dual_value)])
     
-    # Print RT Network prices
-    print("\n=== Deterministic Real-Time Network Nodal Prices ===")
-    print(f"Node 1: ${Pi[0]:.3f}/MWh")
-    print(f"Node 2: ${Pi[1]:.3f}/MWh")
-    print(f"Node 3: ${Pi[2]:.3f}/MWh")
-    print(f"Generation Capacity: {gen_cap_rt}")
-    print(f"Load Capacity: {load_cap_rt}")
+    # # Print RT Network prices
+    # print("\n=== Deterministic Real-Time Network Nodal Prices ===")
+    # print(f"Node 1: ${Pi[0]:.3f}/MWh")
+    # print(f"Node 2: ${Pi[1]:.3f}/MWh")
+    # print(f"Node 3: ${Pi[2]:.3f}/MWh")
+    # print(f"Generation Capacity: {gen_cap_rt}")
+    # print(f"Load Capacity: {load_cap_rt}")
     
     return jnp.array(G.value), jnp.array(D.value), jnp.array(f.value), jnp.array(theta.value), Pi
 
@@ -548,3 +553,103 @@ def price_distortion_system_1(pi_da, rt_prices, probs):
     exp_rt = probs @ rt_prices
     diff = np.abs(pi_da - exp_rt)
     return float(diff.mean()), float(diff.max())
+
+
+def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
+    num_g = len(mc_g_i)
+    num_d = len(mv_d_j)
+
+    # Define the variables
+    g_i = [cp.Variable() for i in range(num_g)]
+    G_i = [[cp.Variable() for i in range(num_g)] for p in range(len(probs))]
+    d_j = [cp.Variable() for j in range(num_d)]
+    D_j = [[cp.Variable() for j in range(num_d)] for p in range(len(probs))]
+
+    # Compute incremental bids (just a heuristic)
+    mc_g_i_delta = mc_g_i / 10.0
+    mv_d_j_delta = mv_d_j / 10.0
+
+    # --- CVaR knobs ---
+    beta = 0.95
+    lambda_cvar = 0.1  # set >0 to turn on CVaR regularization
+
+    # --- Build per-scenario loss L_p ---
+    Lp = []
+    for p in range(len(probs)):
+        loss_gen = sum(
+            mc_g_i[i] * G_i[p][i]
+            + mc_g_i_delta[i] * cp.max(cp.vstack([G_i[p][i] - g_i[i], 0]))
+            + mc_g_i_delta[i] * cp.max(cp.vstack([g_i[i] - G_i[p][i], 0]))
+            for i in range(num_g)
+        )
+        loss_dem = sum(
+            -mv_d_j[j] * D_j[p][j]
+            + mv_d_j_delta[j] * cp.max(cp.vstack([d_j[j] - D_j[p][j], 0]))
+            + mv_d_j_delta[j] * cp.max(cp.vstack([D_j[p][j] - d_j[j], 0]))
+            for j in range(num_d)
+        )
+        Lp.append(loss_gen + loss_dem)
+
+    # --- Rockafellar–Uryasev CVaR(β): alpha and scenario slacks ---
+    alpha = cp.Variable()
+    s = [cp.Variable(nonneg=True) for _ in range(len(probs))]
+    cvar_link = [s[p] >= Lp[p] - alpha for p in range(len(probs))]
+    cvar_term = alpha + (1.0 / (1.0 - beta)) * sum(probs[p] * s[p] for p in range(len(probs)))
+
+    # Your original expected-loss expression, unchanged
+    expected_loss = (
+        sum(sum((mc_g_i[i] * G_i[p][i]
+                + mc_g_i_delta[i] * cp.max(cp.vstack([G_i[p][i] - g_i[i], 0]))
+                + mc_g_i_delta[i] * cp.max(cp.vstack([g_i[i] - G_i[p][i], 0])))
+                * probs[p] for p in range(len(probs))) for i in range(num_g))
+        + sum(sum((-mv_d_j[j] * D_j[p][j]
+                + mv_d_j_delta[j] * cp.max(cp.vstack([d_j[j] - D_j[p][j], 0]))
+                + mv_d_j_delta[j] * cp.max(cp.vstack([D_j[p][j] - d_j[j], 0])))
+                * probs[p] for p in range(len(probs))) for j in range(num_d))
+    )
+
+    objective = cp.Minimize(expected_loss + lambda_cvar * cvar_term)
+
+    # Define the constraints
+    day_ahead_balance = [
+                    sum(d_j[j] for j in range(num_d)) == sum(g_i[i] for i in range(num_g))
+                ]
+    real_time_balance = [
+                    sum(D_j[p][j] - d_j[j] for j in range(num_d)) == sum(G_i[p][i] - g_i[i] for i in range(num_g)) for p in range(len(probs))
+                ]
+
+    constraints = day_ahead_balance \
+                + real_time_balance + [
+                    G_i[p][i] >= 0 for p in range(len(probs)) for i in range(num_g)
+                ] + [
+                    G_i[p][i] <= g_i_bar[p][i] for p in range(len(probs)) for i in range(num_g)
+                ] + [
+                    D_j[p][j] >= 0 for p in range(len(probs)) for j in range(num_d)
+                ] + [
+                    D_j[p][j] <= d_j_bar[p][j] for p in range(len(probs)) for j in range(num_d)
+                ] + cvar_link
+
+    # Define the problem and solve it
+    prob = cp.Problem(objective, constraints)
+    # prob.solve()
+    prob.solve(
+        solver=cp.GUROBI,
+        Method=2,        # barrier
+        Crossover=0,     # no crossover → central duals
+        FeasibilityTol=1e-9,
+        OptimalityTol=1e-9,
+        BarConvTol=1e-12,
+        # OutputFlag=0,  # uncomment to silence GUROBI logs
+    )
+
+    # # Print solver statistics for debugging
+    # print(f"Solver: {prob.solver_stats.solver_name}, Status: {prob.status}, Iterations: {prob.solver_stats.num_iters}")
+
+    g_i_jax = jnp.array([g_i[i].value for i in range(num_g)])
+    d_j_jax = jnp.array([d_j[j].value for j in range(num_d)])
+    G_i_jax = jnp.array([[G_i[p][i].value for i in range(num_g)] for p in range(len(probs))])
+    D_j_jax = jnp.array([[D_j[p][j].value for j in range(num_d)] for p in range(len(probs))])
+    pi = day_ahead_balance[0].dual_value
+    Pi = jnp.array([real_time_balance[p].dual_value / probs[p] for p in range(len(probs))])
+
+    return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi

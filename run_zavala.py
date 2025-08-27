@@ -5,6 +5,7 @@ from jax import random
 from zavala_funcs import (
     # stochastic
     zavala,
+    zavala_cvar,
     generate_instance,
     price_distortion,
     probability_feasible,
@@ -16,7 +17,7 @@ from zavala_funcs import (
 )
 
 # =========================
-# Run Zavala baseline (stochastic) + deterministic
+# Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
 num_instances = 10
 key = random.key(200)
@@ -35,6 +36,10 @@ probs_feasible = []
 det_distortions = []
 det_regrets = []
 
+# --- CVaR accumulators (new) ---
+cvar_distortions = []
+cvar_regrets = []
+
 for i in range(len(instances)):
     probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar = instances[i]
 
@@ -48,12 +53,12 @@ for i in range(len(instances)):
     zavala_distortions.append(price_distortion(probs, z_pi, z_Pi))
     zavala_regrets.append(expected_cumulative_regret(probs, z_g_i, z_d_j, z_pi, mc_g_i, mv_d_j, g_i_bar, d_j_bar))
 
-    # --- print stochastic dual prices ---
-    print(f"[inst {i}] π^DA (stochastic) = {float(z_pi):.6f}")
-    for p, Pi_p in enumerate(np.asarray(z_Pi)):
-        print(f"[inst {i}] Π^RT_stoch[ω={p}] = {float(Pi_p):.6f}")
-    print(f"[inst {i}] E[Π]_stoch = {float(np.asarray(probs) @ np.asarray(z_Pi)):.6f}")
-    print(f"[inst {i}] distortion_stoch = {float(price_distortion(probs, z_pi, z_Pi)):.6f}")
+
+    # ===== CVaR Zavala (new) =====
+    cvar_g_i, cvar_d_j, _, _, cvar_pi, cvar_Pi = zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar)
+
+    cvar_distortions.append(price_distortion(probs, cvar_pi, cvar_Pi))
+    cvar_regrets.append(expected_cumulative_regret(probs, cvar_g_i, cvar_d_j, cvar_pi, mc_g_i, mv_d_j, g_i_bar, d_j_bar))
 
     # ===== Deterministic Zavala (energy-only, no network) =====
     # Use expected capacities for DA (as in §3.1 text)
@@ -62,16 +67,16 @@ for i in range(len(instances)):
     # Day-ahead deterministic solve
     g_det, d_det, pi_det = zavala_deterministic_da(mc_g_i, mv_d_j, gbar_det, dbar_det)
 
-    # --- print deterministic DA dual price ---
-    print(f"[inst {i}] π^DA (deterministic) = {pi_det:.6f}")
+    # # --- print deterministic DA dual price ---
+    # print(f"[inst {i}] π^DA (deterministic) = {pi_det:.6f}")
 
     # Real-time per scenario (to compute Π(ω) and distortion)
     Pi_det = []
     for p in range(len(probs)):
         _, _, Pi_p = zavala_rt_energy_only(mc_g_i, mv_d_j, g_i_bar[p], d_j_bar[p])
         Pi_det.append(Pi_p)
-        # --- print deterministic RT dual price for this scenario ---
-        print(f"[inst {i}] Π^RT_det[ω={p}] = {Pi_p:.6f}")
+        # # --- print deterministic RT dual price for this scenario ---
+        # print(f"[inst {i}] Π^RT_det[ω={p}] = {Pi_p:.6f}")
     Pi_det = np.array(Pi_det)
 
     det_distortions.append(price_distortion(probs, pi_det, Pi_det))
@@ -80,6 +85,9 @@ for i in range(len(instances)):
 # ============== Prints =================
 print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
 print(f'Stochastic Zavala mean regret: {np.mean(zavala_regrets)}')
+
+print(f'Stochastic Zavala with CVaR mean distortion: {np.mean(cvar_distortions)}')
+print(f'Stochastic Zavala with CVaR mean regret: {np.mean(cvar_regrets)}')
 
 print(f'Deterministic mean distortion: {np.mean(det_distortions)}')
 print(f'Deterministic mean regret: {np.mean(det_regrets)}')
