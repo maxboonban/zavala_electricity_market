@@ -81,7 +81,73 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
         g_i_bar = random.uniform(g_key, (num_scenarios, num_g), minval=minval, maxval=maxval)
         d_j_bar = random.uniform(d_key, (num_scenarios, num_d), minval=minval, maxval=maxval)
-    
+
+    elif input_scenario == "s_2":
+        # Supply-shortage tails: gen caps left-heavy (more mass near 0)
+        # Beta(a<1,b>1). Demand caps remain uniform.
+        probs_key, mc_key, mv_key, g_key, d_key = random.split(key, 5)
+        probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
+        mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
+        mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
+        g_i_bar = beta_scaled(g_key, (num_scenarios, num_g), a=0.4, b=4.0)
+        d_j_bar = random.uniform(d_key, (num_scenarios, num_d), minval=minval, maxval=maxval)
+
+    elif input_scenario == "s_3":
+        # Demand-surge tails: demand caps right-heavy (more mass near max)
+        # Beta(a>1,b<1). Gen caps remain uniform.
+        probs_key, mc_key, mv_key, g_key, d_key = random.split(key, 5)
+        probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
+        mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
+        mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
+        g_i_bar = random.uniform(g_key, (num_scenarios, num_g), minval=minval, maxval=maxval)
+        d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=4.0, b=0.4)
+
+    elif input_scenario == "s_4":
+        # Correlated extremes: in a small ε share of scenarios, shrink gen & blow up demand
+        probs_key, mc_key, mv_key, g_key, d_key, t_key, k_shrink, k_blow = random.split(key, 8)
+        probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
+        mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
+        mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
+        # mild heavy-tails even outside stress
+        g_i_bar = beta_scaled(g_key, (num_scenarios, num_g), a=0.8, b=3.0)
+        d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=3.0, b=0.8)
+        # mark tail scenarios
+        eps = 0.10  # fraction stressed
+        is_tail = random.bernoulli(t_key, eps, (num_scenarios,))
+        # scenario-level stress multipliers
+        shrink = random.uniform(k_shrink, (num_scenarios, 1), minval=0.05, maxval=0.30)  # 5–30% of base
+        blow   = random.uniform(k_blow,   (num_scenarios, 1), minval=1.20, maxval=1.80)  # 120–180% of base
+        g_i_bar = jnp.where(is_tail[:, None], g_i_bar * shrink, g_i_bar)
+        d_j_bar = jnp.where(is_tail[:, None], d_j_bar * blow,   d_j_bar)
+        # keep within declared bounds
+        g_i_bar = jnp.clip(g_i_bar, minval, maxval)
+        d_j_bar = jnp.clip(d_j_bar, minval, maxval)
+
+    elif input_scenario == "s_5":
+        # Per-unit heterogeneity: some generators are intermittent (high-variance Beta) -> renewables generators
+        probs_key, mc_key, mv_key, gA_key, gB_key, d_key, flag_key = random.split(key, 7)
+        probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
+        mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
+        mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
+
+        # choose intermittent generators
+        frac_inter = 0.30
+        is_inter = random.bernoulli(flag_key, frac_inter, (num_g,))
+        a_g_vec = jnp.where(is_inter, 0.5, 3.0)  # intermittent: (0.5,4.0); stable: (3.0,3.0)
+        b_g_vec = jnp.where(is_inter, 4.0, 3.0)
+
+        # broadcast per-unit Beta shapes across scenarios
+        a_g = jnp.broadcast_to(a_g_vec, (num_scenarios, num_g))
+        b_g = jnp.broadcast_to(b_g_vec, (num_scenarios, num_g))
+        z_g = random.beta(gA_key, a_g, b_g)
+        g_i_bar = minval + z_g * (maxval - minval)
+
+        # demand: moderate variability
+        d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=3.0, b=3.0)
+
+    else:
+        raise ValueError(f"Unknown input_scenario: {input_scenario}")
+
     return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
 
 def price_distortion(probs, pi, Pi):
@@ -653,3 +719,59 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     Pi = jnp.array([real_time_balance[p].dual_value / probs[p] for p in range(len(probs))])
 
     return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi
+
+
+def _print_da_rt_summary(label, pi, g_da, d_da, Pi, G_rt, D_rt, probs=None):
+    """
+    Prints a compact DA/RT summary.
+    - label: str, "STOCH" or "DET"
+    - pi: scalar DA price
+    - g_da, d_da: 1D arrays of DA generator and demand commitments
+    - Pi: 1D array of RT prices per scenario (length S)
+    - G_rt, D_rt: 2D arrays (S x G) and (S x D) of RT dispatches
+    - probs: optional scenario probabilities (for weighted summaries)
+    """
+    import numpy as np
+    S = Pi.shape[0]
+    G = g_da.shape[0]
+    D = d_da.shape[0]
+
+    dG = G_rt - g_da[None, :]   # S x G
+    dD = D_rt - d_da[None, :]   # S x D
+
+    print(f"\n==== {label} — Day-Ahead ====")
+    print(f"DA price π: {pi:.4f}")
+    print(f"DA gen commits g_i (len={G}): {np.array(g_da).round(4)}")
+    print(f"DA load commits d_j (len={D}): {np.array(d_da).round(4)}")
+
+    print(f"\n==== {label} — Real-Time (per scenario) ====")
+    print(f"RT prices Π(ω) (len={S}): {np.array(Pi).round(4)}")
+    print("ΔG = G(ω) - g (negative ⇒ scaled back):")
+    print(np.array(dG).round(4))
+    print("ΔD = D(ω) - d (positive ⇒ demand up):")
+    print(np.array(dD).round(4))
+
+    # Small summary by generator (how often scaled back / up)
+    tol = 1e-9
+    frac_back = (dG < -tol).mean(axis=0)
+    frac_up   = (dG >  tol).mean(axis=0)
+    print("\nPer-generator fraction of scenarios:")
+    print(f"  scaled back (ΔG<0): {np.array(frac_back).round(2)}")
+    print(f"  ramped up  (ΔG>0): {np.array(frac_up).round(2)}")
+
+    if probs is not None:
+        # probability-weighted average adjustments
+        w_avg_dG = (probs[:, None] * dG).sum(axis=0)
+        w_avg_dD = (probs[:, None] * dD).sum(axis=0)
+        print("\nProbability-weighted average ΔG per generator:")
+        print(np.array(w_avg_dG).round(4))
+        print("Probability-weighted average ΔD per load:")
+        print(np.array(w_avg_dD).round(4))
+
+
+def _stack_rt(G_list, D_list):
+    """Convert lists of per-scenario RT vectors into arrays shaped (S, G/D)."""
+    import numpy as np
+    G_rt = np.vstack([np.asarray(x) for x in G_list])
+    D_rt = np.vstack([np.asarray(x) for x in D_list])
+    return G_rt, D_rt
