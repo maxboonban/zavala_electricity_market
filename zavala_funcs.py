@@ -68,6 +68,7 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     pi = day_ahead_balance[0].dual_value
     Pi = jnp.array([real_time_balance[p].dual_value / probs[p] for p in range(len(probs))])
 
+
     return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi
 
 def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100):
@@ -122,28 +123,6 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         # keep within declared bounds
         g_i_bar = jnp.clip(g_i_bar, minval, maxval)
         d_j_bar = jnp.clip(d_j_bar, minval, maxval)
-
-    elif input_scenario == "s_5":
-        # Per-unit heterogeneity: some generators are intermittent (high-variance Beta) -> renewables generators
-        probs_key, mc_key, mv_key, gA_key, gB_key, d_key, flag_key = random.split(key, 7)
-        probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
-        mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
-        mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
-
-        # choose intermittent generators
-        frac_inter = 0.30
-        is_inter = random.bernoulli(flag_key, frac_inter, (num_g,))
-        a_g_vec = jnp.where(is_inter, 0.5, 3.0)  # intermittent: (0.5,4.0); stable: (3.0,3.0)
-        b_g_vec = jnp.where(is_inter, 4.0, 3.0)
-
-        # broadcast per-unit Beta shapes across scenarios
-        a_g = jnp.broadcast_to(a_g_vec, (num_scenarios, num_g))
-        b_g = jnp.broadcast_to(b_g_vec, (num_scenarios, num_g))
-        z_g = random.beta(gA_key, a_g, b_g)
-        g_i_bar = minval + z_g * (maxval - minval)
-
-        # demand: moderate variability
-        d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=3.0, b=3.0)
 
     else:
         raise ValueError(f"Unknown input_scenario: {input_scenario}")
