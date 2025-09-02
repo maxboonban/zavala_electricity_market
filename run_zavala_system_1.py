@@ -76,6 +76,13 @@ def main():
         rt_prices_det.append(np.asarray(Pi_s, float))
     rt_prices_det = np.vstack(rt_prices_det)  # (S,3)
 
+    # Calculate and print expected deterministic real-time network nodal prices
+    exp_rt_prices = probs @ rt_prices_det  # Expected RT prices
+    print("\n=== Expected Deterministic Real-Time Network Nodal Prices ===")
+    print(f"Node 1: ${exp_rt_prices[0]:.3f}/MWh")
+    print(f"Node 2: ${exp_rt_prices[1]:.3f}/MWh")
+    print(f"Node 3: ${exp_rt_prices[2]:.3f}/MWh")
+
     M_avg_d, M_max_d = price_distortion_system_1(pi_da_d, rt_prices_det, probs)
     regret_d = expected_cumulative_regret_system_1(
         probs, g_da_d, d_da_d, pi_da_d, alpha_gen, alpha_load, gen_cap_scn, load_cap_scn
