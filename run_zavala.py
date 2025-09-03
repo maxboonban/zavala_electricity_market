@@ -17,13 +17,14 @@ from zavala_funcs import (
     # >>> ADDED: printing helpers
     _print_da_rt_summary,
     _stack_rt,
+    compute_social_surplus
 )
 
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 10
-key = random.key(2)
+num_instances = 100
+key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
 for key in keys:
@@ -43,53 +44,47 @@ det_regrets = []
 cvar_distortions = []
 cvar_regrets = []
 
-PRINT_FIRST_INSTANCE_ONLY = True  # keeps output readable
+# --- social-surplus accumulators (new) ---
+stoch_ss_neg_total, stoch_ss_neg_supplier, stoch_ss_neg_consumer, stoch_ss = [], [], [], []
+det_ss_neg_total,   det_ss_neg_supplier,   det_ss_neg_consumer,   det_ss   = [], [], [], []
+cvar_ss_neg_total,  cvar_ss_neg_supplier,  cvar_ss_neg_consumer,  cvar_ss  = [], [], [], []
 
 for i in range(len(instances)):
     probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar = instances[i]
 
     # ===== Stochastic Zavala =====
-    start_time = time.time()
     # >>> CHANGED: capture Z_G, Z_D instead of discarding
     z_g_i, z_d_j, Z_G, Z_D, z_pi, z_Pi = zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar)
-    end_time = time.time()
 
     probs_feasible.append(probability_feasible(probs, z_g_i, z_d_j, g_i_bar, d_j_bar))
-    zavala_times.append(end_time - start_time)
     zavala_distortions.append(price_distortion(probs, z_pi, z_Pi))
     zavala_regrets.append(expected_cumulative_regret(probs, z_g_i, z_d_j, z_pi, mc_g_i, mv_d_j, g_i_bar, d_j_bar))
-
-    # >>> ADDED: print DA/RT summary (stochastic) for first instance
-    if (not PRINT_FIRST_INSTANCE_ONLY) or (i == 0):
-        _print_da_rt_summary(
-            label="STOCHASTIC",
-            pi=float(z_pi),
-            g_da=np.array(z_g_i),
-            d_da=np.array(z_d_j),
-            Pi=np.array(z_Pi),      # length S
-            G_rt=np.array(Z_G),     # S x G
-            D_rt=np.array(Z_D),     # S x D
-            probs=np.array(probs),
-        )
+    ss_stoch = compute_social_surplus(
+        probs, mc_g_i, mv_d_j,
+        g_da=z_g_i, d_da=z_d_j,
+        G_rt=Z_G, D_rt=Z_D,
+        # optional: pass custom deltas to match your experiments
+        # mc_g_i_delta=mc_g_i/10.0, mv_d_j_delta=mv_d_j/10.0
+    )
+    stoch_ss_neg_total.append(ss_stoch["E_neg_total"])
+    stoch_ss_neg_supplier.append(ss_stoch["E_neg_supplier"])
+    stoch_ss_neg_consumer.append(ss_stoch["E_neg_consumer"])
+    stoch_ss.append(ss_stoch["E_social_surplus"])
 
     # ===== CVaR Zavala =====
     # >>> CHANGED: capture C_G, C_D so we can print
     cvar_g_i, cvar_d_j, C_G, C_D, cvar_pi, cvar_Pi = zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar)
     cvar_distortions.append(price_distortion(probs, cvar_pi, cvar_Pi))
     cvar_regrets.append(expected_cumulative_regret(probs, cvar_g_i, cvar_d_j, cvar_pi, mc_g_i, mv_d_j, g_i_bar, d_j_bar))
-
-    # >>> ADDED: print DA/RT summary (CVaR) for first instance
-    if (not PRINT_FIRST_INSTANCE_ONLY) or (i == 0):
-        _print_da_rt_summary(
-            label="CVAR",
-            pi=float(cvar_pi),
-            g_da=np.array(cvar_g_i),
-            d_da=np.array(cvar_d_j),
-            Pi=np.array(cvar_Pi),
-            G_rt=np.array(C_G),
-            D_rt=np.array(C_D),
-            probs=np.array(probs),
-        )
+    ss_cvar = compute_social_surplus(
+        probs, mc_g_i, mv_d_j,
+        g_da=cvar_g_i, d_da=cvar_d_j,
+        G_rt=C_G, D_rt=C_D,
+    )
+    cvar_ss_neg_total.append(ss_cvar["E_neg_total"])
+    cvar_ss_neg_supplier.append(ss_cvar["E_neg_supplier"])
+    cvar_ss_neg_consumer.append(ss_cvar["E_neg_consumer"])
+    cvar_ss.append(ss_cvar["E_social_surplus"])
 
     # ===== Deterministic Zavala (energy-only, no network) =====
     # Use expected capacities for DA
@@ -111,25 +106,31 @@ for i in range(len(instances)):
     det_distortions.append(price_distortion(probs, pi_det, Pi_det))
     det_regrets.append(expected_cumulative_regret(probs, g_det, d_det, pi_det, mc_g_i, mv_d_j, g_i_bar, d_j_bar))
 
-    # >>> ADDED: print DA/RT summary (deterministic) for first instance
-    if (not PRINT_FIRST_INSTANCE_ONLY) or (i == 0):
-        _print_da_rt_summary(
-            label="DETERMINISTIC",
-            pi=float(pi_det),
-            g_da=np.array(g_det),
-            d_da=np.array(d_det),
-            Pi=Pi_det,
-            G_rt=G_det_rt,
-            D_rt=D_det_rt,
-            probs=np.array(probs),
-        )
+    # --- NEW: §4.1 social surplus for deterministic run ---
+    ss_det = compute_social_surplus(
+        probs, mc_g_i, mv_d_j,
+        g_da=g_det, d_da=d_det,
+        G_rt=G_det_rt, D_rt=D_det_rt,
+        # mc_g_i_delta=mc_g_i/10.0, mv_d_j_delta=mv_d_j/10.0,  # (optional) explicitly pass deltas
+    )
+    det_ss_neg_total.append(ss_det["E_neg_total"])
+    det_ss_neg_supplier.append(ss_det["E_neg_supplier"])
+    det_ss_neg_consumer.append(ss_det["E_neg_consumer"])
+    det_ss.append(ss_det["E_social_surplus"])
 
 # ============== Aggregates =================
 print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
-print(f'Stochastic Zavala mean regret: {np.mean(zavala_regrets)}')
-
 print(f'Stochastic Zavala with CVaR mean distortion: {np.mean(cvar_distortions)}')
-print(f'Stochastic Zavala with CVaR mean regret: {np.mean(cvar_regrets)}')
-
 print(f'Deterministic mean distortion: {np.mean(det_distortions)}')
-print(f'Deterministic mean regret: {np.mean(det_regrets)}')
+
+print(f"Stochastic mean E[-SS]: {np.mean(stoch_ss_neg_total)} "
+      f"(suppliers {np.mean(stoch_ss_neg_supplier)}, consumers {np.mean(stoch_ss_neg_consumer)})")
+print(f"Stochastic mean E[SS]:  {np.mean(stoch_ss)}")
+
+print(f"CVaR       mean E[-SS]: {np.mean(cvar_ss_neg_total)} "
+      f"(suppliers {np.mean(cvar_ss_neg_supplier)}, consumers {np.mean(cvar_ss_neg_consumer)})")
+print(f"CVaR       mean E[SS]:  {np.mean(cvar_ss)}")
+
+print(f"Deterministic mean E[-SS]: {np.mean(det_ss_neg_total)} "
+      f"(suppliers {np.mean(det_ss_neg_supplier)}, consumers {np.mean(det_ss_neg_consumer)})")
+print(f"Deterministic mean E[SS]:  {np.mean(det_ss)}")

@@ -8,6 +8,11 @@ import gurobipy as gp
 # Enable 64-bit precision for better numerical stability
 jax.config.update("jax_enable_x64", True)
 
+def beta_scaled(rng, shape, a, b, lo, hi):
+    """Generate beta-distributed random numbers scaled to [lo, hi] range."""
+    z = random.beta(rng, a, b, shape=shape)
+    return lo + z * (hi - lo)
+
 def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     num_g = len(mc_g_i)
     num_d = len(mv_d_j)
@@ -72,7 +77,7 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi
 
 def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100):
-    input_scenario = "s_1"
+    input_scenario = "s_4"
 
     if input_scenario == "s_1":
         # Sid's original synthetic case with uniform distribution
@@ -90,7 +95,7 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
         mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
         mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
-        g_i_bar = beta_scaled(g_key, (num_scenarios, num_g), a=0.4, b=4.0)
+        g_i_bar = beta_scaled(g_key, (num_scenarios, num_g), a=0.4, b=4.0, lo=minval, hi=maxval)
         d_j_bar = random.uniform(d_key, (num_scenarios, num_d), minval=minval, maxval=maxval)
 
     elif input_scenario == "s_3":
@@ -101,7 +106,7 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
         mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
         g_i_bar = random.uniform(g_key, (num_scenarios, num_g), minval=minval, maxval=maxval)
-        d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=4.0, b=0.4)
+        d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=4.0, b=0.4, lo=minval, hi=maxval)
 
     elif input_scenario == "s_4":
         # Correlated extremes: in a small ε share of scenarios, shrink gen & blow up demand
@@ -110,8 +115,8 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
         mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
         # mild heavy-tails even outside stress
-        g_i_bar = beta_scaled(g_key, (num_scenarios, num_g), a=0.8, b=3.0)
-        d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=3.0, b=0.8)
+        g_i_bar = beta_scaled(g_key, (num_scenarios, num_g), a=0.8, b=3.0, lo=minval, hi=maxval)
+        d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=3.0, b=0.8, lo=minval, hi=maxval)
         # mark tail scenarios
         eps = 0.10  # fraction stressed
         is_tail = random.bernoulli(t_key, eps, (num_scenarios,))
@@ -614,7 +619,6 @@ def price_distortion_system_1(pi_da, rt_prices, probs):
     diff = np.abs(pi_da - exp_rt)
     return float(diff.mean()), float(diff.max())
 
-
 def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     num_g = len(mc_g_i)
     num_d = len(mv_d_j)
@@ -714,7 +718,6 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 
     return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi
 
-
 def _print_da_rt_summary(label, pi, g_da, d_da, Pi, G_rt, D_rt, probs=None):
     """
     Prints a compact DA/RT summary.
@@ -762,10 +765,86 @@ def _print_da_rt_summary(label, pi, g_da, d_da, Pi, G_rt, D_rt, probs=None):
         print("Probability-weighted average ΔD per load:")
         print(np.array(w_avg_dD).round(4))
 
-
 def _stack_rt(G_list, D_list):
     """Convert lists of per-scenario RT vectors into arrays shaped (S, G/D)."""
     import numpy as np
     G_rt = np.vstack([np.asarray(x) for x in G_list])
     D_rt = np.vstack([np.asarray(x) for x in D_list])
     return G_rt, D_rt
+
+def compute_social_surplus(
+    probs,
+    mc_g_i, mv_d_j,          # α^g, α^d  (vectors)
+    g_da, d_da,              # day-ahead commitments
+    G_rt, D_rt,              # arrays shaped (S, G) and (S, D)
+    mc_g_i_delta=None,       # optional Δα for generators
+    mv_d_j_delta=None,       # optional Δα for loads
+):
+    """
+    Implements §4.1 Social Surplus:
+
+      C_i^g(ω) = +α_i^g g_i
+                  + α_i^{g,+} (G_i(ω) - g_i)_+
+                  - α_i^{g,−} (G_i(ω) - g_i)_−
+
+      C_j^d(ω) = −α_j^d d_j
+                  + α_j^{d,+} (D_j(ω) - d_j)_+
+                  - α_j^{d,−} (D_j(ω) - d_j)_−
+
+    Negative social surplus per scenario is  Σ_i C_i^g(ω) + Σ_j C_j^d(ω).
+    We return its expectation, its components, and (+)social surplus (the negative of it).
+
+    Returns dict with:
+      E_neg_supplier, E_neg_consumer, E_neg_total, E_social_surplus
+    """
+    import numpy as np
+
+    probs   = np.asarray(probs, dtype=float)
+    mc_g_i  = np.asarray(mc_g_i, dtype=float)
+    mv_d_j  = np.asarray(mv_d_j, dtype=float)
+    g_da    = np.asarray(g_da, dtype=float)
+    d_da    = np.asarray(d_da, dtype=float)
+    G_rt    = np.asarray(G_rt, dtype=float)  # (S, G)
+    D_rt    = np.asarray(D_rt, dtype=float)  # (S, D)
+
+    # Default incremental prices: your current heuristic
+    if mc_g_i_delta is None:
+        mc_g_i_delta = mc_g_i / 10.0
+    if mv_d_j_delta is None:
+        mv_d_j_delta = mv_d_j / 10.0
+
+    # Construct α^{·,+} and α^{·,−} from Δα, per paper (Δα>0):
+    #   Δα^{g,+} = α^{g,+} − α^g  ⇒ α^{g,+} = α^g + Δα^{g,+}
+    #   Δα^{g,−} = α^g − α^{g,−} ⇒ α^{g,−} = α^g − Δα^{g,−}
+    alpha_g_plus  = mc_g_i + mc_g_i_delta
+    alpha_g_minus = mc_g_i - mc_g_i_delta
+    alpha_d_plus  = mv_d_j + mv_d_j_delta
+    alpha_d_minus = mv_d_j - mv_d_j_delta
+
+    # Deviations
+    dG = G_rt - g_da[None, :]   # (S, G)
+    dD = D_rt - d_da[None, :]   # (S, D)
+    pos = lambda x: np.maximum(x, 0.0)
+    neg = lambda x: np.maximum(-x, 0.0)
+
+    # Supplier negative cost per scenario (vector shape (S,))
+    const_sup = float(np.sum(mc_g_i * g_da))
+    Cg = const_sup + pos(dG) @ alpha_g_plus - neg(dG) @ alpha_g_minus
+
+    # Consumer negative cost per scenario
+    const_dem = -float(np.sum(mv_d_j * d_da))
+    Cd = const_dem + pos(dD) @ alpha_d_plus - neg(dD) @ alpha_d_minus
+
+    neg_total = Cg + Cd
+
+    E_neg_supplier = float(probs @ Cg)
+    E_neg_consumer = float(probs @ Cd)
+    E_neg_total    = float(probs @ neg_total)
+    E_social_surplus = -E_neg_total
+
+    return {
+        "E_neg_supplier": E_neg_supplier,
+        "E_neg_consumer": E_neg_consumer,
+        "E_neg_total":    E_neg_total,
+        "E_social_surplus": E_social_surplus,
+    }
