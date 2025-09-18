@@ -79,7 +79,7 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100):
     input_scenario = "s_4"
 
-    if input_scenario == "s_1":
+    if input_scenario == "s_2":
         # Sid's original synthetic case with uniform distribution
         probs_key, mc_key, mv_key, g_key, d_key = random.split(key, 5)
         probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
@@ -292,14 +292,13 @@ def build_system_1_data():
     num_lines = 2
     num_scenarios = 3
 
-    # bids / incremental bids
+    # bids prices
     alpha_gen  = np.array([10.0, 1.0, 20.0])      # generator bids at nodes [1,2,3]
-    # delta_gen  = np.array([1.0, 0.1, 2.0])        # incremental generator bids
     alpha_load = np.array([0.0, 1000.0, 0.0])     # value of lost load at node 2
-    # delta_load = np.array([0.0, 0.001, 0.0])      # incremental load bids (node 2)
 
-
+    # incremental bid prices
     delta_gen = np.array([1.0, 0.10, 2.0])
+    # incremental load bids
     delta_load = np.array([0.0, 0.001, 0.0])
 
     susceptance = np.array([50.0, 50.0])          # for lines [1-2, 2-3]
@@ -364,8 +363,8 @@ def zavala_system_1_stochastic():
     theta_rt = cp.Variable((S, N))
     f_rt = cp.Variable((S, L))
 
-    # Up/Down deviations (split abs)
-    Ugp = cp.Variable((S, N), nonneg=True); Ugn = cp.Variable((S, N), nonneg=True)  # G_rt - g_da = Ugp - Ugn
+    # Up/Down deviations/auxiliary variables
+    Ugp = cp.Variable((S, N), nonneg=True); Ugn = cp.Variable((S, N), nonneg=True)  # Generator Up/down deviations:G_rt - g_da = Ugp - Ugn
     Udp = cp.Variable((S, N), nonneg=True); UdN = cp.Variable((S, N), nonneg=True)  # D_rt - d_da = Udp - UdN
     Wfp = cp.Variable((S, L), nonneg=True); WfN = cp.Variable((S, L), nonneg=True)  # f_rt - f_da = Wfp - WfN
     Ztp = cp.Variable((S, N), nonneg=True); ZtN = cp.Variable((S, N), nonneg=True)  # theta_rt - theta_da = Ztp - ZtN
@@ -388,12 +387,11 @@ def zavala_system_1_stochastic():
 
     # DA load is deterministic: [0, 100, 0]
     cons += [d_da[0] == 0.0, d_da[1] == 100.0, d_da[2] == 0.0]
-    cons += [d_da <= np.array([0.0, 100.0, 0.0])]
 
     # CAp DA generation
     cons += [g_da <= np.array([50.0, 50.0, 50.0])]
 
-    # Scenario constraints + deviation linkers
+    # Network constraints
     rt_bal_constraints = []
     for s in range(S):
         cons += [theta_rt[s,1] == 0]
@@ -411,39 +409,26 @@ def zavala_system_1_stochastic():
         cons += [G_rt[s] <= Gbar_s[s], D_rt[s] <= Dbar_s[s]]
 
         # deviation linkers
-        cons += [G_rt[s] - g_da == Ugp[s] - Ugn[s]]
-        cons += [D_rt[s] - d_da == Udp[s] - UdN[s]]
-        cons += [f_rt[s] - f_da == Wfp[s] - WfN[s]]
-        cons += [theta_rt[s] - theta_da == Ztp[s] - ZtN[s]]
+        cons += [G_rt[s] - g_da == Ugp[s] - Ugn[s]] # Generator real-time - DA deviation = Generator Up/down deviations
+        cons += [D_rt[s] - d_da == Udp[s] - UdN[s]] # Load real-time - DA deviation = Load Up/down deviations
+        cons += [f_rt[s] - f_da == Wfp[s] - WfN[s]] # Flow real-time - DA deviation = Flow Up/down deviations
+        cons += [theta_rt[s] - theta_da == Ztp[s] - ZtN[s]] # Angle real-time - DA deviation = Angle Up/down deviations
 
-    # # Objective: DA base + expected deviation costs (no RT linear welfare term)
-    # dev_cost = 0
-    # for s in range(S):
-    #     dev_cost += probs[s]*( cp.sum(cp.multiply(delta_gen,  Ugp[s]+Ugn[s])) +
-    #                            cp.sum(cp.multiply(delta_load, Udp[s]+UdN[s])) +
-    #                            delta_flow  * cp.sum(Wfp[s]+WfN[s]) +
-    #                            delta_theta * cp.sum(Ztp[s]+ZtN[s]) )
-    # obj = cp.Minimize(alpha_gen @ g_da - alpha_load @ d_da + dev_cost)
-
-    # prob = cp.Problem(obj, cons)
-
-    # --- objective pieces ---
+    # objective function: split into a two-step approach
     base_DA = alpha_gen @ g_da - alpha_load @ d_da
     obj_terms = []
     for s in range(S):
-        rt_lin   = alpha_gen @ G_rt[s] - alpha_load @ D_rt[s]  # <-- put this back
+        rt_lin   = alpha_gen @ G_rt[s] - alpha_load @ D_rt[s]
         dev_gen  = cp.sum(cp.multiply(delta_gen,  Ugp[s] + Ugn[s]))
         dev_load = cp.sum(cp.multiply(delta_load, Udp[s] + UdN[s]))
         dev_flow = delta_flow  * cp.sum(Wfp[s] + WfN[s])
         dev_th   = delta_theta * cp.sum(Ztp[s] + ZtN[s])
         obj_terms.append(probs[s] * (rt_lin + dev_gen + dev_load + dev_flow + dev_th))
 
-    prob = cp.Problem(cp.Minimize(base_DA + cp.sum(obj_terms)), cons)
+    objective = base_DA + cp.sum(obj_terms)
+    prob = cp.Problem(cp.Minimize(objective), cons)
     prob.solve(solver=cp.GUROBI, Method=2, Crossover=0, FeasibilityTol=1e-9, OptimalityTol=1e-9)
-
-    # Which DA bounds are active?
-    print("DA gen at bounds?:", (np.isclose(g_da.value, 0) | np.isclose(g_da.value, Gbar_max)).astype(int))
-    print("DA load fixed  :", d_da.value.round(4))
+    print(f"Objective value: {objective.value:.10f}")
 
     if prob.status not in ("optimal", "optimal_inaccurate"):
         raise RuntimeError(f"System 1 stochastic solve failed: status={prob.status}")
@@ -485,6 +470,7 @@ def zavala_system_1_stochastic():
     print(f"Node 3: ${expected_rt_prices[2]:.3f}/MWh")
 
     return g_da_v, d_da_v, f_da_v, theta_da_v, G_rt_v, D_rt_v, f_rt_v, theta_rt_v, pi_da, Pi_rt
+
 
 def zavala_system_1_deterministic_da():
     """
@@ -692,6 +678,7 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
                 ] + [
                     D_j[p][j] <= d_j_bar[p][j] for p in range(len(probs)) for j in range(num_d)
                 ] + cvar_link
+    
 
     # Define the problem and solve it
     prob = cp.Problem(objective, constraints)
@@ -715,6 +702,7 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     D_j_jax = jnp.array([[D_j[p][j].value for j in range(num_d)] for p in range(len(probs))])
     pi = day_ahead_balance[0].dual_value
     Pi = jnp.array([real_time_balance[p].dual_value / probs[p] for p in range(len(probs))])
+    # cvar_link_dual = jnp.array([cvar_link[i].dual_value] for p in range(len(probs)))
 
     return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi
 
@@ -842,9 +830,38 @@ def compute_social_surplus(
     E_neg_total    = float(probs @ neg_total)
     E_social_surplus = -E_neg_total
 
+    ss_per_scenario = neg_total
+
     return {
         "E_neg_supplier": E_neg_supplier,
         "E_neg_consumer": E_neg_consumer,
         "E_neg_total":    E_neg_total,
         "E_social_surplus": E_social_surplus,
+        "ss_per_scenario": ss_per_scenario
     }
+
+def collect_tail_list(values, probs, tail=0.05):
+    """
+    1) sort values ascending
+    2) follow the same index order for probs
+    3) keep appending until cumulative prob >= tail
+    4) return the appended lists
+    """
+    values = np.asarray(values, dtype=float)
+    probs  = np.asarray(probs,  dtype=float)
+
+    order = np.argsort(values)              # lowest (worst) first
+    v = values[order]
+    p = probs[order]
+
+    picked_vals = []
+    picked_probs = []
+    cum = 0.0
+    for vi, pi in zip(v, p):
+        picked_vals.append(vi)
+        picked_probs.append(pi)
+        cum += pi
+        if cum >= tail:
+            break
+
+    return np.array(picked_vals), np.array(picked_probs)

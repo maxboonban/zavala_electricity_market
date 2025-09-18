@@ -17,7 +17,8 @@ from zavala_funcs import (
     # >>> ADDED: printing helpers
     _print_da_rt_summary,
     _stack_rt,
-    compute_social_surplus
+    compute_social_surplus,
+    collect_tail_list
 )
 
 # =========================
@@ -30,21 +31,21 @@ instances = []
 for key in keys:
     instances.append(generate_instance(key, num_scenarios=10, num_g=10, num_d=10))
 
-# --- stochastic accumulators (your existing ones) ---
+# --- stochastic accumulators ---
 zavala_times = []
 zavala_distortions = []
 zavala_regrets = []
 probs_feasible = []
 
-# --- deterministic accumulators (new) ---
+# --- deterministic accumulators ---
 det_distortions = []
 det_regrets = []
 
-# --- CVaR accumulators (new) ---
+# --- CVaR accumulators ---
 cvar_distortions = []
 cvar_regrets = []
 
-# --- social-surplus accumulators (new) ---
+# --- social-surplus accumulators ---
 stoch_ss_neg_total, stoch_ss_neg_supplier, stoch_ss_neg_consumer, stoch_ss = [], [], [], []
 det_ss_neg_total,   det_ss_neg_supplier,   det_ss_neg_consumer,   det_ss   = [], [], [], []
 cvar_ss_neg_total,  cvar_ss_neg_supplier,  cvar_ss_neg_consumer,  cvar_ss  = [], [], [], []
@@ -84,7 +85,7 @@ for i in range(len(instances)):
     cvar_ss_neg_total.append(ss_cvar["E_neg_total"])
     cvar_ss_neg_supplier.append(ss_cvar["E_neg_supplier"])
     cvar_ss_neg_consumer.append(ss_cvar["E_neg_consumer"])
-    cvar_ss.append(ss_cvar["E_social_surplus"])
+    cvar_ss.append(ss_cvar["E_social_surplus"])          
 
     # ===== Deterministic Zavala (energy-only, no network) =====
     # Use expected capacities for DA
@@ -118,19 +119,47 @@ for i in range(len(instances)):
     det_ss_neg_consumer.append(ss_det["E_neg_consumer"])
     det_ss.append(ss_det["E_social_surplus"])
 
-# ============== Aggregates =================
-print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
-print(f'Stochastic Zavala with CVaR mean distortion: {np.mean(cvar_distortions)}')
-print(f'Deterministic mean distortion: {np.mean(det_distortions)}')
+# # ============== Overall Expectation Results =================
+# print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
+# print(f'Stochastic Zavala with CVaR mean distortion: {np.mean(cvar_distortions)}')
+# print(f'Deterministic mean distortion: {np.mean(det_distortions)}')
 
-print(f"Stochastic mean E[-SS]: {np.mean(stoch_ss_neg_total)} "
-      f"(suppliers {np.mean(stoch_ss_neg_supplier)}, consumers {np.mean(stoch_ss_neg_consumer)})")
-print(f"Stochastic mean E[SS]:  {np.mean(stoch_ss)}")
+# print(f"Stochastic mean E[-SS]: {np.mean(stoch_ss_neg_total)} "
+#       f"(suppliers {np.mean(stoch_ss_neg_supplier)}, consumers {np.mean(stoch_ss_neg_consumer)})")
+# print(f"Stochastic mean E[SS]:  {np.mean(stoch_ss)}")
 
-print(f"CVaR       mean E[-SS]: {np.mean(cvar_ss_neg_total)} "
-      f"(suppliers {np.mean(cvar_ss_neg_supplier)}, consumers {np.mean(cvar_ss_neg_consumer)})")
-print(f"CVaR       mean E[SS]:  {np.mean(cvar_ss)}")
+# print(f"CVaR       mean E[-SS]: {np.mean(cvar_ss_neg_total)} "
+#       f"(suppliers {np.mean(cvar_ss_neg_supplier)}, consumers {np.mean(cvar_ss_neg_consumer)})")
+# print(f"CVaR       mean E[SS]:  {np.mean(cvar_ss)}")
 
-print(f"Deterministic mean E[-SS]: {np.mean(det_ss_neg_total)} "
-      f"(suppliers {np.mean(det_ss_neg_supplier)}, consumers {np.mean(det_ss_neg_consumer)})")
-print(f"Deterministic mean E[SS]:  {np.mean(det_ss)}")
+# print(f"Deterministic mean E[-SS]: {np.mean(det_ss_neg_total)} "
+#       f"(suppliers {np.mean(det_ss_neg_supplier)}, consumers {np.mean(det_ss_neg_consumer)})")
+# print(f"Deterministic mean E[SS]:  {np.mean(det_ss)}")
+
+print("Stochastic Case \n")
+print(f"Total Welfare = {stoch_ss_neg_total}")
+print(f"Day-ahead price = {z_pi}")
+print(f"Real-time price = {z_Pi}")
+print(f"Probability = {probs} \n")
+
+
+print("CVaR Stochastic Case \n")
+print(f"Total Welfare = {cvar_ss_neg_total}")
+print(f"Day-ahead price = {cvar_pi}")
+print(f"Real-time price = {cvar_Pi}")
+print(f"Probability = {probs} \n")
+
+# tail_vals_stoch, tail_probs_stoch = collect_tail_list(stoch_ss_neg_total, probs, tail=0.05)
+# tail_vals_cvar,  tail_probs_cvar  = collect_tail_list(cvar_ss_neg_total,  probs, tail=0.05)
+# # sanity prints
+# print("All stochastic NEG-SS:", np.array(stoch_ss_neg_total))
+# print("Tail 5% stochastic NEG-SS:", tail_vals_stoch)
+# print("Tail 5% stochastic probs:", tail_probs_stoch, " -> sum =", tail_probs_stoch.sum())
+
+# print("All CVaR NEG-SS:", np.array(cvar_ss_neg_total))
+# print("Tail 5% CVaR NEG-SS:", tail_vals_cvar)
+# print("Tail 5% CVaR probs:", tail_probs_cvar, " -> sum =", tail_probs_cvar.sum())
+
+# print(f" Mean Stochastic Tail welfare = {np.mean(tail_vals_stoch)}")
+# print(f" Mean CVaR Stochastic Tail welfare = {np.mean(tail_vals_cvar)}")
+
