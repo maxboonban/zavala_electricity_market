@@ -77,7 +77,7 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi
 
 def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100):
-    input_scenario = "s_4"
+    input_scenario = "s_5"
 
     if input_scenario == "s_2":
         # Sid's original synthetic case with uniform distribution
@@ -125,6 +125,27 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         blow   = random.uniform(k_blow,   (num_scenarios, 1), minval=1.20, maxval=1.80)  # 120–180% of base
         g_i_bar = jnp.where(is_tail[:, None], g_i_bar * shrink, g_i_bar)
         d_j_bar = jnp.where(is_tail[:, None], d_j_bar * blow,   d_j_bar)
+        # keep within declared bounds
+        g_i_bar = jnp.clip(g_i_bar, minval, maxval)
+        d_j_bar = jnp.clip(d_j_bar, minval, maxval)
+    
+    elif input_scenario == "s_5":
+        # Correlated extremes: in a small ε share of scenarios, shrink demand & blow up gen
+        probs_key, mc_key, mv_key, g_key, d_key, t_key, k_shrink, k_blow = random.split(key, 8)
+        probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
+        mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
+        mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
+        # mild heavy-tails even outside stress
+        g_i_bar = beta_scaled(g_key, (num_scenarios, num_g), a=3.0, b=0.8, lo=minval, hi=maxval)
+        d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=0.8, b=3.0, lo=minval, hi=maxval)
+        # mark tail scenarios
+        eps = 0.10  # fraction stressed
+        is_tail = random.bernoulli(t_key, eps, (num_scenarios,))
+        # scenario-level stress multipliers
+        shrink = random.uniform(k_shrink, (num_scenarios, 1), minval=0.05, maxval=0.30)  # 5–30% of base
+        blow   = random.uniform(k_blow,   (num_scenarios, 1), minval=1.20, maxval=1.80)  # 120–180% of base
+        g_i_bar = jnp.where(is_tail[:, None], g_i_bar * blow, g_i_bar)
+        d_j_bar = jnp.where(is_tail[:, None], d_j_bar * shrink,   d_j_bar)
         # keep within declared bounds
         g_i_bar = jnp.clip(g_i_bar, minval, maxval)
         d_j_bar = jnp.clip(d_j_bar, minval, maxval)
@@ -840,28 +861,112 @@ def compute_social_surplus(
         "ss_per_scenario": ss_per_scenario
     }
 
-def collect_tail_list(values, probs, tail=0.05):
+# === Tail scenario helpers for tail welfare analysis ===
+def tail_worst_indices_by_value(values, probs, tail=0.05, worst="low"):
     """
-    1) sort values ascending
-    2) follow the same index order for probs
-    3) keep appending until cumulative prob >= tail
-    4) return the appended lists
+    Return indices of the worst `tail` probability mass using the supplied per-scenario
+    `values` and `probs`. We pick WHOLE scenarios (no fractional split) until the
+    cumulative probability reaches / exceeds `tail`.
+
+    Parameters
+    ----------
+    values : array-like, shape (S,)
+        Per-scenario metric used to rank 'worst' (e.g., NEGATIVE social surplus from
+        compute_social_surplus(...)[ "ss_per_scenario" ]).
+    probs : array-like, shape (S,)
+        Scenario probabilities (sum to 1).
+    tail : float, default 0.05
+        Target tail probability mass, e.g., 0.05 for 5%.
+    worst : {"low","high"}, default "low"
+        How to define 'worse':
+          - "low": smaller values are worse (use this if `values` are NEG-SS and
+                   you consider more negative to be worse).
+          - "high": larger values are worse.
+
+    Returns
+    -------
+    idx : np.ndarray of int, shape (K,)
+        Scenario indices (0..S-1) that make up the selected worst tail, ordered
+        from worst to less-worse according to `worst`.
     """
-    values = np.asarray(values, dtype=float)
-    probs  = np.asarray(probs,  dtype=float)
+    import numpy as np
 
-    order = np.argsort(values)              # lowest (worst) first
-    v = values[order]
-    p = probs[order]
+    v = np.asarray(values, dtype=float).ravel()
+    p = np.asarray(probs,  dtype=float).ravel()
+    if v.shape != p.shape:
+        raise ValueError("values and probs must be 1D arrays of equal length.")
 
-    picked_vals = []
-    picked_probs = []
+    if worst not in ("low", "high"):
+        raise ValueError("worst must be 'low' or 'high'")
+
+    order = np.argsort(v) if worst == "low" else np.argsort(v)[::-1]
+
     cum = 0.0
-    for vi, pi in zip(v, p):
-        picked_vals.append(vi)
-        picked_probs.append(pi)
-        cum += pi
-        if cum >= tail:
+    chosen = []
+    for k in order:
+        chosen.append(int(k))
+        cum += float(p[k])
+        if cum >= float(tail) - 1e-15:
             break
 
-    return np.array(picked_vals), np.array(picked_probs)
+    return np.asarray(chosen, dtype=int)
+
+
+def compare_tail_welfare_stoch_vs_cvar(neg_ss_stoch_per_scn, neg_ss_cvar_per_scn, probs, tail=0.05, worst="low"):
+    """
+    Using the baseline (stochastic) NEG-SS to define the worst `tail` scenarios, return the
+    tail indices and the corresponding NEG-SS arrays for both STOCH and CVaR runs so you can
+    compare them on the SAME set of scenarios.
+
+    Parameters
+    ----------
+    neg_ss_stoch_per_scn : array-like, shape (S,)
+        Baseline per-scenario NEG-SS (from compute_social_surplus for the zavala run).
+    neg_ss_cvar_per_scn : array-like, shape (S,)
+        CVaR per-scenario NEG-SS (same scenarios, same ordering).
+    probs : array-like, shape (S,)
+        Scenario probabilities (sum to 1).
+    tail : float, default 0.05
+        Target tail probability mass (e.g., 0.05 for worst 5%).
+    worst : {"low","high"}, default "low"
+        'low' means smaller values are worse (use for NEG-SS if you define more negative as worse);
+        'high' means larger values are worse.
+
+    Returns
+    -------
+    result : dict with keys
+        - "idx" : (K,) indices of scenarios chosen by the STOCH tail
+        - "probs" : (K,) original probabilities for those scenarios
+        - "stoch_neg_ss" : (K,) baseline NEG-SS at those indices
+        - "cvar_neg_ss"  : (K,) CVaR   NEG-SS at those indices
+        - "stoch_tail_prob_sum" : float, sum of tail probabilities (≤ tail if we ran out)
+        - "stoch_tail_weighted_mean_neg_ss" : float, prob-weighted mean of baseline NEG-SS on tail
+        - "cvar_on_stoch_tail_weighted_mean_neg_ss" : float, prob-weighted mean of CVaR NEG-SS on same tail
+    """
+    import numpy as np
+
+    v_stoch = np.asarray(neg_ss_stoch_per_scn, dtype=float).ravel()
+    v_cvar  = np.asarray(neg_ss_cvar_per_scn,  dtype=float).ravel()
+    p       = np.asarray(probs,                dtype=float).ravel()
+    if not (v_stoch.shape == v_cvar.shape == p.shape):
+        raise ValueError("All inputs must be 1D arrays of the same length.")
+
+    idx = tail_worst_indices_by_value(v_stoch, p, tail=tail, worst=worst)
+
+    p_tail     = p[idx]
+    stoch_tail = v_stoch[idx]
+    cvar_tail  = v_cvar[idx]
+
+    mass = float(p_tail.sum())
+    stoch_wmean = float(np.average(stoch_tail, weights=p_tail)) if mass > 0 else np.nan
+    cvar_wmean  = float(np.average(cvar_tail,  weights=p_tail)) if mass > 0 else np.nan
+
+    return {
+        "idx": idx,
+        "probs": p_tail,
+        "stoch_neg_ss": stoch_tail,
+        "cvar_neg_ss": cvar_tail,
+        "stoch_tail_prob_sum": mass,
+        "stoch_tail_weighted_mean_neg_ss": stoch_wmean,
+        "cvar_on_stoch_tail_weighted_mean_neg_ss": cvar_wmean,
+    }

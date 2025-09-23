@@ -18,18 +18,18 @@ from zavala_funcs import (
     _print_da_rt_summary,
     _stack_rt,
     compute_social_surplus,
-    collect_tail_list
+    compare_tail_welfare_stoch_vs_cvar
 )
 
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 100
+num_instances = 10
 key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
 for key in keys:
-    instances.append(generate_instance(key, num_scenarios=10, num_g=10, num_d=10))
+    instances.append(generate_instance(key, num_scenarios=20, num_g=10, num_d=10))
 
 # --- stochastic accumulators ---
 zavala_times = []
@@ -119,6 +119,23 @@ for i in range(len(instances)):
     det_ss_neg_consumer.append(ss_det["E_neg_consumer"])
     det_ss.append(ss_det["E_social_surplus"])
 
+    # ss_stoch["ss_per_scenario"] and ss_cvar["ss_per_scenario"] should both be (S,)
+    cmp = compare_tail_welfare_stoch_vs_cvar(
+        ss_stoch["ss_per_scenario"],   # baseline per-scenario NEG-SS
+        ss_cvar["ss_per_scenario"],    # CVaR per-scenario NEG-SS
+        probs,
+        tail=0.05,                     # 5% tail
+        worst="low"                    # treat more negative as worse; use "high" if opposite
+    )
+
+    print(f'############# iter {i+1} ##################### \n')
+    print("Tail indices (baseline-defined):", cmp["idx"])
+    print("Tail probs:", cmp["probs"], "sum =", cmp["stoch_tail_prob_sum"])
+    print("Baseline NEG-SS on tail:", cmp["stoch_neg_ss"])
+    print("CVaR     NEG-SS on tail:", cmp["cvar_neg_ss"])
+    print("Baseline tail weighted-mean NEG-SS:", cmp["stoch_tail_weighted_mean_neg_ss"])
+    print("CVaR on same tail weighted-mean NEG-SS:", cmp["cvar_on_stoch_tail_weighted_mean_neg_ss"])
+
 # # ============== Overall Expectation Results =================
 # print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
 # print(f'Stochastic Zavala with CVaR mean distortion: {np.mean(cvar_distortions)}')
@@ -136,30 +153,14 @@ for i in range(len(instances)):
 #       f"(suppliers {np.mean(det_ss_neg_supplier)}, consumers {np.mean(det_ss_neg_consumer)})")
 # print(f"Deterministic mean E[SS]:  {np.mean(det_ss)}")
 
-print("Stochastic Case \n")
-print(f"Total Welfare = {stoch_ss_neg_total}")
-print(f"Day-ahead price = {z_pi}")
-print(f"Real-time price = {z_Pi}")
-print(f"Probability = {probs} \n")
+# print("Stochastic Case \n")
+# print(f"Total Welfare = {stoch_ss_neg_total}")
+# print(f"Day-ahead price = {z_pi}")
+# print(f"Real-time price = {z_Pi}")
+# print(f"Probability = {probs} \n")
 
-
-print("CVaR Stochastic Case \n")
-print(f"Total Welfare = {cvar_ss_neg_total}")
-print(f"Day-ahead price = {cvar_pi}")
-print(f"Real-time price = {cvar_Pi}")
-print(f"Probability = {probs} \n")
-
-# tail_vals_stoch, tail_probs_stoch = collect_tail_list(stoch_ss_neg_total, probs, tail=0.05)
-# tail_vals_cvar,  tail_probs_cvar  = collect_tail_list(cvar_ss_neg_total,  probs, tail=0.05)
-# # sanity prints
-# print("All stochastic NEG-SS:", np.array(stoch_ss_neg_total))
-# print("Tail 5% stochastic NEG-SS:", tail_vals_stoch)
-# print("Tail 5% stochastic probs:", tail_probs_stoch, " -> sum =", tail_probs_stoch.sum())
-
-# print("All CVaR NEG-SS:", np.array(cvar_ss_neg_total))
-# print("Tail 5% CVaR NEG-SS:", tail_vals_cvar)
-# print("Tail 5% CVaR probs:", tail_probs_cvar, " -> sum =", tail_probs_cvar.sum())
-
-# print(f" Mean Stochastic Tail welfare = {np.mean(tail_vals_stoch)}")
-# print(f" Mean CVaR Stochastic Tail welfare = {np.mean(tail_vals_cvar)}")
-
+# print("CVaR Stochastic Case \n")
+# print(f"Total Welfare = {cvar_ss_neg_total}")
+# print(f"Day-ahead price = {cvar_pi}")
+# print(f"Real-time price = {cvar_Pi}")
+# print(f"Probability = {probs} \n")
