@@ -76,10 +76,15 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 
     return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi
 
+def truncated_lognormal(rng, shape, mean, sigma, lo, hi):
+    x = np.random.lognormal(mean, sigma, size = shape)
+    x = np.clip(x, lo, hi)
+    return x
+    
 def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100):
-    input_scenario = "s_5"
+    input_scenario = "s_7"
 
-    if input_scenario == "s_2":
+    if input_scenario == "s_1":
         # Sid's original synthetic case with uniform distribution
         probs_key, mc_key, mv_key, g_key, d_key = random.split(key, 5)
         probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
@@ -107,48 +112,16 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
         g_i_bar = random.uniform(g_key, (num_scenarios, num_g), minval=minval, maxval=maxval)
         d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=4.0, b=0.4, lo=minval, hi=maxval)
-
-    elif input_scenario == "s_4":
-        # Correlated extremes: in a small ε share of scenarios, shrink gen & blow up demand
-        probs_key, mc_key, mv_key, g_key, d_key, t_key, k_shrink, k_blow = random.split(key, 8)
-        probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
-        mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
-        mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
-        # mild heavy-tails even outside stress
-        g_i_bar = beta_scaled(g_key, (num_scenarios, num_g), a=0.8, b=3.0, lo=minval, hi=maxval)
-        d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=3.0, b=0.8, lo=minval, hi=maxval)
-        # mark tail scenarios
-        eps = 0.10  # fraction stressed
-        is_tail = random.bernoulli(t_key, eps, (num_scenarios,))
-        # scenario-level stress multipliers
-        shrink = random.uniform(k_shrink, (num_scenarios, 1), minval=0.05, maxval=0.30)  # 5–30% of base
-        blow   = random.uniform(k_blow,   (num_scenarios, 1), minval=1.20, maxval=1.80)  # 120–180% of base
-        g_i_bar = jnp.where(is_tail[:, None], g_i_bar * shrink, g_i_bar)
-        d_j_bar = jnp.where(is_tail[:, None], d_j_bar * blow,   d_j_bar)
-        # keep within declared bounds
-        g_i_bar = jnp.clip(g_i_bar, minval, maxval)
-        d_j_bar = jnp.clip(d_j_bar, minval, maxval)
     
-    elif input_scenario == "s_5":
-        # Correlated extremes: in a small ε share of scenarios, shrink demand & blow up gen
-        probs_key, mc_key, mv_key, g_key, d_key, t_key, k_shrink, k_blow = random.split(key, 8)
+    elif input_scenario == "s_7":
+        #print("Using s_7: Original Sid uniform but with truncated lognormal gen caps")
+        probs_key, mc_key, mv_key, g_key, d_key = random.split(key, 5)
         probs = random.dirichlet(probs_key, jnp.ones(num_scenarios))
         mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
         mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
-        # mild heavy-tails even outside stress
-        g_i_bar = beta_scaled(g_key, (num_scenarios, num_g), a=3.0, b=0.8, lo=minval, hi=maxval)
-        d_j_bar = beta_scaled(d_key, (num_scenarios, num_d), a=0.8, b=3.0, lo=minval, hi=maxval)
-        # mark tail scenarios
-        eps = 0.10  # fraction stressed
-        is_tail = random.bernoulli(t_key, eps, (num_scenarios,))
-        # scenario-level stress multipliers
-        shrink = random.uniform(k_shrink, (num_scenarios, 1), minval=0.05, maxval=0.30)  # 5–30% of base
-        blow   = random.uniform(k_blow,   (num_scenarios, 1), minval=1.20, maxval=1.80)  # 120–180% of base
-        g_i_bar = jnp.where(is_tail[:, None], g_i_bar * blow, g_i_bar)
-        d_j_bar = jnp.where(is_tail[:, None], d_j_bar * shrink,   d_j_bar)
-        # keep within declared bounds
-        g_i_bar = jnp.clip(g_i_bar, minval, maxval)
-        d_j_bar = jnp.clip(d_j_bar, minval, maxval)
+
+        g_i_bar = maxval - truncated_lognormal(g_key, shape=(num_scenarios, num_g), mean=3, sigma=1.0, lo=1, hi=100) 
+        d_j_bar = random.uniform(d_key, (num_scenarios, num_d), minval=40, maxval=43)
 
     else:
         raise ValueError(f"Unknown input_scenario: {input_scenario}")
@@ -245,7 +218,7 @@ def zavala_deterministic_da(mc_g_i, mv_d_j, g_i_bar_det, d_j_bar_det):
 
 
 # === NEW: real-time energy-only per scenario (to get Π(ω)) ===================
-def zavala_rt_energy_only(mc_g_i, mv_d_j, g_i_bar_rt, d_j_bar_rt):
+def zavala_rt_energy_only(mc_g_i, mv_d_j, g_da, d_da, g_i_bar_rt, d_j_bar_rt):
     """
     Real-time energy-only clearing for a single scenario ω (no network):
     min   sum_i α^g_i G_i(ω) - sum_j α^d_j D_j(ω)
@@ -258,10 +231,18 @@ def zavala_rt_energy_only(mc_g_i, mv_d_j, g_i_bar_rt, d_j_bar_rt):
     num_g = mc_g_i.size
     num_d = mv_d_j.size
 
+    # Compute incremental bids (just a heuristic)
+    mc_g_i_delta = mc_g_i / 10.0
+    mv_d_j_delta = mv_d_j / 10.0
+    delta_alpha_g = np.asarray(mc_g_i_delta, float).reshape(num_g)  # generator incremental bid prices
+    delta_alpha_d = np.asarray(mv_d_j_delta, float).reshape(num_d)  # load incremental bid prices
+
     G = cp.Variable(num_g, nonneg=True)
     D = cp.Variable(num_d, nonneg=True)
 
-    obj = cp.Minimize(mc_g_i @ G - mv_d_j @ D)
+    # obj = cp.Minimize(mc_g_i @ G - mv_d_j @ D)
+    obj = cp.Minimize(delta_alpha_g @ cp.abs(G - g_da) + delta_alpha_d @ cp.abs(D - d_da))
+
     balance_con = cp.sum(D) - cp.sum(G) == 0
     cons = [balance_con, G <= g_i_bar_rt, D <= d_j_bar_rt]
 
@@ -723,9 +704,9 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     D_j_jax = jnp.array([[D_j[p][j].value for j in range(num_d)] for p in range(len(probs))])
     pi = day_ahead_balance[0].dual_value
     Pi = jnp.array([real_time_balance[p].dual_value / probs[p] for p in range(len(probs))])
-    # cvar_link_dual = jnp.array([cvar_link[i].dual_value] for p in range(len(probs)))
+    cvar_link_dual = jnp.array([float(np.asarray(c.dual_value).ravel()[0]) if c.dual_value is not None else np.nan for c in cvar_link])
 
-    return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi
+    return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi, cvar_link_dual
 
 def _print_da_rt_summary(label, pi, g_da, d_da, Pi, G_rt, D_rt, probs=None):
     """

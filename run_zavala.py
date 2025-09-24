@@ -24,7 +24,7 @@ from zavala_funcs import (
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 10
+num_instances = 100
 key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
@@ -74,7 +74,7 @@ for i in range(len(instances)):
 
     # ===== CVaR Zavala =====
     # >>> CHANGED: capture C_G, C_D so we can print
-    cvar_g_i, cvar_d_j, C_G, C_D, cvar_pi, cvar_Pi = zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar)
+    cvar_g_i, cvar_d_j, C_G, C_D, cvar_pi, cvar_Pi, cvar_link_dual = zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar)
     cvar_distortions.append(price_distortion(probs, cvar_pi, cvar_Pi))
     cvar_regrets.append(expected_cumulative_regret(probs, cvar_g_i, cvar_d_j, cvar_pi, mc_g_i, mv_d_j, g_i_bar, d_j_bar))
     ss_cvar = compute_social_surplus(
@@ -97,7 +97,7 @@ for i in range(len(instances)):
     # Real-time per scenario — also collect RT dispatch to print deltas
     G_det_list, D_det_list, Pi_det_list = [], [], []
     for p in range(len(probs)):
-        Gp, Dp, Pi_p = zavala_rt_energy_only(mc_g_i, mv_d_j, g_i_bar[p], d_j_bar[p])
+        Gp, Dp, Pi_p = zavala_rt_energy_only(mc_g_i, mv_d_j, g_det, d_det, g_i_bar[p], d_j_bar[p])
         G_det_list.append(Gp)
         D_det_list.append(Dp)
         Pi_det_list.append(Pi_p)
@@ -128,22 +128,28 @@ for i in range(len(instances)):
         worst="low"                    # treat more negative as worse; use "high" if opposite
     )
 
-    print(f'############# iter {i+1} ##################### \n')
-    print("Tail indices (baseline-defined):", cmp["idx"])
-    print("Tail probs:", cmp["probs"], "sum =", cmp["stoch_tail_prob_sum"])
-    print("Baseline NEG-SS on tail:", cmp["stoch_neg_ss"])
-    print("CVaR     NEG-SS on tail:", cmp["cvar_neg_ss"])
-    print("Baseline tail weighted-mean NEG-SS:", cmp["stoch_tail_weighted_mean_neg_ss"])
-    print("CVaR on same tail weighted-mean NEG-SS:", cmp["cvar_on_stoch_tail_weighted_mean_neg_ss"])
+    # print(f'############# iter {i+1} ##################### \n')
+    # # print("Tail indices (baseline-defined):", cmp["idx"])
+    # # print("Tail probs:", cmp["probs"], "sum =", cmp["stoch_tail_prob_sum"])
+    # print("Baseline NEG-SS on tail:", cmp["stoch_neg_ss"])
+    # print("CVaR     NEG-SS on tail:", cmp["cvar_neg_ss"])
+    # print("Baseline tail weighted-mean NEG-SS:", cmp["stoch_tail_weighted_mean_neg_ss"])
+    # print("CVaR on same tail weighted-mean NEG-SS:", cmp["cvar_on_stoch_tail_weighted_mean_neg_ss"])
+    # print(f"CVaR link dual = {cvar_link_dual}")
+print(f"Price distortion stochastic = {zavala_distortions}")
+print(f"Price distortion CVaR = {cvar_distortions}")
+
 
 # # ============== Overall Expectation Results =================
-# print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
+print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
 # print(f'Stochastic Zavala with CVaR mean distortion: {np.mean(cvar_distortions)}')
 # print(f'Deterministic mean distortion: {np.mean(det_distortions)}')
 
 # print(f"Stochastic mean E[-SS]: {np.mean(stoch_ss_neg_total)} "
 #       f"(suppliers {np.mean(stoch_ss_neg_supplier)}, consumers {np.mean(stoch_ss_neg_consumer)})")
 # print(f"Stochastic mean E[SS]:  {np.mean(stoch_ss)}")
+
+print(f'CVaR mean distortion: {np.mean(cvar_distortions)}')
 
 # print(f"CVaR       mean E[-SS]: {np.mean(cvar_ss_neg_total)} "
 #       f"(suppliers {np.mean(cvar_ss_neg_supplier)}, consumers {np.mean(cvar_ss_neg_consumer)})")
