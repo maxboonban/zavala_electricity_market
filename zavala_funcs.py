@@ -80,7 +80,26 @@ def truncated_lognormal(rng, shape, mean, sigma, lo, hi):
     x = np.random.lognormal(mean, sigma, size = shape)
     x = np.clip(x, lo, hi)
     return x
-    
+
+def _beta_mixture_left_heavy(rng, n, low=0.0, high=100.0,
+                             w=0.65,  # weight on the "bad/low" component
+                             a1=0.8, b1=3.5,  # very left-skewed beta
+                             a2=4.5, b2=2.0   # right-skewed but bounded
+                             ):
+    import numpy as np
+    u = rng.random(n)
+    x1 = rng.beta(a1, b1, size=n)
+    x2 = rng.beta(a2, b2, size=n)
+    x  = np.where(u < w, x1, x2)
+    return low + (high - low) * x
+
+def _dirichlet_near_uniform(rng, n, kappa=500.0):
+    # probabilities close to uniform but not identical (helps smoothness)
+    import numpy as np
+    alpha = np.full(n, kappa / n)
+    p = rng.dirichlet(alpha)
+    return p / p.sum()
+  
 def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100):
     input_scenario = "s_7"
 
@@ -122,6 +141,60 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
 
         g_i_bar = maxval - truncated_lognormal(g_key, shape=(num_scenarios, num_g), mean=3, sigma=1.0, lo=1, hi=100) 
         d_j_bar = random.uniform(d_key, (num_scenarios, num_d), minval=40, maxval=43)
+    
+    elif input_scenario == "s_htoy":
+        # Single-bus, 2 generators (cheap-unreliable & expensive-reliable), 1 load.
+        # Five discrete scenarios with equal prob (you can tilt these if you want).
+
+        probs   = jnp.array([0.20, 0.20, 0.20, 0.20, 0.20], dtype=float)
+
+        # Marginal bids: cheap unreliable vs. expensive reliable
+        mc_g_i  = jnp.array([10.0, 40.0])   # α^g
+        mv_d_j  = jnp.array([1000.0])       # VOLL-like α^d to punish curtailment
+
+        # Unreliable cheap unit has a heavy *right* tail (high mean; many lows)
+        # capacities across 5 scenarios: 20,30,80,90,100  (median = 80? no → 80 is above middle, but 40% lows)
+        g1      = jnp.array([20.0, 30.0, 80.0, 90.0, 100.0])
+        # Reliable expensive unit: fixed cap that *almost* backstops worst case
+        g2      = jnp.array([55.0, 55.0, 55.0, 55.0, 55.0])
+
+        # Demand cap (deterministic): 90 MW — creates shortfalls when g1 is 20 or 30
+        d1      = jnp.array([90.0, 90.0, 90.0, 90.0, 90.0])
+
+        g_i_bar = jnp.stack([g1, g2], axis=1)  # (S,2)
+        d_j_bar = d1.reshape(-1, 1)            # (S,1)
+
+        return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
+    
+    elif input_scenario == "s_htoy_mix":
+        # import numpy as np
+        rng = np.random.default_rng(12)  # deterministic for reproducibility
+
+        S = max(num_scenarios, 200)  # ensure plenty of scenarios
+        probs = _dirichlet_near_uniform(rng, S, kappa=800.0)
+
+        # bids: cheap unreliable vs. reliable but pricier
+        mc_g_i = np.array([10.0, 45.0], dtype=float)
+        mv_d_j = np.array([1000.0], dtype=float)  # inelastic-ish
+
+        # unreliable cheap capacity: left-heavy mixture on [0, 100]
+        g1 = _beta_mixture_left_heavy(rng, S, low=0.0, high=100.0,
+                                      w=0.6, a1=0.7, b1=4.0, a2=4.5, b2=2.0)
+
+        # reliable pricey cap: just below fully backstopping bad outcomes
+        g2_cap = 55.0
+        g2 = np.full(S, g2_cap, dtype=float)
+
+        # demand with mild noise, set to strain system in bad g1 cases
+        d_mean = 92.0
+        d_sd   = 3.0
+        d1 = np.clip(rng.normal(d_mean, d_sd, size=S), 86.0, 98.0)
+
+        g_i_bar = np.stack([g1, g2], axis=1)  # (S, 2)
+        d_j_bar = d1.reshape(S, 1)            # (S, 1)
+
+        # convert to jnp if you prefer; return np is fine if the rest casts
+        return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
 
     else:
         raise ValueError(f"Unknown input_scenario: {input_scenario}")
@@ -765,82 +838,165 @@ def _stack_rt(G_list, D_list):
 def compute_social_surplus(
     probs,
     mc_g_i, mv_d_j,          # α^g, α^d  (vectors)
-    g_da, d_da,              # day-ahead commitments
+    g_da, d_da,              # day-ahead commitments (vectors)
     G_rt, D_rt,              # arrays shaped (S, G) and (S, D)
-    mc_g_i_delta=None,       # optional Δα for generators
-    mv_d_j_delta=None,       # optional Δα for loads
+    mc_g_i_delta=None,       # optional Δα for generators (scalar or vector)
+    mv_d_j_delta=None,       # optional Δα for loads (scalar or vector)
 ):
     """
-    Implements §4.1 Social Surplus:
+    Expected NEGATIVE social surplus (cost), evaluated in the Eq. 10 'incremental-delta' form.
 
-      C_i^g(ω) = +α_i^g g_i
-                  + α_i^{g,+} (G_i(ω) - g_i)_+
-                  - α_i^{g,−} (G_i(ω) - g_i)_−
+      Generators:   α^g · G(ω) + Δα^{g,+}(G-g)_+ + Δα^{g,−}(g-G)_+
+      Loads:       −α^d · D(ω) + Δα^{d,+}(D-d)_+ + Δα^{d,−}(d-D)_+
 
-      C_j^d(ω) = −α_j^d d_j
-                  + α_j^{d,+} (D_j(ω) - d_j)_+
-                  - α_j^{d,−} (D_j(ω) - d_j)_−
-
-    Negative social surplus per scenario is  Σ_i C_i^g(ω) + Σ_j C_j^d(ω).
-    We return its expectation, its components, and (+)social surplus (the negative of it).
-
-    Returns dict with:
-      E_neg_supplier, E_neg_consumer, E_neg_total, E_social_surplus
+    If only mc_g_i_delta / mv_d_j_delta are provided, they are treated as symmetric:
+        Δα^{•,+} = Δα^{•,−} = given delta
     """
     import numpy as np
 
-    probs   = np.asarray(probs, dtype=float)
-    mc_g_i  = np.asarray(mc_g_i, dtype=float)
-    mv_d_j  = np.asarray(mv_d_j, dtype=float)
-    g_da    = np.asarray(g_da, dtype=float)
-    d_da    = np.asarray(d_da, dtype=float)
-    G_rt    = np.asarray(G_rt, dtype=float)  # (S, G)
-    D_rt    = np.asarray(D_rt, dtype=float)  # (S, D)
+    p  = np.asarray(probs,  dtype=float)
+    ag = np.asarray(mc_g_i, dtype=float).reshape(-1)   # α^g
+    ad = np.asarray(mv_d_j, dtype=float).reshape(-1)   # α^d
 
-    # Default incremental prices: your current heuristic
+    g  = np.asarray(g_da,   dtype=float).reshape(-1)
+    d  = np.asarray(d_da,   dtype=float).reshape(-1)
+    G  = np.asarray(G_rt,   dtype=float)              # (S,G)
+    D  = np.asarray(D_rt,   dtype=float)              # (S,D)
+
+    S, Gdim = G.shape
+    _, Ddim = D.shape
+
+    # symmetric increments by default (matches your solver’s Δ = α/10 heuristic)
     if mc_g_i_delta is None:
-        mc_g_i_delta = mc_g_i / 10.0
+        mc_g_i_delta = ag / 10.0
     if mv_d_j_delta is None:
-        mv_d_j_delta = mv_d_j / 10.0
+        mv_d_j_delta = ad / 10.0
 
-    # Construct α^{·,+} and α^{·,−} from Δα, per paper (Δα>0):
-    #   Δα^{g,+} = α^{g,+} − α^g  ⇒ α^{g,+} = α^g + Δα^{g,+}
-    #   Δα^{g,−} = α^g − α^{g,−} ⇒ α^{g,−} = α^g − Δα^{g,−}
-    alpha_g_plus  = mc_g_i + mc_g_i_delta
-    alpha_g_minus = mc_g_i - mc_g_i_delta
-    alpha_d_plus  = mv_d_j + mv_d_j_delta
-    alpha_d_minus = mv_d_j - mv_d_j_delta
+    mc_g_i_delta = np.broadcast_to(np.asarray(mc_g_i_delta, dtype=float).reshape(-1), ag.shape)
+    mv_d_j_delta = np.broadcast_to(np.asarray(mv_d_j_delta, dtype=float).reshape(-1), ad.shape)
 
-    # Deviations
-    dG = G_rt - g_da[None, :]   # (S, G)
-    dD = D_rt - d_da[None, :]   # (S, D)
-    pos = lambda x: np.maximum(x, 0.0)
-    neg = lambda x: np.maximum(-x, 0.0)
+    # Allow asymmetric deltas later if you choose:
+    # Δ+ = Δ− = given delta (for now)
+    dg_plus  = mc_g_i_delta
+    dg_minus = mc_g_i_delta
+    dd_plus  = mv_d_j_delta
+    dd_minus = mv_d_j_delta
 
-    # Supplier negative cost per scenario (vector shape (S,))
-    const_sup = float(np.sum(mc_g_i * g_da))
-    Cg = const_sup + pos(dG) @ alpha_g_plus - neg(dG) @ alpha_g_minus
+    # helpers
+    def pos(x): return np.maximum(x, 0.0)
 
-    # Consumer negative cost per scenario
-    const_dem = -float(np.sum(mv_d_j * d_da))
-    Cd = const_dem + pos(dD) @ alpha_d_plus - neg(dD) @ alpha_d_minus
+    # Per-scenario NEGATIVE social surplus (cost)
+    #   gen:  α^g · G  +  Δg+·(G−g)_+ + Δg−·(g−G)_+
+    #   load: −α^d · D  +  Δd+·(D−d)_+ + Δd−·(d−D)_+
+    ss_per_scn = np.empty(S, dtype=float)
+    for s in range(S):
+        dG = G[s] - g
+        dD = D[s] - d
 
-    neg_total = Cg + Cd
+        gen_cost  = ag @ G[s]  +  dg_plus @ pos(dG)  +  dg_minus @ pos(-dG)
+        load_cost = - ad @ D[s] +  dd_plus @ pos(dD) +  dd_minus @ pos(-dD)
 
-    E_neg_supplier = float(probs @ Cg)
-    E_neg_consumer = float(probs @ Cd)
-    E_neg_total    = float(probs @ neg_total)
+        ss_per_scn[s] = gen_cost + load_cost   # NEGATIVE social surplus for scenario s
+
+    # Expectations
+    E_neg_total     = float(p @ ss_per_scn)
     E_social_surplus = -E_neg_total
 
-    ss_per_scenario = neg_total
+    # Optional split (supplier vs consumer) if you want:
+    # E_neg_supplier = float(p @ (ag @ G.T + (dg_plus @ pos(G - g).T) + (dg_minus @ pos(g - G).T)))
+    # E_neg_consumer = float(p @ (-ad @ D.T + (dd_plus @ pos(D - d).T) + (dd_minus @ pos(d - D).T)))
+
+    # If you want to preserve keys present in your code:
+    E_neg_supplier = np.nan
+    E_neg_consumer = np.nan
 
     return {
         "E_neg_supplier": E_neg_supplier,
         "E_neg_consumer": E_neg_consumer,
         "E_neg_total":    E_neg_total,
         "E_social_surplus": E_social_surplus,
-        "ss_per_scenario": ss_per_scenario
+        "ss_per_scenario": ss_per_scn,   # NEG-SS per scenario (useful for tail metrics)
     }
+
+# def compute_social_surplus(
+#     probs,
+#     mc_g_i, mv_d_j,          # α^g, α^d  (vectors)
+#     g_da, d_da,              # day-ahead commitments
+#     G_rt, D_rt,              # arrays shaped (S, G) and (S, D)
+#     mc_g_i_delta=None,       # optional Δα for generators
+#     mv_d_j_delta=None,       # optional Δα for loads
+# ):
+#     """
+#     Implements §4.1 Social Surplus:
+
+#       C_i^g(ω) = +α_i^g g_i
+#                   + α_i^{g,+} (G_i(ω) - g_i)_+
+#                   - α_i^{g,−} (G_i(ω) - g_i)_−
+
+#       C_j^d(ω) = −α_j^d d_j
+#                   + α_j^{d,+} (D_j(ω) - d_j)_+
+#                   - α_j^{d,−} (D_j(ω) - d_j)_−
+
+#     Negative social surplus per scenario is  Σ_i C_i^g(ω) + Σ_j C_j^d(ω).
+#     We return its expectation, its components, and (+)social surplus (the negative of it).
+
+#     Returns dict with:
+#       E_neg_supplier, E_neg_consumer, E_neg_total, E_social_surplus
+#     """
+#     import numpy as np
+
+#     probs   = np.asarray(probs, dtype=float)
+#     mc_g_i  = np.asarray(mc_g_i, dtype=float)
+#     mv_d_j  = np.asarray(mv_d_j, dtype=float)
+#     g_da    = np.asarray(g_da, dtype=float)
+#     d_da    = np.asarray(d_da, dtype=float)
+#     G_rt    = np.asarray(G_rt, dtype=float)  # (S, G)
+#     D_rt    = np.asarray(D_rt, dtype=float)  # (S, D)
+
+#     # Default incremental prices: your current heuristic
+#     if mc_g_i_delta is None:
+#         mc_g_i_delta = mc_g_i / 10.0
+#     if mv_d_j_delta is None:
+#         mv_d_j_delta = mv_d_j / 10.0
+
+#     # Construct α^{·,+} and α^{·,−} from Δα, per paper (Δα>0):
+#     #   Δα^{g,+} = α^{g,+} − α^g  ⇒ α^{g,+} = α^g + Δα^{g,+}
+#     #   Δα^{g,−} = α^g − α^{g,−} ⇒ α^{g,−} = α^g − Δα^{g,−}
+#     alpha_g_plus  = mc_g_i + mc_g_i_delta
+#     alpha_g_minus = mc_g_i - mc_g_i_delta
+#     alpha_d_plus  = mv_d_j + mv_d_j_delta
+#     alpha_d_minus = mv_d_j - mv_d_j_delta
+
+#     # Deviations
+#     dG = G_rt - g_da[None, :]   # (S, G)
+#     dD = D_rt - d_da[None, :]   # (S, D)
+#     pos = lambda x: np.maximum(x, 0.0)
+#     neg = lambda x: np.maximum(-x, 0.0)
+
+#     # Supplier negative cost per scenario (vector shape (S,))
+#     const_sup = float(np.sum(mc_g_i * g_da))
+#     Cg = const_sup + pos(dG) @ alpha_g_plus - neg(dG) @ alpha_g_minus
+
+#     # Consumer negative cost per scenario
+#     const_dem = -float(np.sum(mv_d_j * d_da))
+#     Cd = const_dem + pos(dD) @ alpha_d_plus - neg(dD) @ alpha_d_minus
+
+#     neg_total = Cg + Cd
+
+#     E_neg_supplier = float(probs @ Cg)
+#     E_neg_consumer = float(probs @ Cd)
+#     E_neg_total    = float(probs @ neg_total)
+#     E_social_surplus = -E_neg_total
+
+#     ss_per_scenario = neg_total
+
+#     return {
+#         "E_neg_supplier": E_neg_supplier,
+#         "E_neg_consumer": E_neg_consumer,
+#         "E_neg_total":    E_neg_total,
+#         "E_social_surplus": E_social_surplus,
+#         "ss_per_scenario": ss_per_scenario
+#     }
 
 # === Tail scenario helpers for tail welfare analysis ===
 def tail_worst_indices_by_value(values, probs, tail=0.05, worst="low"):

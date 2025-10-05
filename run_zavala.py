@@ -136,28 +136,28 @@ for i in range(len(instances)):
     # print("Baseline tail weighted-mean NEG-SS:", cmp["stoch_tail_weighted_mean_neg_ss"])
     # print("CVaR on same tail weighted-mean NEG-SS:", cmp["cvar_on_stoch_tail_weighted_mean_neg_ss"])
     # print(f"CVaR link dual = {cvar_link_dual}")
-print(f"Price distortion stochastic = {zavala_distortions}")
-print(f"Price distortion CVaR = {cvar_distortions}")
+# print(f"Price distortion stochastic = {zavala_distortions}")
+# print(f"Price distortion CVaR = {cvar_distortions}")
 
 
 # # ============== Overall Expectation Results =================
 print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
-# print(f'Stochastic Zavala with CVaR mean distortion: {np.mean(cvar_distortions)}')
-# print(f'Deterministic mean distortion: {np.mean(det_distortions)}')
+print(f'Stochastic Zavala with CVaR mean distortion: {np.mean(cvar_distortions)}')
+print(f'Deterministic mean distortion: {np.mean(det_distortions)}')
 
 # print(f"Stochastic mean E[-SS]: {np.mean(stoch_ss_neg_total)} "
 #       f"(suppliers {np.mean(stoch_ss_neg_supplier)}, consumers {np.mean(stoch_ss_neg_consumer)})")
-# print(f"Stochastic mean E[SS]:  {np.mean(stoch_ss)}")
+print(f"Stochastic mean E[SS]:  {np.mean(stoch_ss)}")
 
-print(f'CVaR mean distortion: {np.mean(cvar_distortions)}')
+# print(f'CVaR mean distortion: {np.mean(cvar_distortions)}')
 
 # print(f"CVaR       mean E[-SS]: {np.mean(cvar_ss_neg_total)} "
 #       f"(suppliers {np.mean(cvar_ss_neg_supplier)}, consumers {np.mean(cvar_ss_neg_consumer)})")
-# print(f"CVaR       mean E[SS]:  {np.mean(cvar_ss)}")
+print(f"CVaR       mean E[SS]:  {np.mean(cvar_ss)}")
 
 # print(f"Deterministic mean E[-SS]: {np.mean(det_ss_neg_total)} "
 #       f"(suppliers {np.mean(det_ss_neg_supplier)}, consumers {np.mean(det_ss_neg_consumer)})")
-# print(f"Deterministic mean E[SS]:  {np.mean(det_ss)}")
+print(f"Deterministic mean E[SS]:  {np.mean(det_ss)}")
 
 # print("Stochastic Case \n")
 # print(f"Total Welfare = {stoch_ss_neg_total}")
