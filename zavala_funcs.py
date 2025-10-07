@@ -31,6 +31,7 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     objective = cp.Minimize(sum(sum((mc_g_i[i] * G_i[p][i] + mc_g_i_delta[i] * cp.max(cp.vstack([G_i[p][i] - g_i[i], 0])) + mc_g_i_delta[i] * cp.max(cp.vstack([g_i[i] - G_i[p][i], 0]))) * probs[p] for p in range(len(probs))) for i in range(num_g)) \
                             + sum(sum((-mv_d_j[j] * D_j[p][j] + mv_d_j_delta[j] * cp.max(cp.vstack([d_j[j] - D_j[p][j], 0])) + mv_d_j_delta[j] * cp.max(cp.vstack([D_j[p][j] - d_j[j], 0]))) * probs[p] for p in range(len(probs))) for j in range(num_d)))
 
+
     # Define the constraints
     day_ahead_balance = [
                     sum(d_j[j] for j in range(num_d)) == sum(g_i[i] for i in range(num_g))
@@ -120,8 +121,8 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         mc_g_i = random.uniform(mc_key, (num_g,), minval=minval, maxval=maxval)
         mv_d_j = random.uniform(mv_key, (num_d,), minval=minval, maxval=maxval)
 
-        g_i_bar = maxval - truncated_lognormal(g_key, shape=(num_scenarios, num_g), mean=3, sigma=1.0, lo=1, hi=100) 
-        d_j_bar = random.uniform(d_key, (num_scenarios, num_d), minval=40, maxval=43)
+        g_i_bar = maxval - truncated_lognormal(g_key, shape=(num_scenarios, num_g), mean=3.5, sigma=1.0, lo=1, hi=100) 
+        d_j_bar = random.uniform(d_key, (num_scenarios, num_d), minval=minval, maxval=maxval)
 
     else:
         raise ValueError(f"Unknown input_scenario: {input_scenario}")
@@ -623,7 +624,7 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 
     # --- CVaR knobs ---
     beta = 0.95
-    lambda_cvar = 0.1  # set >0 to turn on CVaR regularization
+    lambda_cvar = 0.5  # set >0 to turn on CVaR regularization
 
     # --- Build per-scenario loss L_p ---
     Lp = []
