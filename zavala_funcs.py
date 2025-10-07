@@ -145,31 +145,27 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
     
     elif input_scenario == "s_htoy":
         # Single-bus, 2 generators (cheap-unreliable & expensive-reliable), 1 load.
-        # Five discrete scenarios with equal prob (you can tilt these if you want).
-
         probs   = jnp.array([0.20, 0.20, 0.20, 0.20, 0.20], dtype=float)
 
         # Marginal bids: cheap unreliable vs. expensive reliable
         mc_g_i  = jnp.array([10.0, 40.0])   # α^g
         mv_d_j  = jnp.array([1000.0])       # VOLL-like α^d to punish curtailment
 
-        # Unreliable cheap unit has a heavy *right* tail (high mean; many lows)
-        # capacities across 5 scenarios: 20,30,80,90,100  (median = 80? no → 80 is above middle, but 40% lows)
+       
         g1      = jnp.array([20.0, 30.0, 80.0, 90.0, 100.0])
-        # Reliable expensive unit: fixed cap that *almost* backstops worst case
+        # Reliable expensive unit
         g2      = jnp.array([55.0, 55.0, 55.0, 55.0, 55.0])
 
         # Demand cap (deterministic): 90 MW — creates shortfalls when g1 is 20 or 30
         d1      = jnp.array([90.0, 90.0, 90.0, 90.0, 90.0])
 
-        g_i_bar = jnp.stack([g1, g2], axis=1)  # (S,2)
-        d_j_bar = d1.reshape(-1, 1)            # (S,1)
+        g_i_bar = jnp.stack([g1, g2], axis=1)  
+        d_j_bar = d1.reshape(-1, 1)            
 
         return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
     
     elif input_scenario == "s_htoy_mix":
-        # import numpy as np
-        rng = np.random.default_rng(12)  # deterministic for reproducibility
+        rng = np.random.default_rng(12)  
 
         S = max(num_scenarios, 200)  # ensure plenty of scenarios
         probs = _dirichlet_near_uniform(rng, S, kappa=800.0)
@@ -178,11 +174,11 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         mc_g_i = np.array([10.0, 45.0], dtype=float)
         mv_d_j = np.array([1000.0], dtype=float)  # inelastic-ish
 
-        # unreliable cheap capacity: left-heavy mixture on [0, 100]
+        
         g1 = _beta_mixture_left_heavy(rng, S, low=0.0, high=100.0,
                                       w=0.6, a1=0.7, b1=4.0, a2=4.5, b2=2.0)
 
-        # reliable pricey cap: just below fully backstopping bad outcomes
+        # reliable pricey cap
         g2_cap = 55.0
         g2 = np.full(S, g2_cap, dtype=float)
 
@@ -191,25 +187,22 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         d_sd   = 3.0
         d1 = np.clip(rng.normal(d_mean, d_sd, size=S), 86.0, 98.0)
 
-        g_i_bar = np.stack([g1, g2], axis=1)  # (S, 2)
-        d_j_bar = d1.reshape(S, 1)            # (S, 1)
+        g_i_bar = np.stack([g1, g2], axis=1)  
+        d_j_bar = d1.reshape(S, 1)            
 
-        # convert to jnp if you prefer; return np is fine if the rest casts
+        
         return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
     
     elif input_scenario == "s_real10_mix":
         rng = np.random.default_rng(2025)
 
-        # Scenarios
         S = num_scenarios
-        #S = max(num_scenarios, 400)  # plenty of scenarios for a smooth histogram
+        #S = max(num_scenarios, 400)  
         probs = _dirichlet_near_uniform(rng, S, kappa=1500.0)
 
         G = 10  # total generators
-        # index 0..5: unreliable/cheap, 6..9: reliable/expensive
 
-        # --- Bid prices (α^g) ---
-        # Cheap/unreliable: low marginal bids → DA leans on them
+       
         mc_unrel = rng.uniform(8.0, 14.0, size=6)    # α^g for unreliable
         # Reliable/expensive: higher bids
         mc_rel   = rng.uniform(35.0, 55.0, size=4)   # α^g for reliable
@@ -218,13 +211,10 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         # Load willingness / VOLL (single inelastic-ish load)
         mv_d_j   = np.array([1000.0], dtype=float)
 
-        # --- Capacity envelopes per unit (heterogeneous) ---
-        # Unreliable units have higher nameplate (tempting) but volatile realization
-        # Pick heterogeneous [low, high] per unit to avoid atoms lining up
+ 
         unrel_ranges = [(25, 90), (30, 95), (20, 85), (35, 100), (28, 92), (22, 88)]
         rel_ranges   = [(20, 30), (22, 32), (18, 28), (24, 34)]  # tighter & higher floor
 
-        # --- Common shock state per scenario (induces correlation) ---
         # states: 0=no shock, 1=mild shock, 2=severe shock
         # probabilities tuned to put enough mass in the tail without being spiky
         shock_state = rng.choice([0, 1, 2], size=S, p=[0.70, 0.20, 0.10])
@@ -234,8 +224,7 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         shock_factor[shock_state == 1] *= rng.uniform(0.60, 0.85, size=(shock_state == 1).sum())
         shock_factor[shock_state == 2] *= rng.uniform(0.15, 0.40, size=(shock_state == 2).sum())
 
-        # small idiosyncratic noise for smoothness (per gen, per scenario)
-        # (kept narrow to preserve the shock structure but remove atoms)
+
         def _jitter(n, lo=0.92, hi=1.08):
             return rng.uniform(lo, hi, size=n)
 
@@ -249,7 +238,6 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
             unrel_caps.append(np.clip(cap, 0.0, None))
         unrel_caps = np.column_stack(unrel_caps)  # (S,6)
 
-        # Build reliable caps (high floor, mild noise only)
         rel_caps = []
         for (lo, hi) in rel_ranges:
             # concentrate near upper end (reliable), small variance
@@ -257,16 +245,15 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
             base = lo + (hi - lo) * x
             cap = base * _jitter(S, 0.98, 1.03)
             rel_caps.append(np.clip(cap, 0.0, None))
-        rel_caps = np.column_stack(rel_caps)      # (S,4)
+        rel_caps = np.column_stack(rel_caps)     
 
-        g_i_bar = np.column_stack([unrel_caps, rel_caps])  # (S,10)
+        g_i_bar = np.column_stack([unrel_caps, rel_caps])  
 
-        # --- Demand process (single load) ---
         # base demand ~ N(μ,σ) and higher during shocks → exacerbates tail
         d_mean, d_sd = 220.0, 10.0
         D = rng.normal(d_mean, d_sd, size=S)
-        D += np.where(shock_state == 1, rng.uniform(8, 15, size=S), 0.0)  # mild shock bump
-        D += np.where(shock_state == 2, rng.uniform(18, 30, size=S), 0.0) # severe shock bump
+        D += np.where(shock_state == 1, rng.uniform(8, 15, size=S), 0.0)  
+        D += np.where(shock_state == 2, rng.uniform(18, 30, size=S), 0.0) 
         D = np.clip(D, 190.0, 265.0)
         d_j_bar = D.reshape(S, 1)
 
