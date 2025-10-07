@@ -125,7 +125,7 @@ for i in range(len(instances)):
         ss_cvar["ss_per_scenario"],    # CVaR per-scenario NEG-SS
         probs,
         tail=0.05,                     # 5% tail
-        worst="low"                    # treat more negative as worse; use "high" if opposite
+        worst="high"                    # treat more negative as worse; use "high" if opposite
     )
 
     # print(f'############# iter {i+1} ##################### \n')
@@ -141,22 +141,22 @@ for i in range(len(instances)):
 
 
 # # ============== Overall Expectation Results =================
-print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
-# print(f'Stochastic Zavala with CVaR mean distortion: {np.mean(cvar_distortions)}')
-# print(f'Deterministic mean distortion: {np.mean(det_distortions)}')
+# print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
+# # print(f'Stochastic Zavala with CVaR mean distortion: {np.mean(cvar_distortions)}')
+# # print(f'Deterministic mean distortion: {np.mean(det_distortions)}')
 
-print(f"Stochastic mean E[-SS]: {np.mean(stoch_ss_neg_total)} "
-      f"(suppliers {np.mean(stoch_ss_neg_supplier)}, consumers {np.mean(stoch_ss_neg_consumer)})")
-# print(f"Stochastic mean E[SS]:  {np.mean(stoch_ss)}")
+# print(f"Stochastic mean E[-SS]: {np.mean(stoch_ss_neg_total)} "
+#       f"(suppliers {np.mean(stoch_ss_neg_supplier)}, consumers {np.mean(stoch_ss_neg_consumer)})")
+# # print(f"Stochastic mean E[SS]:  {np.mean(stoch_ss)}")
 
-print(f'CVaR mean distortion: {np.mean(cvar_distortions)}')
+# print(f'CVaR mean distortion: {np.mean(cvar_distortions)}')
 
-print(f"CVaR       mean E[-SS]: {np.mean(cvar_ss_neg_total)} "
-      f"(suppliers {np.mean(cvar_ss_neg_supplier)}, consumers {np.mean(cvar_ss_neg_consumer)})")
-# print(f"CVaR       mean E[SS]:  {np.mean(cvar_ss)}")
+# print(f"CVaR       mean E[-SS]: {np.mean(cvar_ss_neg_total)} "
+#       f"(suppliers {np.mean(cvar_ss_neg_supplier)}, consumers {np.mean(cvar_ss_neg_consumer)})")
+# # print(f"CVaR       mean E[SS]:  {np.mean(cvar_ss)}")
 
-print(f"Deterministic mean E[-SS]: {np.mean(det_ss_neg_total)} "
-      f"(suppliers {np.mean(det_ss_neg_supplier)}, consumers {np.mean(det_ss_neg_consumer)})")
+# print(f"Deterministic mean E[-SS]: {np.mean(det_ss_neg_total)} "
+#       f"(suppliers {np.mean(det_ss_neg_supplier)}, consumers {np.mean(det_ss_neg_consumer)})")
 # print(f"Deterministic mean E[SS]:  {np.mean(det_ss)}")
 
 # print("Stochastic Case \n")
@@ -170,3 +170,6 @@ print(f"Deterministic mean E[-SS]: {np.mean(det_ss_neg_total)} "
 # print(f"Day-ahead price = {cvar_pi}")
 # print(f"Real-time price = {cvar_Pi}")
 # print(f"Probability = {probs} \n")
+
+print("Baseline NEG-SS on tail:", cmp["stoch_neg_ss"])
+print(ss_stoch["ss_per_scenario"])

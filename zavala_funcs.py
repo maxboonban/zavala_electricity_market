@@ -844,7 +844,7 @@ def compute_social_surplus(
     }
 
 # === Tail scenario helpers for tail welfare analysis ===
-def tail_worst_indices_by_value(values, probs, tail=0.05, worst="low"):
+def tail_worst_indices_by_value(values, probs, tail=0.05, worst="high"):
     """
     Return indices of the worst `tail` probability mass using the supplied per-scenario
     `values` and `probs`. We pick WHOLE scenarios (no fractional split) until the
@@ -894,7 +894,7 @@ def tail_worst_indices_by_value(values, probs, tail=0.05, worst="low"):
     return np.asarray(chosen, dtype=int)
 
 
-def compare_tail_welfare_stoch_vs_cvar(neg_ss_stoch_per_scn, neg_ss_cvar_per_scn, probs, tail=0.05, worst="low"):
+def compare_tail_welfare_stoch_vs_cvar(neg_ss_stoch_per_scn, neg_ss_cvar_per_scn, probs, tail=0.05, worst="high"):
     """
     Using the baseline (stochastic) NEG-SS to define the worst `tail` scenarios, return the
     tail indices and the corresponding NEG-SS arrays for both STOCH and CVaR runs so you can
