@@ -99,9 +99,10 @@ def _dirichlet_near_uniform(rng, n, kappa=500.0):
     alpha = np.full(n, kappa / n)
     p = rng.dirichlet(alpha)
     return p / p.sum()
+
   
 def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100):
-    input_scenario = "s_7"
+    input_scenario = "s_htoy_mix"  # "s_1", "s_2", "s_3", "s_7", "s_htoy", "s_htoy_mix"
 
     if input_scenario == "s_1":
         # Sid's original synthetic case with uniform distribution
@@ -194,6 +195,81 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         d_j_bar = d1.reshape(S, 1)            # (S, 1)
 
         # convert to jnp if you prefer; return np is fine if the rest casts
+        return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
+    
+    elif input_scenario == "s_real10_mix":
+        rng = np.random.default_rng(2025)
+
+        # Scenarios
+        S = num_scenarios
+        #S = max(num_scenarios, 400)  # plenty of scenarios for a smooth histogram
+        probs = _dirichlet_near_uniform(rng, S, kappa=1500.0)
+
+        G = 10  # total generators
+        # index 0..5: unreliable/cheap, 6..9: reliable/expensive
+
+        # --- Bid prices (α^g) ---
+        # Cheap/unreliable: low marginal bids → DA leans on them
+        mc_unrel = rng.uniform(8.0, 14.0, size=6)    # α^g for unreliable
+        # Reliable/expensive: higher bids
+        mc_rel   = rng.uniform(35.0, 55.0, size=4)   # α^g for reliable
+        mc_g_i   = np.concatenate([mc_unrel, mc_rel])
+
+        # Load willingness / VOLL (single inelastic-ish load)
+        mv_d_j   = np.array([1000.0], dtype=float)
+
+        # --- Capacity envelopes per unit (heterogeneous) ---
+        # Unreliable units have higher nameplate (tempting) but volatile realization
+        # Pick heterogeneous [low, high] per unit to avoid atoms lining up
+        unrel_ranges = [(25, 90), (30, 95), (20, 85), (35, 100), (28, 92), (22, 88)]
+        rel_ranges   = [(20, 30), (22, 32), (18, 28), (24, 34)]  # tighter & higher floor
+
+        # --- Common shock state per scenario (induces correlation) ---
+        # states: 0=no shock, 1=mild shock, 2=severe shock
+        # probabilities tuned to put enough mass in the tail without being spiky
+        shock_state = rng.choice([0, 1, 2], size=S, p=[0.70, 0.20, 0.10])
+        # multiplicative factors applied to ALL unreliable gens in that scenario
+        shock_factor = np.ones(S)
+        # mild: cut to 60-85% output, severe: cut to 15-40% → drives tail
+        shock_factor[shock_state == 1] *= rng.uniform(0.60, 0.85, size=(shock_state == 1).sum())
+        shock_factor[shock_state == 2] *= rng.uniform(0.15, 0.40, size=(shock_state == 2).sum())
+
+        # small idiosyncratic noise for smoothness (per gen, per scenario)
+        # (kept narrow to preserve the shock structure but remove atoms)
+        def _jitter(n, lo=0.92, hi=1.08):
+            return rng.uniform(lo, hi, size=n)
+
+        # Build unreliable caps across scenarios
+        unrel_caps = []
+        for (lo, hi) in unrel_ranges:
+            base = _beta_mixture_left_heavy(rng, S, low=lo, high=hi,
+                                            w=0.62, a1=0.7, b1=4.3, a2=5.0, b2=2.1)
+            # apply common shock + idiosyncratic jitter
+            cap = base * shock_factor * _jitter(S)
+            unrel_caps.append(np.clip(cap, 0.0, None))
+        unrel_caps = np.column_stack(unrel_caps)  # (S,6)
+
+        # Build reliable caps (high floor, mild noise only)
+        rel_caps = []
+        for (lo, hi) in rel_ranges:
+            # concentrate near upper end (reliable), small variance
+            x = rng.beta(9.0, 2.0, size=S)  # skewed high
+            base = lo + (hi - lo) * x
+            cap = base * _jitter(S, 0.98, 1.03)
+            rel_caps.append(np.clip(cap, 0.0, None))
+        rel_caps = np.column_stack(rel_caps)      # (S,4)
+
+        g_i_bar = np.column_stack([unrel_caps, rel_caps])  # (S,10)
+
+        # --- Demand process (single load) ---
+        # base demand ~ N(μ,σ) and higher during shocks → exacerbates tail
+        d_mean, d_sd = 220.0, 10.0
+        D = rng.normal(d_mean, d_sd, size=S)
+        D += np.where(shock_state == 1, rng.uniform(8, 15, size=S), 0.0)  # mild shock bump
+        D += np.where(shock_state == 2, rng.uniform(18, 30, size=S), 0.0) # severe shock bump
+        D = np.clip(D, 190.0, 265.0)
+        d_j_bar = D.reshape(S, 1)
+
         return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
 
     else:

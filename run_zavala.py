@@ -29,7 +29,7 @@ key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
 for key in keys:
-    instances.append(generate_instance(key, num_scenarios=20, num_g=10, num_d=10))
+    instances.append(generate_instance(key, num_scenarios=500, num_g=10, num_d=10))
 
 # --- stochastic accumulators ---
 zavala_times = []
@@ -50,6 +50,7 @@ stoch_ss_neg_total, stoch_ss_neg_supplier, stoch_ss_neg_consumer, stoch_ss = [],
 det_ss_neg_total,   det_ss_neg_supplier,   det_ss_neg_consumer,   det_ss   = [], [], [], []
 cvar_ss_neg_total,  cvar_ss_neg_supplier,  cvar_ss_neg_consumer,  cvar_ss  = [], [], [], []
 
+stoch_tail_welfare, cvar_tail_welfare = [], []
 for i in range(len(instances)):
     probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar = instances[i]
 
@@ -128,6 +129,8 @@ for i in range(len(instances)):
         worst="low"                    # treat more negative as worse; use "high" if opposite
     )
 
+    stoch_tail_welfare.append(cmp["stoch_tail_weighted_mean_neg_ss"])
+    cvar_tail_welfare.append(cmp["cvar_on_stoch_tail_weighted_mean_neg_ss"])
     # print(f'############# iter {i+1} ##################### \n')
     # # print("Tail indices (baseline-defined):", cmp["idx"])
     # # print("Tail probs:", cmp["probs"], "sum =", cmp["stoch_tail_prob_sum"])
@@ -153,7 +156,7 @@ print(f"Stochastic mean E[SS]:  {np.mean(stoch_ss)}")
 
 # print(f"CVaR       mean E[-SS]: {np.mean(cvar_ss_neg_total)} "
 #       f"(suppliers {np.mean(cvar_ss_neg_supplier)}, consumers {np.mean(cvar_ss_neg_consumer)})")
-print(f"CVaR       mean E[SS]:  {np.mean(cvar_ss)}")
+print(f"CVaR mean E[SS]:  {np.mean(cvar_ss)}")
 
 # print(f"Deterministic mean E[-SS]: {np.mean(det_ss_neg_total)} "
 #       f"(suppliers {np.mean(det_ss_neg_supplier)}, consumers {np.mean(det_ss_neg_consumer)})")
@@ -170,3 +173,7 @@ print(f"Deterministic mean E[SS]:  {np.mean(det_ss)}")
 # print(f"Day-ahead price = {cvar_pi}")
 # print(f"Real-time price = {cvar_Pi}")
 # print(f"Probability = {probs} \n")
+
+#tail metrics
+print(f'Stochastic Zavala tail welfare: {np.mean(stoch_tail_welfare)}')
+print(f'Stochastic Zavala with CVaR tail welfare: {np.mean(cvar_tail_welfare)}')
