@@ -18,13 +18,14 @@ from zavala_funcs import (
     _print_da_rt_summary,
     _stack_rt,
     compute_social_surplus,
+    tail_worst_indices_by_value,
     compare_tail_welfare_stoch_vs_cvar
 )
 
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 10
+num_instances = 1
 key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
@@ -136,6 +137,16 @@ for i in range(len(instances)):
     # print("Baseline tail weighted-mean NEG-SS:", cmp["stoch_tail_weighted_mean_neg_ss"])
     # print("CVaR on same tail weighted-mean NEG-SS:", cmp["cvar_on_stoch_tail_weighted_mean_neg_ss"])
     # print(f"CVaR link dual = {cvar_link_dual}")
+
+    tail_indices = tail_worst_indices_by_value(ss_stoch['ss_per_scenario'], probs, tail=0.05, worst='high')
+    tail_ss = ss_stoch['ss_per_scenario'][tail_indices]
+    print(f"Tail Indices: {tail_indices}")
+    print(f"Tail -SS values: {ss_stoch['ss_per_scenario'][tail_indices]}")
+    print(f"-SS values: {ss_stoch['ss_per_scenario']}")
+    print(f"Mean tail value = {np.mean(tail_ss)}")
+
+    
+    
 # print(f"Price distortion stochastic = {zavala_distortions}")
 # print(f"Price distortion CVaR = {cvar_distortions}")
 
@@ -170,6 +181,3 @@ for i in range(len(instances)):
 # print(f"Day-ahead price = {cvar_pi}")
 # print(f"Real-time price = {cvar_Pi}")
 # print(f"Probability = {probs} \n")
-
-print("Baseline NEG-SS on tail:", cmp["stoch_neg_ss"])
-print(ss_stoch["ss_per_scenario"])
