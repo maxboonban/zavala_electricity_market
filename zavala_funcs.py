@@ -1062,7 +1062,7 @@ def compute_social_surplus(
 #     }
 
 # === Tail scenario helpers for tail welfare analysis ===
-def tail_worst_indices_by_value(values, probs, tail=0.05, worst="low"):
+def tail_worst_indices_by_value(values, probs, tail=0.05, worst="high"):
     """
     Return indices of the worst `tail` probability mass using the supplied per-scenario
     `values` and `probs`. We pick WHOLE scenarios (no fractional split) until the
@@ -1110,63 +1110,3 @@ def tail_worst_indices_by_value(values, probs, tail=0.05, worst="low"):
             break
 
     return np.asarray(chosen, dtype=int)
-
-
-def compare_tail_welfare_stoch_vs_cvar(neg_ss_stoch_per_scn, neg_ss_cvar_per_scn, probs, tail=0.05, worst="low"):
-    """
-    Using the baseline (stochastic) NEG-SS to define the worst `tail` scenarios, return the
-    tail indices and the corresponding NEG-SS arrays for both STOCH and CVaR runs so you can
-    compare them on the SAME set of scenarios.
-
-    Parameters
-    ----------
-    neg_ss_stoch_per_scn : array-like, shape (S,)
-        Baseline per-scenario NEG-SS (from compute_social_surplus for the zavala run).
-    neg_ss_cvar_per_scn : array-like, shape (S,)
-        CVaR per-scenario NEG-SS (same scenarios, same ordering).
-    probs : array-like, shape (S,)
-        Scenario probabilities (sum to 1).
-    tail : float, default 0.05
-        Target tail probability mass (e.g., 0.05 for worst 5%).
-    worst : {"low","high"}, default "low"
-        'low' means smaller values are worse (use for NEG-SS if you define more negative as worse);
-        'high' means larger values are worse.
-
-    Returns
-    -------
-    result : dict with keys
-        - "idx" : (K,) indices of scenarios chosen by the STOCH tail
-        - "probs" : (K,) original probabilities for those scenarios
-        - "stoch_neg_ss" : (K,) baseline NEG-SS at those indices
-        - "cvar_neg_ss"  : (K,) CVaR   NEG-SS at those indices
-        - "stoch_tail_prob_sum" : float, sum of tail probabilities (≤ tail if we ran out)
-        - "stoch_tail_weighted_mean_neg_ss" : float, prob-weighted mean of baseline NEG-SS on tail
-        - "cvar_on_stoch_tail_weighted_mean_neg_ss" : float, prob-weighted mean of CVaR NEG-SS on same tail
-    """
-    import numpy as np
-
-    v_stoch = np.asarray(neg_ss_stoch_per_scn, dtype=float).ravel()
-    v_cvar  = np.asarray(neg_ss_cvar_per_scn,  dtype=float).ravel()
-    p       = np.asarray(probs,                dtype=float).ravel()
-    if not (v_stoch.shape == v_cvar.shape == p.shape):
-        raise ValueError("All inputs must be 1D arrays of the same length.")
-
-    idx = tail_worst_indices_by_value(v_stoch, p, tail=tail, worst=worst)
-
-    p_tail     = p[idx]
-    stoch_tail = v_stoch[idx]
-    cvar_tail  = v_cvar[idx]
-
-    mass = float(p_tail.sum())
-    stoch_wmean = float(np.average(stoch_tail, weights=p_tail)) if mass > 0 else np.nan
-    cvar_wmean  = float(np.average(cvar_tail,  weights=p_tail)) if mass > 0 else np.nan
-
-    return {
-        "idx": idx,
-        "probs": p_tail,
-        "stoch_neg_ss": stoch_tail,
-        "cvar_neg_ss": cvar_tail,
-        "stoch_tail_prob_sum": mass,
-        "stoch_tail_weighted_mean_neg_ss": stoch_wmean,
-        "cvar_on_stoch_tail_weighted_mean_neg_ss": cvar_wmean,
-    }

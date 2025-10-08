@@ -24,7 +24,7 @@ from zavala_funcs import (
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 100
+num_instances = 1
 key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
@@ -50,7 +50,8 @@ stoch_ss_neg_total, stoch_ss_neg_supplier, stoch_ss_neg_consumer, stoch_ss = [],
 det_ss_neg_total,   det_ss_neg_supplier,   det_ss_neg_consumer,   det_ss   = [], [], [], []
 cvar_ss_neg_total,  cvar_ss_neg_supplier,  cvar_ss_neg_consumer,  cvar_ss  = [], [], [], []
 
-stoch_tail_welfare, cvar_tail_welfare = [], []
+stoch_tail_distortions, cvar_tail_distortions, det_tail_distortions = [], [], []
+stoch_tail_welfare, cvar_tail_welfare, det_tail_welfare = [], [], []
 for i in range(len(instances)):
     probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar = instances[i]
 
@@ -120,24 +121,7 @@ for i in range(len(instances)):
     det_ss_neg_consumer.append(ss_det["E_neg_consumer"])
     det_ss.append(ss_det["E_social_surplus"])
 
-    # ss_stoch["ss_per_scenario"] and ss_cvar["ss_per_scenario"] should both be (S,)
-    cmp = compare_tail_welfare_stoch_vs_cvar(
-        ss_stoch["ss_per_scenario"],   # baseline per-scenario NEG-SS
-        ss_cvar["ss_per_scenario"],    # CVaR per-scenario NEG-SS
-        probs,
-        tail=0.05,                     # 5% tail
-        worst="low"                    # treat more negative as worse; use "high" if opposite
-    )
 
-    stoch_tail_welfare.append(cmp["stoch_tail_weighted_mean_neg_ss"])
-    cvar_tail_welfare.append(cmp["cvar_on_stoch_tail_weighted_mean_neg_ss"])
-    # print(f'############# iter {i+1} ##################### \n')
-    # # print("Tail indices (baseline-defined):", cmp["idx"])
-    # # print("Tail probs:", cmp["probs"], "sum =", cmp["stoch_tail_prob_sum"])
-    # print("Baseline NEG-SS on tail:", cmp["stoch_neg_ss"])
-    # print("CVaR     NEG-SS on tail:", cmp["cvar_neg_ss"])
-    # print("Baseline tail weighted-mean NEG-SS:", cmp["stoch_tail_weighted_mean_neg_ss"])
-    # print("CVaR on same tail weighted-mean NEG-SS:", cmp["cvar_on_stoch_tail_weighted_mean_neg_ss"])
     # print(f"CVaR link dual = {cvar_link_dual}")
 # print(f"Price distortion stochastic = {zavala_distortions}")
 # print(f"Price distortion CVaR = {cvar_distortions}")
