@@ -18,13 +18,13 @@ from zavala_funcs import (
     _print_da_rt_summary,
     _stack_rt,
     compute_social_surplus,
-    compare_tail_welfare_stoch_vs_cvar
+    tail_worst_indices_by_value
 )
 
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 1
+num_instances = 100
 key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
@@ -52,6 +52,7 @@ cvar_ss_neg_total,  cvar_ss_neg_supplier,  cvar_ss_neg_consumer,  cvar_ss  = [],
 
 stoch_tail_distortions, cvar_tail_distortions, det_tail_distortions = [], [], []
 stoch_tail_welfare, cvar_tail_welfare, det_tail_welfare = [], [], []
+
 for i in range(len(instances)):
     probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar = instances[i]
 
@@ -121,11 +122,23 @@ for i in range(len(instances)):
     det_ss_neg_consumer.append(ss_det["E_neg_consumer"])
     det_ss.append(ss_det["E_social_surplus"])
 
+    # Zavala Stochastic Tail Metrics
+    stoch_tail_welfare_indices = tail_worst_indices_by_value(ss_stoch["ss_per_scenario"], probs, tail=0.05, worst="high")
+    stoch_tail_welfare.append(np.mean(ss_stoch['ss_per_scenario'][stoch_tail_welfare_indices]))     # Mean 
+    z_Pi_tail = z_Pi[stoch_tail_welfare_indices]
+    stoch_tail_distortions.append(np.mean(np.abs(z_pi - z_Pi_tail)))
 
-    # print(f"CVaR link dual = {cvar_link_dual}")
-# print(f"Price distortion stochastic = {zavala_distortions}")
-# print(f"Price distortion CVaR = {cvar_distortions}")
+    # CVaR Stochastic Tail Metrics
+    cvar_tail_welfare_indices = tail_worst_indices_by_value(ss_cvar["ss_per_scenario"], probs, tail=0.05, worst="high")
+    cvar_tail_welfare.append(np.mean(ss_cvar['ss_per_scenario'][cvar_tail_welfare_indices])) 
+    cvar_Pi_tail = cvar_Pi[cvar_tail_welfare_indices]
+    cvar_tail_distortions.append(np.mean(np.abs(cvar_pi - cvar_Pi_tail)))
 
+    # Deterministic Tail Metrics
+    det_tail_welfare_indices = tail_worst_indices_by_value(ss_det["ss_per_scenario"], probs, tail=0.05, worst="high")
+    det_tail_welfare.append(np.mean(ss_det["ss_per_scenario"][det_tail_welfare_indices]))
+    det_Pi_tail = Pi_p[det_tail_welfare_indices]
+    det_tail_distortions.append(np.mean(np.abs(pi_det - Pi_p)))
 
 # # ============== Overall Expectation Results =================
 print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
@@ -158,6 +171,11 @@ print(f"Deterministic mean E[SS]:  {np.mean(det_ss)}")
 # print(f"Real-time price = {cvar_Pi}")
 # print(f"Probability = {probs} \n")
 
-#tail metrics
-print(f'Stochastic Zavala tail welfare: {np.mean(stoch_tail_welfare)}')
-print(f'Stochastic Zavala with CVaR tail welfare: {np.mean(cvar_tail_welfare)}')
+print(f"Stochastic Tail distortions = {np.mean(stoch_tail_distortions)}")
+print(f"Stochastic Tail welfare = {np.mean(stoch_tail_welfare)}")
+
+print(f"CVaR Tail distortions = {np.mean(cvar_tail_distortions)}")
+print(f"CVaR Tail welfare = {np.mean(cvar_tail_welfare)}")
+
+print(f"Deterministic Tail distortions = {np.mean(det_tail_distortions)}")
+print(f"Deterministic Tail welfare = {np.mean(det_tail_welfare)}")
