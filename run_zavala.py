@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 from jax import random
 
 from zavala_funcs import (
@@ -24,7 +25,7 @@ from zavala_funcs import (
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 100
+num_instances = 10
 key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
@@ -137,40 +138,28 @@ for i in range(len(instances)):
     # Deterministic Tail Metrics
     det_tail_welfare_indices = tail_worst_indices_by_value(ss_det["ss_per_scenario"], probs, tail=0.05, worst="high")
     det_tail_welfare.append(np.mean(ss_det["ss_per_scenario"][det_tail_welfare_indices]))
-    det_Pi_tail = Pi_p[det_tail_welfare_indices]
+    det_Pi_tail = Pi_det[det_tail_welfare_indices]
     det_tail_distortions.append(np.mean(np.abs(pi_det - Pi_p)))
 
-# # ============== Overall Expectation Results =================
+print("============== Overall Expectation Results =================")
 print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
 print(f'Stochastic Zavala with CVaR mean distortion: {np.mean(cvar_distortions)}')
 print(f'Deterministic mean distortion: {np.mean(det_distortions)}')
 
-# print(f"Stochastic mean E[-SS]: {np.mean(stoch_ss_neg_total)} "
-#       f"(suppliers {np.mean(stoch_ss_neg_supplier)}, consumers {np.mean(stoch_ss_neg_consumer)})")
+print(f"Stochastic mean E[-SS]: {np.mean(stoch_ss_neg_total)} "
+      f"(suppliers {np.mean(stoch_ss_neg_supplier)}, consumers {np.mean(stoch_ss_neg_consumer)})")
 print(f"Stochastic mean E[SS]:  {np.mean(stoch_ss)}")
 
-# print(f'CVaR mean distortion: {np.mean(cvar_distortions)}')
-
-# print(f"CVaR       mean E[-SS]: {np.mean(cvar_ss_neg_total)} "
-#       f"(suppliers {np.mean(cvar_ss_neg_supplier)}, consumers {np.mean(cvar_ss_neg_consumer)})")
+print(f"CVaR       mean E[-SS]: {np.mean(cvar_ss_neg_total)} "
+      f"(suppliers {np.mean(cvar_ss_neg_supplier)}, consumers {np.mean(cvar_ss_neg_consumer)})")
 print(f"CVaR mean E[SS]:  {np.mean(cvar_ss)}")
 
-# print(f"Deterministic mean E[-SS]: {np.mean(det_ss_neg_total)} "
-#       f"(suppliers {np.mean(det_ss_neg_supplier)}, consumers {np.mean(det_ss_neg_consumer)})")
+print(f"Deterministic mean E[-SS]: {np.mean(det_ss_neg_total)} "
+      f"(suppliers {np.mean(det_ss_neg_supplier)}, consumers {np.mean(det_ss_neg_consumer)})")
 print(f"Deterministic mean E[SS]:  {np.mean(det_ss)}")
 
-# print("Stochastic Case \n")
-# print(f"Total Welfare = {stoch_ss_neg_total}")
-# print(f"Day-ahead price = {z_pi}")
-# print(f"Real-time price = {z_Pi}")
-# print(f"Probability = {probs} \n")
 
-# print("CVaR Stochastic Case \n")
-# print(f"Total Welfare = {cvar_ss_neg_total}")
-# print(f"Day-ahead price = {cvar_pi}")
-# print(f"Real-time price = {cvar_Pi}")
-# print(f"Probability = {probs} \n")
-
+print("######################## Tail Metrics #############################################")
 print(f"Stochastic Tail distortions = {np.mean(stoch_tail_distortions)}")
 print(f"Stochastic Tail welfare = {np.mean(stoch_tail_welfare)}")
 
@@ -179,3 +168,63 @@ print(f"CVaR Tail welfare = {np.mean(cvar_tail_welfare)}")
 
 print(f"Deterministic Tail distortions = {np.mean(det_tail_distortions)}")
 print(f"Deterministic Tail welfare = {np.mean(det_tail_welfare)}")
+
+# Compare committed vs real-time prices
+print(f"Day-ahead prices (Stoch) = {z_pi}")
+print(f"Tail real-time prices (Stoch) = {z_Pi_tail}")
+
+print(f"Day-ahead prices (CVaR) = {cvar_pi}")
+print(f"Tail real-time prices (CVaR) = {cvar_Pi_tail}")
+
+print(f"Day-ahead price (deterministic) = {pi_det}")
+print(f"Tail real-time price (deterministic) = {det_Pi_tail}")
+
+print(f"Real-time prices (Stoch) = {z_Pi}")
+print(f"Real-time prices (CVaR) = {cvar_Pi}")
+print(f"Real-time prices (deterministic) = {Pi_det}")
+
+# =========================
+# Create side-by-side histograms of z_Pi and cvar_Pi
+# =========================
+
+# Create figure with subplots
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+
+# Plot histogram of z_Pi (Stochastic)
+ax1.hist(z_Pi, bins=30, alpha=0.7, color='blue', edgecolor='black')
+ax1.set_title('Histogram of z_Pi (Stochastic Real-time Prices)', fontsize=14)
+ax1.set_xlabel('Price ($/MWh)', fontsize=12)
+ax1.set_ylabel('Frequency', fontsize=12)
+ax1.grid(True, alpha=0.3)
+
+# Plot histogram of cvar_Pi (CVaR Real-time Prices)
+ax2.hist(cvar_Pi, bins=30, alpha=0.7, color='red', edgecolor='black')
+ax2.set_title('Histogram of cvar_Pi (CVaR Real-time Prices)', fontsize=14)
+ax2.set_xlabel('Price ($/MWh)', fontsize=12)
+ax2.set_ylabel('Frequency', fontsize=12)
+ax2.grid(True, alpha=0.3)
+
+# Ensure both plots have the same y-axis scale for better comparison
+max_freq = max(ax1.get_ylim()[1], ax2.get_ylim()[1])
+ax1.set_ylim(0, max_freq)
+ax2.set_ylim(0, max_freq)
+
+# Add statistics text boxes
+stats_text1 = f'Mean: {np.mean(z_Pi):.2f}\nStd: {np.std(z_Pi):.2f}\nMin: {np.min(z_Pi):.2f}\nMax: {np.max(z_Pi):.2f}'
+stats_text2 = f'Mean: {np.mean(cvar_Pi):.2f}\nStd: {np.std(cvar_Pi):.2f}\nMin: {np.min(cvar_Pi):.2f}\nMax: {np.max(cvar_Pi):.2f}'
+
+ax1.text(0.02, 0.98, stats_text1, transform=ax1.transAxes, fontsize=10,
+         verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+ax2.text(0.02, 0.98, stats_text2, transform=ax2.transAxes, fontsize=10,
+         verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+
+plt.tight_layout()
+
+# Save the plot to visual_outputs folder
+output_path = 'visual_outputs/z_Pi_vs_cvar_Pi_histograms.png'
+plt.savefig(output_path, dpi=300, bbox_inches='tight')
+print(f"\nHistogram plot saved to: {output_path}")
+
+# Show the plot (optional - comment out if running in headless mode)
+plt.show()
+

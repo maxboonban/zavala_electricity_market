@@ -376,14 +376,23 @@ def zavala_rt_energy_only(mc_g_i, mv_d_j, g_da, d_da, g_i_bar_rt, d_j_bar_rt):
     G = cp.Variable(num_g, nonneg=True)
     D = cp.Variable(num_d, nonneg=True)
 
-    # obj = cp.Minimize(mc_g_i @ G - mv_d_j @ D)
-    obj = cp.Minimize(delta_alpha_g @ cp.abs(G - g_da) + delta_alpha_d @ cp.abs(D - d_da))
+    obj = cp.Minimize(mc_g_i @ G - mv_d_j @ D)
+    # obj = cp.Minimize(delta_alpha_g @ cp.abs(G - g_da) + delta_alpha_d @ cp.abs(D - d_da))
+
 
     balance_con = cp.sum(D) - cp.sum(G) == 0
     cons = [balance_con, G <= g_i_bar_rt, D <= d_j_bar_rt]
 
     prob = cp.Problem(obj, cons)
-    prob.solve()
+    prob.solve(
+        solver=cp.GUROBI,
+        Method=2,        # barrier
+        Crossover=0,     # no crossover → central duals
+        FeasibilityTol=1e-9,
+        OptimalityTol=1e-9,
+        BarConvTol=1e-12,
+        # OutputFlag=0,  # uncomment to silence GUROBI logs
+    )
 
     if prob.status not in ("optimal", "optimal_inaccurate"):
         raise RuntimeError(f"RT solve failed: status={prob.status}")
