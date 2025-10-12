@@ -376,8 +376,8 @@ def zavala_rt_energy_only(mc_g_i, mv_d_j, g_da, d_da, g_i_bar_rt, d_j_bar_rt):
     G = cp.Variable(num_g, nonneg=True)
     D = cp.Variable(num_d, nonneg=True)
 
-    obj = cp.Minimize(mc_g_i @ G - mv_d_j @ D)
-    # obj = cp.Minimize(delta_alpha_g @ cp.abs(G - g_da) + delta_alpha_d @ cp.abs(D - d_da))
+    # obj = cp.Minimize(mc_g_i @ G - mv_d_j @ D)
+    obj = cp.Minimize((mc_g_i + delta_alpha_g) @ cp.abs(G - g_da) + (mv_d_j + delta_alpha_d) @ cp.abs(D - d_da))
 
 
     balance_con = cp.sum(D) - cp.sum(G) == 0

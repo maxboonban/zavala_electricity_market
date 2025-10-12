@@ -183,48 +183,71 @@ print(f"Real-time prices (Stoch) = {z_Pi}")
 print(f"Real-time prices (CVaR) = {cvar_Pi}")
 print(f"Real-time prices (deterministic) = {Pi_det}")
 
-# =========================
-# Create side-by-side histograms of z_Pi and cvar_Pi
-# =========================
+print("############################ Unit Commitments #############################")
+# Unit commitments for Generators
+print(f"Day-ahead g committed quantities (Stochastic) = {z_g_i}")
+print(f"Tail Real-time g committed quantities (Stochastic) = {Z_G[stoch_tail_welfare_indices]}")
 
-# Create figure with subplots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+print(f"Day-ahead g committed quantities (CVaR) = {cvar_g_i}")
+print(f"Tail Real-time g committed quantities (CVaR) = {C_G[cvar_tail_welfare_indices]}")
 
-# Plot histogram of z_Pi (Stochastic)
-ax1.hist(z_Pi, bins=30, alpha=0.7, color='blue', edgecolor='black')
-ax1.set_title('Histogram of z_Pi (Stochastic Real-time Prices)', fontsize=14)
-ax1.set_xlabel('Price ($/MWh)', fontsize=12)
-ax1.set_ylabel('Frequency', fontsize=12)
-ax1.grid(True, alpha=0.3)
+print(f"Day-ahead g committed quantities (deterministic) = {g_det}")
+print(f"Tail Real-time g committed quantities (deterministic) = {G_det_rt[det_tail_welfare_indices]}")
 
-# Plot histogram of cvar_Pi (CVaR Real-time Prices)
-ax2.hist(cvar_Pi, bins=30, alpha=0.7, color='red', edgecolor='black')
-ax2.set_title('Histogram of cvar_Pi (CVaR Real-time Prices)', fontsize=14)
-ax2.set_xlabel('Price ($/MWh)', fontsize=12)
-ax2.set_ylabel('Frequency', fontsize=12)
-ax2.grid(True, alpha=0.3)
+# Unit commitments for Consumers
+print(f"Day-ahead d committed quantities (Stochastic) = {z_d_j}")
+print(f"Tail Real-time d committed quantities (Stochastic) = {Z_D[stoch_tail_welfare_indices]}")
 
-# Ensure both plots have the same y-axis scale for better comparison
-max_freq = max(ax1.get_ylim()[1], ax2.get_ylim()[1])
-ax1.set_ylim(0, max_freq)
-ax2.set_ylim(0, max_freq)
+print(f"Day-ahead d committed quantities (CVaR) = {cvar_d_j}")
+print(f"Tail Real-time d committed quantities (CVaR) = {C_D[cvar_tail_welfare_indices]}")
 
-# Add statistics text boxes
-stats_text1 = f'Mean: {np.mean(z_Pi):.2f}\nStd: {np.std(z_Pi):.2f}\nMin: {np.min(z_Pi):.2f}\nMax: {np.max(z_Pi):.2f}'
-stats_text2 = f'Mean: {np.mean(cvar_Pi):.2f}\nStd: {np.std(cvar_Pi):.2f}\nMin: {np.min(cvar_Pi):.2f}\nMax: {np.max(cvar_Pi):.2f}'
+print(f"Day-ahead d committed quantities (deterministic) = {d_det}")
+print(f"Tail Real-time d committed quantities (deterministic) = {D_det_rt[det_tail_welfare_indices]}")
 
-ax1.text(0.02, 0.98, stats_text1, transform=ax1.transAxes, fontsize=10,
-         verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-ax2.text(0.02, 0.98, stats_text2, transform=ax2.transAxes, fontsize=10,
-         verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
-plt.tight_layout()
 
-# Save the plot to visual_outputs folder
-output_path = 'visual_outputs/z_Pi_vs_cvar_Pi_histograms.png'
-plt.savefig(output_path, dpi=300, bbox_inches='tight')
-print(f"\nHistogram plot saved to: {output_path}")
+# # =========================
+# # Create side-by-side histograms of z_Pi and cvar_Pi
+# # =========================
 
-# Show the plot (optional - comment out if running in headless mode)
-plt.show()
+# # Create figure with subplots
+# fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+
+# # Plot histogram of z_Pi (Stochastic)
+# ax1.hist(z_Pi, bins=30, alpha=0.7, color='blue', edgecolor='black')
+# ax1.set_title('Histogram of z_Pi (Stochastic Real-time Prices)', fontsize=14)
+# ax1.set_xlabel('Price ($/MWh)', fontsize=12)
+# ax1.set_ylabel('Frequency', fontsize=12)
+# ax1.grid(True, alpha=0.3)
+
+# # Plot histogram of cvar_Pi (CVaR Real-time Prices)
+# ax2.hist(cvar_Pi, bins=30, alpha=0.7, color='red', edgecolor='black')
+# ax2.set_title('Histogram of cvar_Pi (CVaR Real-time Prices)', fontsize=14)
+# ax2.set_xlabel('Price ($/MWh)', fontsize=12)
+# ax2.set_ylabel('Frequency', fontsize=12)
+# ax2.grid(True, alpha=0.3)
+
+# # Ensure both plots have the same y-axis scale for better comparison
+# max_freq = max(ax1.get_ylim()[1], ax2.get_ylim()[1])
+# ax1.set_ylim(0, max_freq)
+# ax2.set_ylim(0, max_freq)
+
+# # Add statistics text boxes
+# stats_text1 = f'Mean: {np.mean(z_Pi):.2f}\nStd: {np.std(z_Pi):.2f}\nMin: {np.min(z_Pi):.2f}\nMax: {np.max(z_Pi):.2f}'
+# stats_text2 = f'Mean: {np.mean(cvar_Pi):.2f}\nStd: {np.std(cvar_Pi):.2f}\nMin: {np.min(cvar_Pi):.2f}\nMax: {np.max(cvar_Pi):.2f}'
+
+# ax1.text(0.02, 0.98, stats_text1, transform=ax1.transAxes, fontsize=10,
+#          verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+# ax2.text(0.02, 0.98, stats_text2, transform=ax2.transAxes, fontsize=10,
+#          verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+
+# plt.tight_layout()
+
+# # Save the plot to visual_outputs folder
+# output_path = 'visual_outputs/z_Pi_vs_cvar_Pi_histograms.png'
+# plt.savefig(output_path, dpi=300, bbox_inches='tight')
+# print(f"\nHistogram plot saved to: {output_path}")
+
+# # Show the plot (optional - comment out if running in headless mode)
+# plt.show()
 
