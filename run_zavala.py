@@ -35,8 +35,8 @@ key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
 for key in keys:
-    r = int(random.randint(k, shape=(), minval=0, maxval=1_000_000))
-    instances.append(generate_instance(k, num_scenarios=500, num_g=10, num_d=10, r=r))
+    r = int(random.randint(key, shape=(), minval=0, maxval=1_000_000))
+    instances.append(generate_instance(key, num_scenarios=500, num_g=10, num_d=10, r=r))
 # --- stochastic accumulators ---
 zavala_times = []
 zavala_distortions = []
