@@ -102,7 +102,7 @@ def _dirichlet_near_uniform(rng, n, kappa=500.0):
 
   
 def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100, r=None):
-    input_scenario = "s_htoy_mix"  # "s_1", "s_2", "s_3", "s_7", "s_htoy", "s_htoy_mix"
+    input_scenario = "s_htoy_mix_v2"  # "s_1", "s_2", "s_3", "s_7", "s_htoy", "s_htoy_mix"
 
     if input_scenario == "s_1":
         # Sid's original synthetic case with uniform distribution
@@ -208,7 +208,7 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
                                       w=0.6, a1=0.7, b1=4.0, a2=4.5, b2=2.0)
 
         # reliable pricey cap
-        g2_cap = 100.0
+        g2_cap = 1000.0
         g2 = np.full(S, g2_cap, dtype=float)
 
         # demand with mild noise, set to strain system in bad g1 cases

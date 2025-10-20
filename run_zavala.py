@@ -24,13 +24,15 @@ from zavala_funcs import (
 
 from plot_visualization import (
     plot_ss_bar_with_errorlabels,
-    plot_det_ss_distribution
+    plot_tail_welfare_means_with_errorbars,
+    plot_rt_price_histograms,
+
 )
 
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 10
+num_instances = 100
 key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
@@ -56,6 +58,10 @@ stoch_ss_neg_total, stoch_ss_neg_supplier, stoch_ss_neg_consumer, stoch_ss = [],
 det_ss_neg_total,   det_ss_neg_supplier,   det_ss_neg_consumer,   det_ss   = [], [], [], []
 cvar_ss_neg_total,  cvar_ss_neg_supplier,  cvar_ss_neg_consumer,  cvar_ss  = [], [], [], []
 
+# Price accumulators
+z_Pi_all = []
+cvar_Pi_all = []
+
 stoch_tail_distortions, cvar_tail_distortions, det_tail_distortions = [], [], []
 stoch_tail_welfare, cvar_tail_welfare, det_tail_welfare = [], [], []
 
@@ -80,6 +86,7 @@ for i in range(len(instances)):
     stoch_ss_neg_supplier.append(ss_stoch["E_neg_supplier"])
     stoch_ss_neg_consumer.append(ss_stoch["E_neg_consumer"])
     stoch_ss.append(ss_stoch["E_social_surplus"])
+    z_Pi_all.append(np.asarray(z_Pi).ravel())
 
     # ===== CVaR Zavala =====
     # >>> CHANGED: capture C_G, C_D so we can print
@@ -94,7 +101,8 @@ for i in range(len(instances)):
     cvar_ss_neg_total.append(ss_cvar["E_neg_total"])
     cvar_ss_neg_supplier.append(ss_cvar["E_neg_supplier"])
     cvar_ss_neg_consumer.append(ss_cvar["E_neg_consumer"])
-    cvar_ss.append(ss_cvar["E_social_surplus"])          
+    cvar_ss.append(ss_cvar["E_social_surplus"])    
+    cvar_Pi_all.append(np.asarray(cvar_Pi).ravel())      
 
     # ===== Deterministic Zavala (energy-only, no network) =====
     # Use expected capacities for DA
@@ -127,24 +135,25 @@ for i in range(len(instances)):
     det_ss_neg_supplier.append(ss_det["E_neg_supplier"])
     det_ss_neg_consumer.append(ss_det["E_neg_consumer"])
     det_ss.append(ss_det["E_social_surplus"])
+    
 
     # Zavala Stochastic Tail Metrics
     stoch_tail_welfare_indices = tail_worst_indices_by_value(ss_stoch["ss_per_scenario"], probs, tail=0.05, worst="high")
-    stoch_tail_welfare.append(np.mean(ss_stoch['ss_per_scenario'][stoch_tail_welfare_indices]))     # Mean 
+    stoch_tail_welfare.append(-np.mean(ss_stoch['ss_per_scenario'][stoch_tail_welfare_indices]))     # Mean (report positive social surplus)
     z_Pi_tail = z_Pi[stoch_tail_welfare_indices]
     stoch_tail_distortions.append(np.mean(np.abs(z_pi - z_Pi_tail)))
 
     # CVaR Stochastic Tail Metrics
     cvar_tail_welfare_indices = tail_worst_indices_by_value(ss_cvar["ss_per_scenario"], probs, tail=0.05, worst="high")
-    cvar_tail_welfare.append(np.mean(ss_cvar['ss_per_scenario'][cvar_tail_welfare_indices])) 
+    cvar_tail_welfare.append(-np.mean(ss_cvar['ss_per_scenario'][cvar_tail_welfare_indices])) 
     cvar_Pi_tail = cvar_Pi[cvar_tail_welfare_indices]
     cvar_tail_distortions.append(np.mean(np.abs(cvar_pi - cvar_Pi_tail)))
 
     # Deterministic Tail Metrics
     det_tail_welfare_indices = tail_worst_indices_by_value(ss_det["ss_per_scenario"], probs, tail=0.05, worst="high")
-    det_tail_welfare.append(np.mean(ss_det["ss_per_scenario"][det_tail_welfare_indices]))
+    det_tail_welfare.append(-np.mean(ss_det["ss_per_scenario"][det_tail_welfare_indices]))
     det_Pi_tail = Pi_det[det_tail_welfare_indices]
-    det_tail_distortions.append(np.mean(np.abs(pi_det - Pi_p)))
+    det_tail_distortions.append(np.mean(np.abs(pi_det - det_Pi_tail)))
 
 print("============== Overall Expectation Results =================")
 print(f'Stochastic Zavala mean distortion: {np.mean(zavala_distortions)}')
@@ -211,50 +220,38 @@ print(f"Tail Real-time d committed quantities (deterministic) = {D_det_rt[det_ta
 
 
 print(f"Stochastic Welfare Total = {stoch_ss}")
-# # =========================
-# # Create side-by-side histograms of z_Pi and cvar_Pi
-# # =========================
-
-# # Create figure with subplots
-# fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
-
-# # Plot histogram of z_Pi (Stochastic)
-# ax1.hist(z_Pi, bins=30, alpha=0.7, color='blue', edgecolor='black')
-# ax1.set_title('Histogram of z_Pi (Stochastic Real-time Prices)', fontsize=14)
-# ax1.set_xlabel('Price ($/MWh)', fontsize=12)
-# ax1.set_ylabel('Frequency', fontsize=12)
-# ax1.grid(True, alpha=0.3)
-
-# # Plot histogram of cvar_Pi (CVaR Real-time Prices)
-# ax2.hist(cvar_Pi, bins=30, alpha=0.7, color='red', edgecolor='black')
-# ax2.set_title('Histogram of cvar_Pi (CVaR Real-time Prices)', fontsize=14)
-# ax2.set_xlabel('Price ($/MWh)', fontsize=12)
-# ax2.set_ylabel('Frequency', fontsize=12)
-# ax2.grid(True, alpha=0.3)
-
-# # Ensure both plots have the same y-axis scale for better comparison
-# max_freq = max(ax1.get_ylim()[1], ax2.get_ylim()[1])
-# ax1.set_ylim(0, max_freq)
-# ax2.set_ylim(0, max_freq)
-
-# # Add statistics text boxes
-# stats_text1 = f'Mean: {np.mean(z_Pi):.2f}\nStd: {np.std(z_Pi):.2f}\nMin: {np.min(z_Pi):.2f}\nMax: {np.max(z_Pi):.2f}'
-# stats_text2 = f'Mean: {np.mean(cvar_Pi):.2f}\nStd: {np.std(cvar_Pi):.2f}\nMin: {np.min(cvar_Pi):.2f}\nMax: {np.max(cvar_Pi):.2f}'
-
-# ax1.text(0.02, 0.98, stats_text1, transform=ax1.transAxes, fontsize=10,
-#          verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-# ax2.text(0.02, 0.98, stats_text2, transform=ax2.transAxes, fontsize=10,
-#          verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-
-# plt.tight_layout()
-
-# # Save the plot to visual_outputs folder
-# output_path = 'visual_outputs/z_Pi_vs_cvar_Pi_histograms.png'
-# plt.savefig(output_path, dpi=300, bbox_inches='tight')
-# print(f"\nHistogram plot saved to: {output_path}")
-
-# # Show the plot (optional - comment out if running in headless mode)
-# plt.show()
 
 ############ OTHER visualization plots #############
 
+plot_ss_bar_with_errorlabels(
+    stoch_ss, cvar_ss, det_ss,
+    err="std",
+    title="E[SS] — mean with SD error bars",
+    savepath="visual_outputs/mean_ss_bar_sd.png",
+    show=False
+)
+# === Plot: mean tail welfare with vertical error bars ===
+plot_tail_welfare_means_with_errorbars(
+    stoch_tail_welfare,
+    cvar_tail_welfare,
+    det_tail_welfare,
+    err="std",         # use "sem" if you prefer standard error
+    show=True,         # set False if running headless
+    save=True,
+    outdir="visual_outputs",
+    filename="tail_welfare_means.png",
+)
+
+# === Aggregate real-time prices across instances and plot histograms ===
+if len(z_Pi_all) > 0 and len(cvar_Pi_all) > 0:
+    z_prices_all = np.concatenate(z_Pi_all)
+    cvar_prices_all = np.concatenate(cvar_Pi_all)
+
+    plot_rt_price_histograms(
+        z_prices_all,
+        cvar_prices_all,
+        bins=30,
+        show=False,  # headless-safe
+        savepath="visual_outputs/z_Pi_vs_cvar_Pi_histograms.png",
+    )
+    print("\nSaved side-by-side histograms to visual_outputs/z_Pi_vs_cvar_Pi_histograms.png")

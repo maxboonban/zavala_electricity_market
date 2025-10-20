@@ -21,6 +21,8 @@ def plot_ss_bar_with_errorlabels(
     else:
         errs = np.array([g.std(ddof=1) for g in groups])
         err_name = "SD"
+    # Compute per-group standard deviations (always SD, not SEM)
+    stds = np.array([g.std(ddof=1) if g.size > 1 else 0.0 for g in groups])
 
     x = np.arange(3)
     fig, ax = plt.subplots(figsize=(7, 4.5))
@@ -31,20 +33,22 @@ def plot_ss_bar_with_errorlabels(
         zorder=1
     )
 
-    # annotate numeric error above each bar
+    # annotate mean and SD above each bar
     y_max = float(np.max(means + errs))
     y_min = float(np.min(np.concatenate([means - errs, [0]])))
     pad = 0.03 * (y_max - y_min if y_max > y_min else 1.0)
     for xi, (m, e) in enumerate(zip(means, errs)):
+        label = f"mean={m:.{decimals}f}\nSD={stds[xi]:.{decimals}f}"
         ax.text(
-            xi, m + e + pad,
-            f"{err_name}={e:.{decimals}f}",
+            xi,
+            m + (e if np.isfinite(e) else 0) + pad,
+            label,
             ha="center", va="bottom", fontsize=10
         )
 
     ax.set_xticks(x, labels)
     ax.set_ylabel("Social welfare")
-    ax.set_title(title)
+    # ax.set_title(title)
     ax.grid(axis="y", linestyle=":", alpha=0.45, zorder=0)
     plt.tight_layout()
 
@@ -55,56 +59,142 @@ def plot_ss_bar_with_errorlabels(
     plt.close(fig)
     return fig, ax
 
-def plot_det_ss_distribution(
-    det_ss,
-    bins=30,
-    title="Deterministic E[SS] distribution across instances",
-    savepath="visual_outputs/det_ss_distribution.png",
-    show=False,
-):
+def plot_tail_welfare_means_with_errorbars(stoch_tail_welfare,
+                                           cvar_tail_welfare,
+                                           det_tail_welfare,
+                                           err="std",
+                                           show=False,
+                                           save=True,
+                                           outdir="visual_outputs",
+                                           filename="tail_welfare_means.png"):
     """
-    Plot the distribution of deterministic expected social surplus (E[SS])
-    across instances with a vertical mean line. Saves to `savepath`.
+    Plot mean tail welfare for Stochastic, CVaR, and Deterministic with vertical error bars.
 
     Parameters
     ----------
-    det_ss : sequence of float
-        E[SS] (positive social surplus) for the deterministic runs, one per instance.
-    bins : int
-        Number of histogram bins.
-    title : str
-        Plot title.
-    savepath : str
-        Output path for the saved image (directories created if needed).
-    show : bool
-        If True, display the figure in an interactive window.
+    stoch_tail_welfare, cvar_tail_welfare, det_tail_welfare : sequence of floats
+        Per-instance tail welfare values (e.g., mean NEG-SS on worst-tail scenarios).
+    err : {"std","sem"}, default "std"
+        Error bars show standard deviation ("std") or standard error of the mean ("sem").
+    show : bool, default False
+        Whether to call plt.show() at the end.
+    save : bool, default True
+        Whether to save the figure to disk.
+    outdir : str, default "visual_outputs"
+        Directory for the output file.
+    filename : str, default "tail_welfare_means.png"
+        Output filename.
     """
-    import os
-    import numpy as np
-    import matplotlib.pyplot as plt
+    series = [
+        np.asarray(stoch_tail_welfare, dtype=float),
+        np.asarray(cvar_tail_welfare, dtype=float),
+        np.asarray(det_tail_welfare, dtype=float),
+    ]
+    labels = ["Stochastic", "CVaR", "Deterministic"]
 
-    vals = np.asarray(det_ss, dtype=float)
+    means = [float(x.mean()) if x.size else np.nan for x in series]
+    stds  = [float(x.std(ddof=1)) if x.size > 1 else 0.0 for x in series]
+    ns    = [int(x.size) for x in series]
 
-    fig, ax = plt.subplots(figsize=(7.5, 4.5))
-    ax.hist(vals, bins=bins, edgecolor="black")
-    mu = float(np.mean(vals)) if vals.size else float("nan")
-    sd = float(np.std(vals, ddof=1)) if vals.size > 1 else float("nan")
+    if err not in {"std", "sem"}:
+        raise ValueError("err must be 'std' or 'sem'")
+    errors = stds if err == "std" else [s / np.sqrt(max(n, 1)) for s, n in zip(stds, ns)]
+    err_label_prefix = "σ" if err == "std" else "SE"
 
-    ax.axvline(mu, linestyle="--", linewidth=2, label=f"mean = {mu:.3f}")
-    ax.set_xlabel("Deterministic expected social surplus, E[SS]")
-    ax.set_ylabel("Count")
-    ax.set_title(title)
-    ax.legend()
-    ax.grid(axis="y", linestyle=":", alpha=0.4)
-    plt.tight_layout()
+    fig, ax = plt.subplots(figsize=(6.0, 4.5))
+    x = np.arange(len(labels))
 
-    # ensure output directory exists and save
-    outdir = os.path.dirname(savepath)
-    if outdir:
+    # Vertical error bars on bars
+    ax.bar(x, means, yerr=errors, capsize=6)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("Mean tail welfare")
+    ax.grid(axis="y", alpha=0.2)
+
+    # Annotate mean and SD above each bar
+    y_pad = 0.01 * (np.nanmax(means) - np.nanmin(means) + 1e-9)
+    for i, (m, e, s) in enumerate(zip(means, errors, stds)):
+        ax.text(i,
+                m + (e if np.isfinite(e) and e > 0 else 0) + y_pad,
+                f"mean={m:.2f}\nSD={s:.2f}",
+                ha="center", va="bottom", fontsize=9)
+
+    fig.tight_layout()
+
+    if save:
         os.makedirs(outdir, exist_ok=True)
-    fig.savefig(savepath, dpi=300, bbox_inches="tight")
-
+        out_path = os.path.join(outdir, filename)
+        fig.savefig(out_path, dpi=300, bbox_inches="tight")
+        print(f"[plot_tail_welfare_means_with_errorbars] saved to: {out_path}")
     if show:
         plt.show()
     plt.close(fig)
-    return mu, sd, savepath
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def plot_rt_price_histograms(
+    z_prices,
+    cvar_prices,
+    bins=30,
+    show=False,
+    savepath=None,
+    title_left="Histogram of Π(ω) — Stochastic",
+    title_right="Histogram of Π(ω) — CVaR"
+):
+    """
+    Side-by-side histograms comparing real-time prices from the stochastic run (z_prices)
+    and from the CVaR run (cvar_prices). Accepts 1-D arrays (flattened across all scenarios/instances).
+    """
+    z = np.asarray(z_prices, dtype=float).ravel()
+    c = np.asarray(cvar_prices, dtype=float).ravel()
+
+    # Common bin edges for fair comparison
+    vmin = float(np.nanmin([z.min(), c.min()])) if z.size and c.size else 0.0
+    vmax = float(np.nanmax([z.max(), c.max()])) if z.size and c.size else 1.0
+    if not np.isfinite(vmin) or not np.isfinite(vmax) or vmin == vmax:
+        vmin, vmax = 0.0, 1.0
+    edges = np.linspace(vmin, vmax, int(bins) + 1)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+
+    n1, _, _ = ax1.hist(z, bins=edges, alpha=0.7, edgecolor='black')
+    ax1.set_title(title_left, fontsize=14)
+    ax1.set_xlabel('Price ($/MWh)', fontsize=12)
+    ax1.set_ylabel('Frequency', fontsize=12)
+    ax1.grid(True, alpha=0.3)
+
+    n2, _, _ = ax2.hist(c, bins=edges, alpha=0.7, edgecolor='black', color='tab:red')
+    ax2.set_title(title_right, fontsize=14)
+    ax2.set_xlabel('Price ($/MWh)', fontsize=12)
+    ax2.set_ylabel('Frequency', fontsize=12)
+    ax2.grid(True, alpha=0.3)
+
+    # Match y-lims
+    y_max = max(float(np.nanmax(n1)) if n1.size else 0.0,
+                float(np.nanmax(n2)) if n2.size else 0.0)
+    ax1.set_ylim(0, y_max * 1.05 if y_max > 0 else 1)
+    ax2.set_ylim(ax1.get_ylim())
+
+    # Stats boxes
+    stats_text1 = f"Mean: {np.nanmean(z):.2f}\nStd: {np.nanstd(z):.2f}\nMin: {np.nanmin(z):.2f}\nMax: {np.nanmax(z):.2f}"
+    stats_text2 = f"Mean: {np.nanmean(c):.2f}\nStd: {np.nanstd(c):.2f}\nMin: {np.nanmin(c):.2f}\nMax: {np.nanmax(c):.2f}"
+    ax1.text(0.02, 0.98, stats_text1, transform=ax1.transAxes, fontsize=10,
+             va='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    ax2.text(0.02, 0.98, stats_text2, transform=ax2.transAxes, fontsize=10,
+             va='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+
+    plt.tight_layout()
+
+    if savepath:
+        os.makedirs(os.path.dirname(savepath), exist_ok=True)
+        plt.savefig(savepath, dpi=300, bbox_inches='tight')
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return fig, (ax1, ax2)
