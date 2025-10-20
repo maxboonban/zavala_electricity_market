@@ -101,7 +101,7 @@ def _dirichlet_near_uniform(rng, n, kappa=500.0):
     return p / p.sum()
 
   
-def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100):
+def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100, r=None):
     input_scenario = "s_htoy_mix"  # "s_1", "s_2", "s_3", "s_7", "s_htoy", "s_htoy_mix"
 
     if input_scenario == "s_1":
@@ -165,7 +165,7 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
     
     elif input_scenario == "s_htoy_mix":
-        rng = np.random.default_rng(12)  
+        rng = np.random.default_rng(r)  
 
         S = max(num_scenarios, 200)  # ensure plenty of scenarios
         probs = _dirichlet_near_uniform(rng, S, kappa=800.0)
@@ -179,7 +179,7 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
                                       w=0.6, a1=0.7, b1=4.0, a2=4.5, b2=2.0)
 
         # reliable pricey cap
-        g2_cap = 55.0
+        g2_cap = 75.0
         g2 = np.full(S, g2_cap, dtype=float)
 
         # demand with mild noise, set to strain system in bad g1 cases
@@ -193,6 +193,37 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         
         return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
     
+    elif input_scenario == "s_htoy_mix_v2":
+        rng = np.random.default_rng(r) 
+
+        S = max(num_scenarios, 200)  # ensure plenty of scenarios
+        probs = _dirichlet_near_uniform(rng, S, kappa=800.0)
+
+        # bids: cheap unreliable vs. reliable but pricier
+        mc_g_i = np.array([1.0, 20.0], dtype=float)
+        mv_d_j = np.array([1000.0], dtype=float)  # inelastic-ish
+
+        
+        g1 = _beta_mixture_left_heavy(rng, S, low=0.0, high=100.0,
+                                      w=0.6, a1=0.7, b1=4.0, a2=4.5, b2=2.0)
+
+        # reliable pricey cap
+        g2_cap = 100.0
+        g2 = np.full(S, g2_cap, dtype=float)
+
+        # demand with mild noise, set to strain system in bad g1 cases
+        d_mean = 92.0
+        d_sd   = 3.0
+        d1 = np.clip(rng.normal(d_mean, d_sd, size=S), 86.0, 98.0)
+
+        # d1 = np.full(S, 100.0)    # Keep demand fixed like in Zavala's paper
+
+        g_i_bar = np.stack([g1, g2], axis=1)  
+        d_j_bar = d1.reshape(S, 1)            
+
+        
+        return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
+
     elif input_scenario == "s_real10_mix":
         rng = np.random.default_rng(2025)
 

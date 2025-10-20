@@ -22,6 +22,11 @@ from zavala_funcs import (
     tail_worst_indices_by_value
 )
 
+from plot_visualization import (
+    plot_ss_bar_with_errorlabels,
+    plot_det_ss_distribution
+)
+
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
@@ -30,8 +35,8 @@ key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
 for key in keys:
-    instances.append(generate_instance(key, num_scenarios=500, num_g=10, num_d=10))
-
+    r = int(random.randint(k, shape=(), minval=0, maxval=1_000_000))
+    instances.append(generate_instance(k, num_scenarios=500, num_g=10, num_d=10, r=r))
 # --- stochastic accumulators ---
 zavala_times = []
 zavala_distortions = []
@@ -205,7 +210,7 @@ print(f"Day-ahead d committed quantities (deterministic) = {d_det}")
 print(f"Tail Real-time d committed quantities (deterministic) = {D_det_rt[det_tail_welfare_indices]}")
 
 
-
+print(f"Stochastic Welfare Total = {stoch_ss}")
 # # =========================
 # # Create side-by-side histograms of z_Pi and cvar_Pi
 # # =========================
@@ -250,4 +255,6 @@ print(f"Tail Real-time d committed quantities (deterministic) = {D_det_rt[det_ta
 
 # # Show the plot (optional - comment out if running in headless mode)
 # plt.show()
+
+############ OTHER visualization plots #############
 
