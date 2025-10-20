@@ -879,7 +879,7 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     G_i_jax = jnp.array([[G_i[p][i].value for i in range(num_g)] for p in range(len(probs))])
     D_j_jax = jnp.array([[D_j[p][j].value for j in range(num_d)] for p in range(len(probs))])
     pi = day_ahead_balance[0].dual_value
-    Pi = jnp.array([real_time_balance[p].dual_value / probs[p] for p in range(len(probs))])
+    Pi = jnp.array([real_time_balance[p].dual_value / (probs[p] + cvar_link[p].dual_value) for p in range(len(probs))])
     cvar_link_dual = jnp.array([float(np.asarray(c.dual_value).ravel()[0]) if c.dual_value is not None else np.nan for c in cvar_link])
 
     return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi, cvar_link_dual

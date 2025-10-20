@@ -32,7 +32,7 @@ from plot_visualization import (
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 100
+num_instances = 10
 key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
@@ -182,6 +182,11 @@ print(f"CVaR Tail welfare = {np.mean(cvar_tail_welfare)}")
 
 print(f"Deterministic Tail distortions = {np.mean(det_tail_distortions)}")
 print(f"Deterministic Tail welfare = {np.mean(det_tail_welfare)}")
+
+print("######################## Prices #############################################")
+print(f"Mean Real-time prices (Stoch) = {np.mean(z_Pi)}")
+print(f"Mean Real-time prices (CVaR) = {np.mean(cvar_Pi)}")
+print(f"Mean Real-time prices (deterministic) = {np.mean(Pi_det)}")
 
 # Compare committed vs real-time prices
 print(f"Day-ahead prices (Stoch) = {z_pi}")
