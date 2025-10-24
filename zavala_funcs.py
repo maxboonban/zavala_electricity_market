@@ -226,6 +226,7 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
 
     elif input_scenario == "s_real10_mix":
         rng = np.random.default_rng(2025)
+        # rng = np.random.default_rng(r) 
 
         S = num_scenarios
         #S = max(num_scenarios, 400)  
@@ -799,7 +800,7 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 
     # --- CVaR knobs ---
     beta = 0.95
-    lambda_cvar = 0.1  # set >0 to turn on CVaR regularization
+    lambda_cvar = 0.2  # set >0 to turn on CVaR regularization
 
     # --- Build per-scenario loss L_p ---
     Lp = []

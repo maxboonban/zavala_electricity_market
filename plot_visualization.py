@@ -32,22 +32,26 @@ def plot_ss_bar_with_errorlabels(
         ecolor="black", error_kw={"elinewidth": 2, "capsize": 6},
         zorder=1
     )
+    # --- zoom the y-axis around means ± errors (keeps differences visible) ---
+    y_low  = float(np.min(means - errs))
+    y_high = float(np.max(means + errs))
+    span   = y_high - y_low if y_high > y_low else 1.0
+    ax.set_ylim(y_low - 0.15*span, y_high + 0.20*span)
 
-    # annotate mean and SD above each bar
-    y_max = float(np.max(means + errs))
-    y_min = float(np.min(np.concatenate([means - errs, [0]])))
-    pad = 0.03 * (y_max - y_min if y_max > y_min else 1.0)
+    # annotate mean and SD above each bar (pad from current axis span)
+    span_for_text = ax.get_ylim()[1] - ax.get_ylim()[0]
+    text_pad = 0.03 * span_for_text
     for xi, (m, e) in enumerate(zip(means, errs)):
         label = f"mean={m:.{decimals}f}\nSD={stds[xi]:.{decimals}f}"
         ax.text(
             xi,
-            m + (e if np.isfinite(e) else 0) + pad,
+            m + (e if np.isfinite(e) else 0) + text_pad,
             label,
-            ha="center", va="bottom", fontsize=10
+            ha="center", va="bottom", fontsize=10, clip_on=True
         )
 
     ax.set_xticks(x, labels)
-    ax.set_ylabel("Social welfare")
+    ax.set_ylabel("Social Surplus")
     # ax.set_title(title)
     ax.grid(axis="y", linestyle=":", alpha=0.45, zorder=0)
     plt.tight_layout()
@@ -106,9 +110,17 @@ def plot_tail_welfare_means_with_errorbars(stoch_tail_welfare,
 
     # Vertical error bars on bars
     ax.bar(x, means, yerr=errors, capsize=6)
+
+    # --- zoom the y-axis around means ± errors ---
+    y_low  = float(np.min(np.asarray(means) - np.asarray(errors)))
+    y_high = float(np.max(np.asarray(means) + np.asarray(errors)))
+    span   = y_high - y_low if y_high > y_low else 1.0
+    pad    = 0.15 * span
+    ax.set_ylim(y_low - pad, y_high + pad)
+
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
-    ax.set_ylabel("Mean tail welfare")
+    ax.set_ylabel("Mean tail social surplus")
     ax.grid(axis="y", alpha=0.2)
 
     # Annotate mean and SD above each bar
@@ -198,3 +210,135 @@ def plot_rt_price_histograms(
         plt.close(fig)
 
     return fig, (ax1, ax2)
+
+# ############################################# Without Standard Deviation Plots ####################################
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import os
+
+# def plot_ss_bar_with_errorlabels(
+#     stoch_ss, cvar_ss, det_ss,
+#     err="std",                      # "std" or "sem"
+#     title="Mean with error bars",
+#     decimals=3,                     # how many decimals to show
+#     savepath=None,
+#     show=False,
+# ):
+#     groups = [np.asarray(stoch_ss, float),
+#               np.asarray(cvar_ss,  float),
+#               np.asarray(det_ss,   float)]
+#     labels = ["Stochastic", "CVaR", "Deterministic"]
+
+#     means = np.array([g.mean() for g in groups])
+
+#     if err.lower() == "sem":
+#         errs = np.array([g.std(ddof=1)/np.sqrt(max(len(g), 1)) for g in groups])
+#     else:  # "std"
+#         errs = np.array([g.std(ddof=1) for g in groups])
+
+#     x = np.arange(3)
+#     fig, ax = plt.subplots(figsize=(7, 4.5))
+#     ax.bar(
+#         x, means, yerr=errs, width=0.55,
+#         edgecolor="black", color="#88c", alpha=0.65,
+#         ecolor="black", error_kw={"elinewidth": 2, "capsize": 6},
+#         zorder=1
+#     )
+
+#     # --- zoom the y-axis around means ± errors (keeps differences visible) ---
+#     y_low  = float(np.min(means - errs))
+#     y_high = float(np.max(means + errs))
+#     span   = y_high - y_low if y_high > y_low else 1.0
+#     ax.set_ylim(y_low - 0.15*span, y_high + 0.20*span)
+
+#     # annotate mean only (pad from current axis span)
+#     span_for_text = ax.get_ylim()[1] - ax.get_ylim()[0]
+#     text_pad = 0.03 * span_for_text
+#     for xi, (m, e) in enumerate(zip(means, errs)):
+#         ax.text(
+#             xi,
+#             m + (e if np.isfinite(e) else 0) + text_pad,
+#             f"mean={m:.{decimals}f}",
+#             ha="center", va="bottom", fontsize=10, clip_on=True
+#         )
+
+#     ax.set_xticks(x, labels)
+#     ax.set_ylabel("Social Surplus")
+#     # ax.set_title(title)
+#     ax.grid(axis="y", linestyle=":", alpha=0.45, zorder=0)
+#     plt.tight_layout()
+
+#     if savepath:
+#         os.makedirs(os.path.dirname(savepath) or ".", exist_ok=True)
+#         plt.savefig(savepath, dpi=300, bbox_inches="tight")
+#     if show:
+#         plt.show()
+#     plt.close(fig)
+#     return fig, ax
+
+
+# def plot_tail_welfare_means_with_errorbars(stoch_tail_welfare,
+#                                            cvar_tail_welfare,
+#                                            det_tail_welfare,
+#                                            err="std",
+#                                            show=False,
+#                                            save=True,
+#                                            outdir="visual_outputs",
+#                                            filename="tail_welfare_means.png"):
+#     """
+#     Plot mean tail welfare for Stochastic, CVaR, and Deterministic with vertical error bars.
+#     Error bars can be standard deviation ("std") or standard error of the mean ("sem").
+#     Annotations show mean values only.
+#     """
+#     series = [
+#         np.asarray(stoch_tail_welfare, dtype=float),
+#         np.asarray(cvar_tail_welfare, dtype=float),
+#         np.asarray(det_tail_welfare, dtype=float),
+#     ]
+#     labels = ["Stochastic", "CVaR", "Deterministic"]
+
+#     means = np.array([x.mean() if x.size else np.nan for x in series])
+#     stds  = np.array([x.std(ddof=1) if x.size > 1 else 0.0 for x in series])
+#     ns    = np.array([int(x.size) for x in series])
+
+#     if err not in {"std", "sem"}:
+#         raise ValueError("err must be 'std' or 'sem'")
+#     errors = stds if err == "std" else stds / np.sqrt(np.maximum(ns, 1))
+
+#     fig, ax = plt.subplots(figsize=(6.0, 4.5))
+#     x = np.arange(len(labels))
+
+#     # Vertical error bars on bars
+#     ax.bar(x, means, yerr=errors, capsize=6, edgecolor="black", color="#88c", alpha=0.65)
+
+#     # --- zoom the y-axis around means ± errors ---
+#     y_low  = float(np.nanmin(means - errors))
+#     y_high = float(np.nanmax(means + errors))
+#     span   = y_high - y_low if y_high > y_low else 1.0
+#     pad    = 0.15 * span
+#     ax.set_ylim(y_low - pad, y_high + pad)
+
+#     ax.set_xticks(x)
+#     ax.set_xticklabels(labels)
+#     ax.set_ylabel("Mean tail social surplus")
+#     ax.grid(axis="y", alpha=0.2)
+
+#     # Annotate mean only
+#     span_for_text = ax.get_ylim()[1] - ax.get_ylim()[0]
+#     text_pad = 0.03 * span_for_text
+#     for i, (m, e) in enumerate(zip(means, errors)):
+#         ax.text(i,
+#                 m + (e if np.isfinite(e) and e > 0 else 0) + text_pad,
+#                 f"mean={m:.2f}",
+#                 ha="center", va="bottom", fontsize=9, clip_on=True)
+
+#     fig.tight_layout()
+
+#     if save:
+#         os.makedirs(outdir, exist_ok=True)
+#         out_path = os.path.join(outdir, filename)
+#         fig.savefig(out_path, dpi=300, bbox_inches="tight")
+#         print(f"[plot_tail_welfare_means_with_errorbars] saved to: {out_path}")
+#     if show:
+#         plt.show()
+#     plt.close(fig)
