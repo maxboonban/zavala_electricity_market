@@ -211,6 +211,84 @@ def plot_rt_price_histograms(
 
     return fig, (ax1, ax2)
 
+# === Overlay plot: E[SS] means and tail-welfare means on same axes ===
+
+def plot_ss_and_tail_overlay(
+    stoch_ss, cvar_ss, det_ss,
+    stoch_tail_welfare, cvar_tail_welfare, det_tail_welfare,
+    title="E[SS] vs Tail Welfare (overlay)",
+    decimals=2,
+    savepath=None,
+    show=False,
+    tail_alpha=0.35
+):
+    """
+    Overlay bar chart: solid bars show mean E[SS]; translucent bars (narrower) show mean tail welfare
+    at the same x positions. No error bars; annotations show mean values only.
+    """
+    labels = ["Stochastic", "CVaR", "Deterministic"]
+
+    ss_groups   = [np.asarray(stoch_ss, float),
+                   np.asarray(cvar_ss,  float),
+                   np.asarray(det_ss,   float)]
+    tail_groups = [np.asarray(stoch_tail_welfare, float),
+                   np.asarray(cvar_tail_welfare,  float),
+                   np.asarray(det_tail_welfare,   float)]
+
+    ss_means   = np.array([g.mean() if g.size else np.nan for g in ss_groups])
+    tail_means = np.array([g.mean() if g.size else np.nan for g in tail_groups])
+
+    x = np.arange(len(labels))
+
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+
+    # Base bars: E[SS] (solid)
+    width_base = 0.55
+    bars_ss = ax.bar(
+        x, ss_means, width=width_base,
+        edgecolor="black", color="#88c", alpha=0.90, zorder=1, label="E[SS] mean"
+    )
+
+    # Overlay bars: tail welfare (narrower & translucent)
+    width_overlay = 0.35
+    bars_tail = ax.bar(
+        x, tail_means, width=width_overlay,
+        edgecolor="black", color="tab:orange", alpha=tail_alpha, zorder=2, label="Tail welfare mean"
+    )
+
+    # Axis cosmetics
+    all_means = np.concatenate([ss_means, tail_means])
+    y_low  = float(np.nanmin(all_means))
+    y_high = float(np.nanmax(all_means))
+    span   = y_high - y_low if np.isfinite(y_high - y_low) and (y_high > y_low) else 1.0
+    ax.set_ylim(y_low - 0.15*span, y_high + 0.25*span)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("Social Surplus")
+    # ax.set_title(title)
+    ax.grid(axis="y", linestyle=":", alpha=0.45, zorder=0)
+
+    # Mean labels (no SD), offset a bit above each bar
+    pad = 0.03 * (ax.get_ylim()[1] - ax.get_ylim()[0])
+    for xi, m in enumerate(ss_means):
+        if np.isfinite(m):
+            ax.text(xi, m + pad, f"{m:.{decimals}f}", ha="center", va="bottom", fontsize=10)
+    for xi, m in enumerate(tail_means):
+        if np.isfinite(m):
+            ax.text(xi, m + 0.5*pad, f"{m:.{decimals}f}", ha="center", va="bottom", fontsize=9, color="tab:orange")
+
+    ax.legend(frameon=True)
+
+    plt.tight_layout()
+    if savepath:
+        os.makedirs(os.path.dirname(savepath) or ".", exist_ok=True)
+        fig.savefig(savepath, dpi=300, bbox_inches="tight")
+    if show:
+        plt.show()
+    plt.close(fig)
+    return fig, ax
+
 # ############################################# Without Standard Deviation Plots ####################################
 # import numpy as np
 # import matplotlib.pyplot as plt

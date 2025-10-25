@@ -800,7 +800,7 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 
     # --- CVaR knobs ---
     beta = 0.95
-    lambda_cvar = 0.2  # set >0 to turn on CVaR regularization
+    lambda_cvar = 0.1  # set >0 to turn on CVaR regularization
 
     # --- Build per-scenario loss L_p ---
     Lp = []

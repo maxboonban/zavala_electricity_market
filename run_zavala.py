@@ -26,7 +26,7 @@ from plot_visualization import (
     plot_ss_bar_with_errorlabels,
     plot_tail_welfare_means_with_errorbars,
     plot_rt_price_histograms,
-
+    plot_ss_and_tail_overlay
 )
 
 # =========================
@@ -228,35 +228,42 @@ print(f"Stochastic Welfare Total = {stoch_ss}")
 
 ############ OTHER visualization plots #############
 
-plot_ss_bar_with_errorlabels(
+# plot_ss_bar_with_errorlabels(
+#     stoch_ss, cvar_ss, det_ss,
+#     err="std",
+#     title="E[SS] — mean with SD error bars",
+#     savepath="visual_outputs/mean_ss_bar_sd.png",
+#     show=False
+# )
+# # === Plot: mean tail welfare with vertical error bars ===
+# plot_tail_welfare_means_with_errorbars(
+#     stoch_tail_welfare,
+#     cvar_tail_welfare,
+#     det_tail_welfare,
+#     err="std",         # use "sem" if you prefer standard error
+#     show=True,         # set False if running headless
+#     save=True,
+#     outdir="visual_outputs",
+#     filename="tail_welfare_means.png",
+# )
+
+# # === Aggregate real-time prices across instances and plot histograms ===
+# if len(z_Pi_all) > 0 and len(cvar_Pi_all) > 0:
+#     z_prices_all = np.concatenate(z_Pi_all)
+#     cvar_prices_all = np.concatenate(cvar_Pi_all)
+
+#     plot_rt_price_histograms(
+#         z_prices_all,
+#         cvar_prices_all,
+#         bins=30,
+#         show=False,  # headless-safe
+#         savepath="visual_outputs/z_Pi_vs_cvar_Pi_histograms.png",
+#     )
+#     print("\nSaved side-by-side histograms to visual_outputs/z_Pi_vs_cvar_Pi_histograms.png")
+
+plot_ss_and_tail_overlay(
     stoch_ss, cvar_ss, det_ss,
-    err="std",
-    title="E[SS] — mean with SD error bars",
-    savepath="visual_outputs/mean_ss_bar_sd.png",
-    show=False
+    stoch_tail_welfare, cvar_tail_welfare, det_tail_welfare,
+    savepath="visual_outputs/ss_vs_tail_overlay.png",
+    show=False  # or True if you want to display
 )
-# === Plot: mean tail welfare with vertical error bars ===
-plot_tail_welfare_means_with_errorbars(
-    stoch_tail_welfare,
-    cvar_tail_welfare,
-    det_tail_welfare,
-    err="std",         # use "sem" if you prefer standard error
-    show=True,         # set False if running headless
-    save=True,
-    outdir="visual_outputs",
-    filename="tail_welfare_means.png",
-)
-
-# === Aggregate real-time prices across instances and plot histograms ===
-if len(z_Pi_all) > 0 and len(cvar_Pi_all) > 0:
-    z_prices_all = np.concatenate(z_Pi_all)
-    cvar_prices_all = np.concatenate(cvar_Pi_all)
-
-    plot_rt_price_histograms(
-        z_prices_all,
-        cvar_prices_all,
-        bins=30,
-        show=False,  # headless-safe
-        savepath="visual_outputs/z_Pi_vs_cvar_Pi_histograms.png",
-    )
-    print("\nSaved side-by-side histograms to visual_outputs/z_Pi_vs_cvar_Pi_histograms.png")
