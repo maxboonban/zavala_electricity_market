@@ -102,7 +102,7 @@ def _dirichlet_near_uniform(rng, n, kappa=500.0):
 
   
 def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100, r=None):
-    input_scenario = "s_real10_mix"  # "s_1", "s_2", "s_3", "s_7", "s_htoy", "s_htoy_mix"
+    input_scenario = "s_htoy_mix_v2"  # "s_1", "s_2", "s_3", "s_7", "s_htoy", "s_htoy_mix"
 
     if input_scenario == "s_1":
         # Sid's original synthetic case with uniform distribution
@@ -800,7 +800,7 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 
     # --- CVaR knobs ---
     beta = 0.95
-    lambda_cvar = 0.1  # set >0 to turn on CVaR regularization
+    lambda_cvar = 0.5  # set >0 to turn on CVaR regularization
 
     # --- Build per-scenario loss L_p ---
     Lp = []
