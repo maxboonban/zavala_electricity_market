@@ -32,7 +32,7 @@ from plot_visualization import (
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 500
+num_instances = 50
 # seeds = [2025, 100, 500, 45, 69, 1]
 # seeds that didn't work = [5]
 key = random.key(200)
