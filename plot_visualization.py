@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 def plot_ss_bar_with_errorlabels(
     stoch_ss, cvar_ss, det_ss,
-    err="std",                      # "std" or "sem"
+    err="sem",                      # "std" or "sem"
     title="Mean with error bars",
     decimals=3,                    # how many decimals to show
     savepath=None,
@@ -15,14 +15,11 @@ def plot_ss_bar_with_errorlabels(
     labels = ["Stochastic", "CVaR", "Deterministic"]
 
     means = np.array([g.mean() for g in groups])
-    if err.lower() == "sem":
-        errs = np.array([g.std(ddof=1)/np.sqrt(len(g)) for g in groups])
-        err_name = "SEM"
-    else:
-        errs = np.array([g.std(ddof=1) for g in groups])
-        err_name = "SD"
-    # Compute per-group standard deviations (always SD, not SEM)
+    # Use STANDARD ERROR for error bars: SE = SD / sqrt(n)
+    ns   = np.array([g.size for g in groups], dtype=int)
     stds = np.array([g.std(ddof=1) if g.size > 1 else 0.0 for g in groups])
+    errs = np.array([stds[i] / np.sqrt(max(ns[i], 1)) for i in range(len(groups))])
+    err_name = "SE"
 
     x = np.arange(3)
     fig, ax = plt.subplots(figsize=(7, 4.5))
@@ -41,15 +38,21 @@ def plot_ss_bar_with_errorlabels(
     # annotate mean and SD above each bar (pad from current axis span)
     span_for_text = ax.get_ylim()[1] - ax.get_ylim()[0]
     text_pad = 0.03 * span_for_text
+    # for xi, (m, e) in enumerate(zip(means, errs)):
+    #     label = f"mean={m:.{decimals}f}\nstandard error={stds[xi]:.{decimals}f}"
+    #     ax.text(
+    #         xi,
+    #         m + (e if np.isfinite(e) else 0) + text_pad,
+    #         label,
+    #         ha="center", va="bottom", fontsize=10, clip_on=True
+    #     )
     for xi, (m, e) in enumerate(zip(means, errs)):
-        label = f"mean={m:.{decimals}f}\nSD={stds[xi]:.{decimals}f}"
         ax.text(
-            xi,
-            m + (e if np.isfinite(e) else 0) + text_pad,
-            label,
+            xi, m + (e if np.isfinite(e) else 0) + text_pad,
+            f"mean={m:.{decimals}f}\nstandard error={e:.{decimals}f}",
             ha="center", va="bottom", fontsize=10, clip_on=True
         )
-
+        
     ax.set_xticks(x, labels)
     ax.set_ylabel("Social Surplus")
     # ax.set_title(title)
@@ -66,7 +69,7 @@ def plot_ss_bar_with_errorlabels(
 def plot_tail_welfare_means_with_errorbars(stoch_tail_welfare,
                                            cvar_tail_welfare,
                                            det_tail_welfare,
-                                           err="std",
+                                           err="sem",
                                            show=False,
                                            save=True,
                                            outdir="visual_outputs",
@@ -100,10 +103,9 @@ def plot_tail_welfare_means_with_errorbars(stoch_tail_welfare,
     stds  = [float(x.std(ddof=1)) if x.size > 1 else 0.0 for x in series]
     ns    = [int(x.size) for x in series]
 
-    if err not in {"std", "sem"}:
-        raise ValueError("err must be 'std' or 'sem'")
-    errors = stds if err == "std" else [s / np.sqrt(max(n, 1)) for s, n in zip(stds, ns)]
-    err_label_prefix = "σ" if err == "std" else "SE"
+    # Use STANDARD ERROR for error bars: SE = SD / sqrt(n)
+    errors = [s / np.sqrt(max(n, 1)) for s, n in zip(stds, ns)]
+    err_label_prefix = "SE"
 
     fig, ax = plt.subplots(figsize=(6.0, 4.5))
     x = np.arange(len(labels))
@@ -132,10 +134,14 @@ def plot_tail_welfare_means_with_errorbars(stoch_tail_welfare,
 
     # Annotate mean and SD above each bar
     y_pad = 0.01 * (np.nanmax(means) - np.nanmin(means) + 1e-9)
-    for i, (m, e, s) in enumerate(zip(means, errors, stds)):
-        ax.text(i,
-                m + (e if np.isfinite(e) and e > 0 else 0) + y_pad,
-                f"mean={m:.2f}\nSD={s:.2f}",
+    # for i, (m, e, s) in enumerate(zip(means, errors, stds)):
+    #     ax.text(i,
+    #             m + (e if np.isfinite(e) and e > 0 else 0) + y_pad,
+    #             f"mean={m:.2f}\nstandard error={s:.2f}",
+    #             ha="center", va="bottom", fontsize=9)
+    for i, (m, e) in enumerate(zip(means, errors)):
+        ax.text(i, m + (e if np.isfinite(e) and e > 0 else 0) + y_pad,
+                f"mean={m:.2f}\nstandard error={e:.2f}",
                 ha="center", va="bottom", fontsize=9)
 
     fig.tight_layout()
