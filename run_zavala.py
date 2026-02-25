@@ -29,10 +29,14 @@ from plot_visualization import (
     plot_ss_and_tail_overlay
 )
 
+from zavala_funcs_gurobi import (
+    zavala_gurobi
+)
+
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 50
+num_instances = 1
 # seeds = [2025, 100, 500, 45, 69, 1]
 # seeds that didn't work = [5]
 key = random.key(200)
@@ -77,6 +81,8 @@ for i in range(len(instances)):
         # ===== Stochastic Zavala =====
         # >>> CHANGED: capture Z_G, Z_D instead of discarding
         z_g_i, z_d_j, Z_G, Z_D, z_pi, z_Pi = zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar)
+        z_g_i, z_d_j, Z_G, Z_D, z_pi, z_Pi = zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar)
+
 
         probs_feasible.append(probability_feasible(probs, z_g_i, z_d_j, g_i_bar, d_j_bar))
         zavala_distortions.append(price_distortion(probs, z_pi, z_Pi))
@@ -93,6 +99,55 @@ for i in range(len(instances)):
         stoch_ss_neg_consumer.append(ss_stoch["E_neg_consumer"])
         stoch_ss.append(ss_stoch["E_social_surplus"])
         z_Pi_all.append(np.asarray(z_Pi).ravel())
+
+        # === Compare with native Gurobi implementation (minimal, prices only) ===
+        try:
+            g_grb, d_grb, G_grb, D_grb, pi_grb, Pi_grb = zavala_gurobi(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar)
+            print("\n[Compare] zavala vs zavala_gurobi")
+
+            # --- 0) shapes first (catches 80% of mismatches) ---
+            print("[Shapes]")
+            print("  g_da:", np.asarray(z_g_i).shape, "vs", np.asarray(g_grb).shape)
+            print("  d_da:", np.asarray(z_d_j).shape, "vs", np.asarray(d_grb).shape)
+            print("  G_rt:", np.asarray(Z_G).shape,  "vs", np.asarray(G_grb).shape)
+            print("  D_rt:", np.asarray(Z_D).shape,  "vs", np.asarray(D_grb).shape)
+            print("  Π_rt:", np.asarray(z_Pi).shape, "vs", np.asarray(Pi_grb).shape)
+
+            # --- 1) DA price ---
+            print("\n[Price check] DA π — CVXPY vs GUROBI:")
+            print(f"  π_cvxpy  = {float(z_pi):.10f}")
+            print(f"  π_gurobi = {float(pi_grb):.10f}")
+            print(f"  Δπ       = {float(z_pi - pi_grb):+.3e}")
+
+            # --- 2) RT prices (with length guard) ---
+            _Pi_cvx = np.asarray(z_Pi, dtype=float).ravel()
+            _Pi_grb = np.asarray(Pi_grb, dtype=float).ravel()
+            if _Pi_cvx.size != _Pi_grb.size:
+                print(f"\n[Price check] RT Π(ω): length mismatch cvxpy={_Pi_cvx.size} vs gurobi={_Pi_grb.size}")
+            else:
+                _max_abs = float(np.max(np.abs(_Pi_cvx - _Pi_grb)))
+                print("\n[Price check] RT Π(ω) — max |Δ| =", f"{_max_abs:.6e}")
+                print("  Π_cvxpy[0:5]  =", _Pi_cvx[:5])
+                print("  Π_gurobi[0:5] =", _Pi_grb[:5])
+
+            # --- 3) PRIMAL checks (this is what you’re missing) ---
+            def _max_abs_diff(a, b):
+                a=np.asarray(a, dtype=float); b=np.asarray(b, dtype=float)
+                if a.shape != b.shape: return None
+                return float(np.max(np.abs(a-b))) if a.size else 0.0
+
+            dg = _max_abs_diff(z_g_i, g_grb)
+            dd = _max_abs_diff(z_d_j, d_grb)
+            dG = _max_abs_diff(Z_G,  G_grb)
+            dD = _max_abs_diff(Z_D,  D_grb)
+
+            print("\n[Primal check] max |Δ| (None = shape mismatch)")
+            print("  DA g:", dg)
+            print("  DA d:", dd)
+            print("  RT G:", dG)
+            print("  RT D:", dD)
+        except Exception as _e_grb:
+            print("[WARN] Gurobi-native comparison skipped due to error:", _e_grb)
 
         # ===== CVaR Zavala =====
         # >>> CHANGED: capture C_G, C_D so we can print
@@ -240,24 +295,24 @@ for i in range(len(instances)):
 
 ############ OTHER visualization plots #############
 
-plot_ss_bar_with_errorlabels(
-    stoch_ss, cvar_ss, det_ss,
-    err="sem",
-    title="E[SS] — mean with SD error bars",
-    savepath="visual_outputs/mean_ss_bar_sd.png",
-    show=False
-)
-# === Plot: mean tail welfare with vertical error bars ===
-plot_tail_welfare_means_with_errorbars(
-    stoch_tail_welfare,
-    cvar_tail_welfare,
-    det_tail_welfare,
-    err="sem",         # use "sem" if you prefer standard error
-    show=True,         # set False if running headless
-    save=True,
-    outdir="visual_outputs",
-    filename="tail_welfare_means.png",
-)
+# plot_ss_bar_with_errorlabels(
+#     stoch_ss, cvar_ss, det_ss,
+#     err="sem",
+#     title="E[SS] — mean with SD error bars",
+#     savepath="visual_outputs/mean_ss_bar_sd.png",
+#     show=False
+# )
+# # === Plot: mean tail welfare with vertical error bars ===
+# plot_tail_welfare_means_with_errorbars(
+#     stoch_tail_welfare,
+#     cvar_tail_welfare,
+#     det_tail_welfare,
+#     err="sem",         # use "sem" if you prefer standard error
+#     show=True,         # set False if running headless
+#     save=True,
+#     outdir="visual_outputs",
+#     filename="tail_welfare_means.png",
+# )
 
 # # === Aggregate real-time prices across instances and plot histograms ===
 # if len(z_Pi_all) > 0 and len(cvar_Pi_all) > 0:
