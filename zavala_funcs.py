@@ -52,16 +52,19 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 
     # Define the problem and solve it
     prob = cp.Problem(objective, constraints)
-    # prob.solve()
-    prob.solve(
-        solver=cp.GUROBI,
-        Method=2,        # barrier
-        Crossover=0,     # no crossover → central duals
-        FeasibilityTol=1e-9,
-        OptimalityTol=1e-9,
-        BarConvTol=1e-12,
-        # OutputFlag=0,  # uncomment to silence GUROBI logs
-    )
+
+    # prob.solve(
+    #     solver=cp.GUROBI,
+    #     Method=2,        # barrier
+    #     Crossover=0,     # no crossover → central duals
+    #     FeasibilityTol=1e-9,
+    #     OptimalityTol=1e-9,
+    #     BarConvTol=1e-12,
+    #     # verbose=True
+    #     # OutputFlag=0,  # uncomment to silence GUROBI logs
+    # )
+
+    prob.solve(solver=cp.GUROBI, verbose=True)
 
     # # Print solver statistics for debugging
     # print(f"Solver: {prob.solver_stats.solver_name}, Status: {prob.status}, Iterations: {prob.solver_stats.num_iters}")
@@ -863,17 +866,19 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 
     # Define the problem and solve it
     prob = cp.Problem(objective, constraints)
-    # prob.solve()
-    prob.solve(
-        solver=cp.GUROBI,
-        Method=2,        # barrier
-        Crossover=0,     # no crossover → central duals
-        FeasibilityTol=1e-9,
-        OptimalityTol=1e-9,
-        BarConvTol=1e-12,
-        # OutputFlag=0,  # uncomment to silence GUROBI logs
-    )
 
+    # prob.solve(
+    #     solver=cp.GUROBI,
+    #     Method=2,        # barrier
+    #     Crossover=0,     # no crossover → central duals
+    #     FeasibilityTol=1e-9,
+    #     OptimalityTol=1e-9,
+    #     BarConvTol=1e-12,
+    #     verbose=True
+    #     # OutputFlag=0,  # uncomment to silence GUROBI logs
+    # )
+
+    prob.solve(solver=cp.GUROBI, verbose=True)
     # # Print solver statistics for debugging
     # print(f"Solver: {prob.solver_stats.solver_name}, Status: {prob.status}, Iterations: {prob.solver_stats.num_iters}")
 
