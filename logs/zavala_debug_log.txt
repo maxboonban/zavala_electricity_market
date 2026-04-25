@@ -1,0 +1,821 @@
+Zavala diagnostics log
+
+===== Stochastic =====
+DA price pi: 1000.000000
+E[RT price]: 999.937615
+DA allocation by tech: {'solar': 142.0388, 'wind': 1028.8026, 'thermal': 27023.72, 'total': 28194.5614}
+Expected RT allocation by tech: {'solar': 265.2777, 'wind': 920.3233, 'thermal': 27023.72, 'total': 28209.321}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1   62.251667  139.312460  7.706079e+01
+  solar_2   36.670337   61.996185  2.532585e+01
+  solar_3   43.116784   63.969013  2.085223e+01
+   wind_1  689.058504  587.676384 -1.013821e+02
+   wind_2  113.000000  141.062718  2.806272e+01
+   wind_3  226.744088  191.584209 -3.515988e+01
+thermal_1 6922.330000 6922.330000 -1.818989e-12
+thermal_2 6837.620000 6837.620000 -6.366463e-12
+thermal_3 6742.080000 6742.080000  8.185452e-12
+thermal_4 6521.690000 6521.690000 -9.094947e-13
+DA load: 28194.561380
+E[RT load]: 28209.320970
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR =====
+DA price pi: 1100.000000
+E[RT price]: 989.920279
+DA allocation by tech: {'solar': 24.2003, 'wind': 907.4584, 'thermal': 27023.72, 'total': 27955.3787}
+Expected RT allocation by tech: {'solar': 265.2777, 'wind': 920.3233, 'thermal': 27023.72, 'total': 28209.321}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    4.937956  139.312460  1.343745e+02
+  solar_2   16.228874   61.996185  4.576731e+01
+  solar_3    3.033493   63.969013  6.093552e+01
+   wind_1  618.601783  587.676384 -3.092540e+01
+   wind_2   89.000000  141.062718  5.206272e+01
+   wind_3  199.856601  191.584209 -8.272391e+00
+thermal_1 6922.330000 6922.330000 -1.818989e-12
+thermal_2 6837.620000 6837.620000 -6.366463e-12
+thermal_3 6742.080000 6742.080000  8.185452e-12
+thermal_4 6521.690000 6521.690000 -9.094947e-13
+DA load: 27955.378707
+E[RT load]: 28209.320970
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== Deterministic =====
+DA price pi: 1000.000000
+E[RT price]: 559.242235
+DA allocation by tech: {'solar': 265.2777, 'wind': 920.3233, 'thermal': 27023.72, 'total': 28209.321}
+Expected RT allocation by tech: {'solar': 197.9908, 'wind': 672.1799, 'thermal': 27023.72, 'total': 27893.8906}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1  139.312460  102.422803 -3.688966e+01
+  solar_2   61.996185   45.824609 -1.617158e+01
+  solar_3   63.969013   49.743338 -1.422567e+01
+   wind_1  587.676384  454.270045 -1.334063e+02
+   wind_2  141.062718   88.123316 -5.293940e+01
+   wind_3  191.584209  129.786503 -6.179771e+01
+thermal_1 6922.330000 6922.330000 -1.818989e-12
+thermal_2 6837.620000 6837.620000 -4.547474e-12
+thermal_3 6742.080000 6742.080000  8.185452e-12
+thermal_4 6521.690000 6521.690000 -9.094947e-13
+DA load: 28209.320970
+E[RT load]: 27893.890615
+DA supply - DA load: -0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR - Stochastic DA difference =====
+      gen    stoch_DA     cvar_DA  cvar_minus_stoch
+  solar_1   62.251667    4.937956        -57.313712
+  solar_2   36.670337   16.228874        -20.441463
+  solar_3   43.116784    3.033493        -40.083290
+   wind_1  689.058504  618.601783        -70.456720
+   wind_2  113.000000   89.000000        -24.000000
+   wind_3  226.744088  199.856601        -26.887488
+thermal_1 6922.330000 6922.330000          0.000000
+thermal_2 6837.620000 6837.620000          0.000000
+thermal_3 6742.080000 6742.080000          0.000000
+thermal_4 6521.690000 6521.690000          0.000000
+Tech-level difference: {'solar': -117.8385, 'wind': -121.3442, 'thermal': 0.0, 'total': -239.1827}
+
+===== COST SUMMARY =====
+Stochastic | E_cost=57076045.59, VaR=83751408.98, CVaR=87630239.77, RiskAdjustedTotalCost=144706285.36
+CVaR       | E_cost=57076039.05, VaR=83751436.06, CVaR=87630289.11, RiskAdjustedTotalCost=144706328.16
+Deterministic | E_cost=57388062.64, VaR=83751179.14, CVaR=87972619.51, RiskAdjustedTotalCost=145360682.15
+
+===== Stochastic =====
+DA price pi: 1000.000000
+E[RT price]: 999.824005
+DA allocation by tech: {'solar': 0.0, 'wind': 549.9006, 'thermal': 27023.72, 'total': 27573.6206}
+Expected RT allocation by tech: {'solar': 146.9947, 'wind': 775.9585, 'thermal': 27023.72, 'total': 27946.6732}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    0.000000   83.605689  8.360569e+01
+  solar_2    0.000000   33.149701  3.314970e+01
+  solar_3    0.000000   30.239316  3.023932e+01
+   wind_1  326.156993  459.352394  1.331954e+02
+   wind_2  138.000000  168.515508  3.051551e+01
+   wind_3   85.743563  148.090622  6.234706e+01
+thermal_1 6922.330000 6922.330000  3.637979e-12
+thermal_2 6837.620000 6837.620000 -9.094947e-13
+thermal_3 6742.080000 6742.080000  1.818989e-12
+thermal_4 6521.690000 6521.690000 -4.547474e-12
+DA load: 27573.620556
+E[RT load]: 27946.673230
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR =====
+DA price pi: 1100.000000
+E[RT price]: 989.752463
+DA allocation by tech: {'solar': 0.0, 'wind': 479.7393, 'thermal': 27023.72, 'total': 27503.4593}
+Expected RT allocation by tech: {'solar': 146.9947, 'wind': 775.9585, 'thermal': 27023.72, 'total': 27946.6732}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    0.000000   83.605689  8.360569e+01
+  solar_2    0.000000   33.149701  3.314970e+01
+  solar_3    0.000000   30.239316  3.023932e+01
+   wind_1  273.851645  459.352394  1.855007e+02
+   wind_2  132.000000  168.515508  3.651551e+01
+   wind_3   73.887663  148.090622  7.420296e+01
+thermal_1 6922.330000 6922.330000  3.637979e-12
+thermal_2 6837.620000 6837.620000 -9.094947e-13
+thermal_3 6742.080000 6742.080000  1.818989e-12
+thermal_4 6521.690000 6521.690000 -4.547474e-12
+DA load: 27503.459308
+E[RT load]: 27946.673230
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== Deterministic =====
+DA price pi: 1000.000000
+E[RT price]: 704.690088
+DA allocation by tech: {'solar': 146.9947, 'wind': 775.9585, 'thermal': 27023.72, 'total': 27946.6732}
+Expected RT allocation by tech: {'solar': 102.9233, 'wind': 449.8002, 'thermal': 27023.72, 'total': 27576.4434}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1   83.605689   58.148771 -2.545692e+01
+  solar_2   33.149701   22.627555 -1.052215e+01
+  solar_3   30.239316   22.146934 -8.092382e+00
+   wind_1  459.352394  262.749336 -1.966031e+02
+   wind_2  168.515508  112.757793 -5.575771e+01
+   wind_3  148.090622   74.293027 -7.379759e+01
+thermal_1 6922.330000 6922.330000  3.637979e-12
+thermal_2 6837.620000 6837.620000  0.000000e+00
+thermal_3 6742.080000 6742.080000  0.000000e+00
+thermal_4 6521.690000 6521.690000 -4.547474e-12
+DA load: 27946.673230
+E[RT load]: 27576.443416
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR - Stochastic DA difference =====
+      gen    stoch_DA     cvar_DA  cvar_minus_stoch
+  solar_1    0.000000    0.000000          0.000000
+  solar_2    0.000000    0.000000          0.000000
+  solar_3    0.000000    0.000000          0.000000
+   wind_1  326.156993  273.851645        -52.305348
+   wind_2  138.000000  132.000000         -6.000000
+   wind_3   85.743563   73.887663        -11.855900
+thermal_1 6922.330000 6922.330000          0.000000
+thermal_2 6837.620000 6837.620000          0.000000
+thermal_3 6742.080000 6742.080000          0.000000
+thermal_4 6521.690000 6521.690000          0.000000
+Tech-level difference: {'solar': 0.0, 'wind': -70.1612, 'thermal': 0.0, 'total': -70.1612}
+
+===== COST SUMMARY =====
+Stochastic | E_cost=54404820.28, VaR=65964345.28, CVaR=67646760.70, RiskAdjustedTotalCost=122051580.99
+CVaR       | E_cost=54404809.01, VaR=65964272.69, CVaR=67646719.19, RiskAdjustedTotalCost=122051528.20
+Deterministic | E_cost=54770752.71, VaR=66183472.68, CVaR=67940636.22, RiskAdjustedTotalCost=122711388.93
+
+===== Stochastic =====
+DA price pi: 1000.000000
+E[RT price]: 999.861182
+DA allocation by tech: {'solar': 0.0, 'wind': 548.7993, 'thermal': 27023.72, 'total': 27572.5193}
+Expected RT allocation by tech: {'solar': 140.7439, 'wind': 786.4075, 'thermal': 27023.72, 'total': 27950.8714}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    0.000000   81.391019  8.139102e+01
+  solar_2    0.000000   30.210870  3.021087e+01
+  solar_3    0.000000   29.142060  2.914206e+01
+   wind_1  329.999655  466.263752  1.362641e+02
+   wind_2  130.000000  169.572373  3.957237e+01
+   wind_3   88.799665  150.571349  6.177168e+01
+thermal_1 6922.330000 6922.330000 -6.366463e-12
+thermal_2 6837.620000 6837.620000 -1.818989e-12
+thermal_3 6742.080000 6742.080000 -9.094947e-13
+thermal_4 6521.690000 6521.690000  1.818989e-12
+DA load: 27572.519320
+E[RT load]: 27950.871423
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR =====
+DA price pi: 1100.000000
+E[RT price]: 989.794614
+DA allocation by tech: {'solar': 0.0, 'wind': 472.6525, 'thermal': 27023.72, 'total': 27496.3725}
+Expected RT allocation by tech: {'solar': 140.7439, 'wind': 786.4075, 'thermal': 27023.72, 'total': 27950.8714}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    0.000000   81.391019  8.139102e+01
+  solar_2    0.000000   30.210870  3.021087e+01
+  solar_3    0.000000   29.142060  2.914206e+01
+   wind_1  274.823384  466.263752  1.914404e+02
+   wind_2  125.000000  169.572373  4.457237e+01
+   wind_3   72.829100  150.571349  7.774225e+01
+thermal_1 6922.330000 6922.330000 -6.366463e-12
+thermal_2 6837.620000 6837.620000 -1.818989e-12
+thermal_3 6742.080000 6742.080000 -9.094947e-13
+thermal_4 6521.690000 6521.690000  1.818989e-12
+DA load: 27496.372484
+E[RT load]: 27950.871423
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== Deterministic =====
+DA price pi: 1000.000000
+E[RT price]: 693.972281
+DA allocation by tech: {'solar': 140.7439, 'wind': 786.4075, 'thermal': 27023.72, 'total': 27950.8714}
+Expected RT allocation by tech: {'solar': 92.4654, 'wind': 458.7883, 'thermal': 27023.72, 'total': 27574.9738}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1   81.391019   53.952592 -2.743843e+01
+  solar_2   30.210870   18.075825 -1.213505e+01
+  solar_3   29.142060   20.437029 -8.705031e+00
+   wind_1  466.263752  269.049226 -1.972145e+02
+   wind_2  169.572373  112.840075 -5.673230e+01
+   wind_3  150.571349   76.899022 -7.367233e+01
+thermal_1 6922.330000 6922.330000 -8.185452e-12
+thermal_2 6837.620000 6837.620000 -9.094947e-13
+thermal_3 6742.080000 6742.080000  0.000000e+00
+thermal_4 6521.690000 6521.690000  1.818989e-12
+DA load: 27950.871423
+E[RT load]: 27574.973768
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR - Stochastic DA difference =====
+      gen    stoch_DA     cvar_DA  cvar_minus_stoch
+  solar_1    0.000000    0.000000          0.000000
+  solar_2    0.000000    0.000000          0.000000
+  solar_3    0.000000    0.000000          0.000000
+   wind_1  329.999655  274.823384        -55.176272
+   wind_2  130.000000  125.000000         -5.000000
+   wind_3   88.799665   72.829100        -15.970564
+thermal_1 6922.330000 6922.330000          0.000000
+thermal_2 6837.620000 6837.620000          0.000000
+thermal_3 6742.080000 6742.080000          0.000000
+thermal_4 6521.690000 6521.690000          0.000000
+Tech-level difference: {'solar': 0.0, 'wind': -76.1468, 'thermal': 0.0, 'total': -76.1468}
+
+===== COST SUMMARY =====
+Stochastic | E_cost=54011547.00, VaR=66122251.04, CVaR=68002307.17, RiskAdjustedTotalCost=122013854.17
+CVaR       | E_cost=54011537.91, VaR=66122175.78, CVaR=68002261.05, RiskAdjustedTotalCost=122013798.96
+Deterministic | E_cost=54383211.38, VaR=66307621.30, CVaR=68067934.93, RiskAdjustedTotalCost=122451146.31
+
+===== Stochastic =====
+DA price pi: 1000.000000
+E[RT price]: 999.911108
+DA allocation by tech: {'solar': 153.1442, 'wind': 789.2455, 'thermal': 27023.72, 'total': 27966.1097}
+Expected RT allocation by tech: {'solar': 247.3979, 'wind': 830.2156, 'thermal': 27023.72, 'total': 28101.3336}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1   57.873079  130.582067  7.270899e+01
+  solar_2   55.000000   57.283966  2.283966e+00
+  solar_3   40.271122   59.531914  1.926079e+01
+   wind_1  545.785380  531.492790 -1.429259e+01
+   wind_2   58.000000  125.854641  6.785464e+01
+   wind_3  185.460151  172.868206 -1.259194e+01
+thermal_1 6922.330000 6922.330000  4.547474e-12
+thermal_2 6837.620000 6837.620000 -7.275958e-12
+thermal_3 6742.080000 6742.080000  3.637979e-12
+thermal_4 6521.690000 6521.690000  6.366463e-12
+DA load: 27966.109732
+E[RT load]: 28101.333583
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR =====
+DA price pi: 1100.000000
+E[RT price]: 989.832491
+DA allocation by tech: {'solar': 115.2126, 'wind': 731.1054, 'thermal': 27023.72, 'total': 27870.038}
+Expected RT allocation by tech: {'solar': 247.3979, 'wind': 830.2156, 'thermal': 27023.72, 'total': 28101.3336}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1   36.428881  130.582067  9.415319e+01
+  solar_2   45.000000   57.283966  1.228397e+01
+  solar_3   33.783737   59.531914  2.574818e+01
+   wind_1  500.019112  531.492790  3.147368e+01
+   wind_2   56.000000  125.854641  6.985464e+01
+   wind_3  175.086238  172.868206 -2.218032e+00
+thermal_1 6922.330000 6922.330000  4.547474e-12
+thermal_2 6837.620000 6837.620000 -7.275958e-12
+thermal_3 6742.080000 6742.080000  3.637979e-12
+thermal_4 6521.690000 6521.690000  6.366463e-12
+DA load: 27870.037968
+E[RT load]: 28101.333583
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== Deterministic =====
+DA price pi: 1000.000000
+E[RT price]: 601.068605
+DA allocation by tech: {'solar': 247.3979, 'wind': 830.2156, 'thermal': 27023.72, 'total': 28101.3336}
+Expected RT allocation by tech: {'solar': 193.0139, 'wind': 589.4742, 'thermal': 27023.72, 'total': 27806.2081}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1  130.582067   98.937991 -3.164408e+01
+  solar_2   57.283966   46.594570 -1.068940e+01
+  solar_3   59.531914   47.481333 -1.205058e+01
+   wind_1  531.492790  372.628623 -1.588642e+02
+   wind_2  125.854641   68.576406 -5.727823e+01
+   wind_3  172.868206  148.269157 -2.459905e+01
+thermal_1 6922.330000 6922.330000  4.547474e-12
+thermal_2 6837.620000 6837.620000 -8.185452e-12
+thermal_3 6742.080000 6742.080000  1.818989e-12
+thermal_4 6521.690000 6521.690000  6.366463e-12
+DA load: 28101.333583
+E[RT load]: 27806.208080
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR - Stochastic DA difference =====
+      gen    stoch_DA     cvar_DA  cvar_minus_stoch
+  solar_1   57.873079   36.428881        -21.444198
+  solar_2   55.000000   45.000000        -10.000000
+  solar_3   40.271122   33.783737         -6.487385
+   wind_1  545.785380  500.019112        -45.766267
+   wind_2   58.000000   56.000000         -2.000000
+   wind_3  185.460151  175.086238        -10.373913
+thermal_1 6922.330000 6922.330000          0.000000
+thermal_2 6837.620000 6837.620000          0.000000
+thermal_3 6742.080000 6742.080000          0.000000
+thermal_4 6521.690000 6521.690000          0.000000
+Tech-level difference: {'solar': -37.9316, 'wind': -58.1402, 'thermal': 0.0, 'total': -96.0718}
+
+===== COST SUMMARY =====
+Stochastic | E_cost=50102250.14, VaR=74327792.69, CVaR=79534793.98, RiskAdjustedTotalCost=129637044.12
+CVaR       | E_cost=50102243.46, VaR=74327900.87, CVaR=79534766.70, RiskAdjustedTotalCost=129637010.16
+Deterministic | E_cost=50393742.14, VaR=74990294.92, CVaR=79689008.49, RiskAdjustedTotalCost=130082750.63
+
+===== Stochastic =====
+DA price pi: 1000.000000
+E[RT price]: 999.667957
+DA allocation by tech: {'solar': 23.7785, 'wind': 399.9873, 'thermal': 27023.72, 'total': 27447.4858}
+Expected RT allocation by tech: {'solar': 143.8457, 'wind': 573.3022, 'thermal': 27023.72, 'total': 27740.8679}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    1.152190   83.615974  8.246378e+01
+  solar_2    8.000000   27.688187  1.968819e+01
+  solar_3   14.626295   32.541543  1.791525e+01
+   wind_1  205.050117  326.552735  1.215026e+02
+   wind_2  131.000000  141.563199  1.056320e+01
+   wind_3   63.937175  105.186249  4.124907e+01
+thermal_1 6922.330000 6922.330000 -4.547474e-12
+thermal_2 6837.620000 6837.620000 -1.818989e-12
+thermal_3 6742.080000 6742.080000 -1.091394e-11
+thermal_4 6521.690000 6521.690000 -2.728484e-12
+DA load: 27447.485777
+E[RT load]: 27740.867887
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR =====
+DA price pi: 1100.000000
+E[RT price]: 989.601724
+DA allocation by tech: {'solar': 9.2591, 'wind': 368.6858, 'thermal': 27023.72, 'total': 27401.6649}
+Expected RT allocation by tech: {'solar': 143.8457, 'wind': 573.3022, 'thermal': 27023.72, 'total': 27740.8679}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    0.493796   83.615974  8.312218e+01
+  solar_2    7.000000   27.688187  2.068819e+01
+  solar_3    1.765349   32.541543  3.077619e+01
+   wind_1  181.824263  326.552735  1.447285e+02
+   wind_2  127.000000  141.563199  1.456320e+01
+   wind_3   59.861501  105.186249  4.532475e+01
+thermal_1 6922.330000 6922.330000 -4.547474e-12
+thermal_2 6837.620000 6837.620000 -1.818989e-12
+thermal_3 6742.080000 6742.080000 -1.091394e-11
+thermal_4 6521.690000 6521.690000 -2.728484e-12
+DA load: 27401.664909
+E[RT load]: 27740.867887
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== Deterministic =====
+DA price pi: 1000.000000
+E[RT price]: 770.397006
+DA allocation by tech: {'solar': 143.8457, 'wind': 573.3022, 'thermal': 27023.72, 'total': 27740.8679}
+Expected RT allocation by tech: {'solar': 109.2605, 'wind': 319.1685, 'thermal': 27023.72, 'total': 27452.149}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1   83.615974   62.279650 -2.133632e+01
+  solar_2   27.688187   21.889944 -5.798243e+00
+  solar_3   32.541543   25.090873 -7.450670e+00
+   wind_1  326.552735  149.895711 -1.766570e+02
+   wind_2  141.563199  118.274473 -2.328873e+01
+   wind_3  105.186249   50.998321 -5.418793e+01
+thermal_1 6922.330000 6922.330000 -1.818989e-12
+thermal_2 6837.620000 6837.620000 -1.818989e-12
+thermal_3 6742.080000 6742.080000 -1.091394e-11
+thermal_4 6521.690000 6521.690000 -9.094947e-13
+DA load: 27740.867887
+E[RT load]: 27452.148972
+DA supply - DA load: -0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR - Stochastic DA difference =====
+      gen    stoch_DA     cvar_DA  cvar_minus_stoch
+  solar_1    1.152190    0.493796         -0.658394
+  solar_2    8.000000    7.000000         -1.000000
+  solar_3   14.626295    1.765349        -12.860946
+   wind_1  205.050117  181.824263        -23.225853
+   wind_2  131.000000  127.000000         -4.000000
+   wind_3   63.937175   59.861501         -4.075674
+thermal_1 6922.330000 6922.330000          0.000000
+thermal_2 6837.620000 6837.620000          0.000000
+thermal_3 6742.080000 6742.080000          0.000000
+thermal_4 6521.690000 6521.690000          0.000000
+Tech-level difference: {'solar': -14.5193, 'wind': -31.3015, 'thermal': 0.0, 'total': -45.8209}
+
+===== COST SUMMARY =====
+Stochastic | E_cost=53634683.68, VaR=66143063.50, CVaR=67512022.97, RiskAdjustedTotalCost=121146706.64
+CVaR       | E_cost=53634669.92, VaR=66143004.24, CVaR=67511983.73, RiskAdjustedTotalCost=121146653.65
+Deterministic | E_cost=53919329.87, VaR=66295899.48, CVaR=67651413.56, RiskAdjustedTotalCost=121570743.43
+
+===== Stochastic =====
+DA price pi: 1000.000000
+E[RT price]: 999.841758
+DA allocation by tech: {'solar': 0.0, 'wind': 890.4318, 'thermal': 27023.72, 'total': 27914.1518}
+Expected RT allocation by tech: {'solar': 184.5846, 'wind': 992.8776, 'thermal': 27023.72, 'total': 28201.1822}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    0.000000  112.418020  1.124180e+02
+  solar_2    0.000000   30.421583  3.042158e+01
+  solar_3    0.000000   41.745034  4.174503e+01
+   wind_1  532.084317  611.016547  7.893223e+01
+   wind_2  193.000000  181.432434 -1.156757e+01
+   wind_3  165.347463  200.428611  3.508115e+01
+thermal_1 6922.330000 6922.330000 -1.818989e-12
+thermal_2 6837.620000 6837.620000 -9.094947e-13
+thermal_3 6742.080000 6742.080000  3.637979e-12
+thermal_4 6521.690000 6521.690000 -2.728484e-12
+DA load: 27914.151780
+E[RT load]: 28201.182229
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR =====
+DA price pi: 1100.000000
+E[RT price]: 989.843256
+DA allocation by tech: {'solar': 0.0, 'wind': 733.1301, 'thermal': 27023.72, 'total': 27756.8501}
+Expected RT allocation by tech: {'solar': 184.5846, 'wind': 992.8776, 'thermal': 27023.72, 'total': 28201.1822}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    0.000000  112.418020  1.124180e+02
+  solar_2    0.000000   30.421583  3.042158e+01
+  solar_3    0.000000   41.745034  4.174503e+01
+   wind_1  435.017189  611.016547  1.759994e+02
+   wind_2  170.000000  181.432434  1.143243e+01
+   wind_3  128.112933  200.428611  7.231568e+01
+thermal_1 6922.330000 6922.330000 -1.818989e-12
+thermal_2 6837.620000 6837.620000 -9.094947e-13
+thermal_3 6742.080000 6742.080000  3.637979e-12
+thermal_4 6521.690000 6521.690000 -2.728484e-12
+DA load: 27756.850122
+E[RT load]: 28201.182229
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== Deterministic =====
+DA price pi: 1000.000000
+E[RT price]: 688.090668
+DA allocation by tech: {'solar': 184.5846, 'wind': 992.8776, 'thermal': 27023.72, 'total': 28201.1822}
+Expected RT allocation by tech: {'solar': 134.7657, 'wind': 632.6695, 'thermal': 27023.72, 'total': 27791.1552}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1  112.418020   79.500303 -3.291772e+01
+  solar_2   30.421583   23.140783 -7.280800e+00
+  solar_3   41.745034   32.124634 -9.620400e+00
+   wind_1  611.016547  386.291428 -2.247251e+02
+   wind_2  181.432434  133.101966 -4.833047e+01
+   wind_3  200.428611  113.276063 -8.715255e+01
+thermal_1 6922.330000 6922.330000 -1.818989e-12
+thermal_2 6837.620000 6837.620000 -1.818989e-12
+thermal_3 6742.080000 6742.080000  3.637979e-12
+thermal_4 6521.690000 6521.690000 -4.547474e-12
+DA load: 28201.182229
+E[RT load]: 27791.155177
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR - Stochastic DA difference =====
+      gen    stoch_DA     cvar_DA  cvar_minus_stoch
+  solar_1    0.000000    0.000000          0.000000
+  solar_2    0.000000    0.000000          0.000000
+  solar_3    0.000000    0.000000          0.000000
+   wind_1  532.084317  435.017189        -97.067127
+   wind_2  193.000000  170.000000        -23.000000
+   wind_3  165.347463  128.112933        -37.234530
+thermal_1 6922.330000 6922.330000          0.000000
+thermal_2 6837.620000 6837.620000          0.000000
+thermal_3 6742.080000 6742.080000          0.000000
+thermal_4 6521.690000 6521.690000          0.000000
+Tech-level difference: {'solar': 0.0, 'wind': -157.3017, 'thermal': 0.0, 'total': -157.3017}
+
+===== COST SUMMARY =====
+Stochastic | E_cost=49498552.51, VaR=65510828.54, CVaR=69641851.00, RiskAdjustedTotalCost=119140403.52
+CVaR       | E_cost=49498536.87, VaR=65510949.20, CVaR=69641916.61, RiskAdjustedTotalCost=119140453.48
+Deterministic | E_cost=49903548.44, VaR=66392230.32, CVaR=70251076.60, RiskAdjustedTotalCost=120154625.04
+
+===== Stochastic =====
+DA price pi: 1000.000000
+E[RT price]: 999.911250
+DA allocation by tech: {'solar': 209.1252, 'wind': 556.7211, 'thermal': 27023.72, 'total': 27789.5663}
+Expected RT allocation by tech: {'solar': 267.1379, 'wind': 701.506, 'thermal': 27023.72, 'total': 27992.3638}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1  129.313737  158.138784  2.882505e+01
+  solar_2   26.000000   49.296727  2.329673e+01
+  solar_3   53.811419   59.702346  5.890928e+00
+   wind_1  357.081048  447.777126  9.069608e+01
+   wind_2   76.000000  106.171085  3.017109e+01
+   wind_3  123.640100  147.557765  2.391766e+01
+thermal_1 6922.330000 6922.330000 -7.275958e-12
+thermal_2 6837.620000 6837.620000  4.547474e-12
+thermal_3 6742.080000 6742.080000  9.094947e-13
+thermal_4 6521.690000 6521.690000  9.094947e-13
+DA load: 27789.566304
+E[RT load]: 27992.363833
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR =====
+DA price pi: 1100.000000
+E[RT price]: 989.815779
+DA allocation by tech: {'solar': 189.1196, 'wind': 543.0838, 'thermal': 27023.72, 'total': 27755.9234}
+Expected RT allocation by tech: {'solar': 267.1379, 'wind': 701.506, 'thermal': 27023.72, 'total': 27992.3638}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1  117.308185  158.138784  4.083060e+01
+  solar_2   18.000000   49.296727  3.129673e+01
+  solar_3   53.811419   59.702346  5.890928e+00
+   wind_1  341.939130  447.777126  1.058380e+02
+   wind_2   72.000000  106.171085  3.417109e+01
+   wind_3  129.144625  147.557765  1.841314e+01
+thermal_1 6922.330000 6922.330000 -7.275958e-12
+thermal_2 6837.620000 6837.620000  4.547474e-12
+thermal_3 6742.080000 6742.080000  9.094947e-13
+thermal_4 6521.690000 6521.690000  9.094947e-13
+DA load: 27755.923359
+E[RT load]: 27992.363833
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== Deterministic =====
+DA price pi: 1000.000000
+E[RT price]: 654.332139
+DA allocation by tech: {'solar': 267.1379, 'wind': 701.506, 'thermal': 27023.72, 'total': 27992.3638}
+Expected RT allocation by tech: {'solar': 223.0026, 'wind': 483.2542, 'thermal': 27023.72, 'total': 27729.9768}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1  158.138784  133.355649 -2.478313e+01
+  solar_2   49.296727   37.935400 -1.136133e+01
+  solar_3   59.702346   51.711550 -7.990796e+00
+   wind_1  447.777126  278.455113 -1.693220e+02
+   wind_2  106.171085   80.245434 -2.592565e+01
+   wind_3  147.557765  124.553695 -2.300407e+01
+thermal_1 6922.330000 6922.330000 -7.275958e-12
+thermal_2 6837.620000 6837.620000  3.637979e-12
+thermal_3 6742.080000 6742.080000  9.094947e-13
+thermal_4 6521.690000 6521.690000  2.728484e-12
+DA load: 27992.363833
+E[RT load]: 27729.976841
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR - Stochastic DA difference =====
+      gen    stoch_DA     cvar_DA  cvar_minus_stoch
+  solar_1  129.313737  117.308185        -12.005552
+  solar_2   26.000000   18.000000         -8.000000
+  solar_3   53.811419   53.811419          0.000000
+   wind_1  357.081048  341.939130        -15.141918
+   wind_2   76.000000   72.000000         -4.000000
+   wind_3  123.640100  129.144625          5.504525
+thermal_1 6922.330000 6922.330000          0.000000
+thermal_2 6837.620000 6837.620000          0.000000
+thermal_3 6742.080000 6742.080000          0.000000
+thermal_4 6521.690000 6521.690000          0.000000
+Tech-level difference: {'solar': -20.0056, 'wind': -13.6374, 'thermal': 0.0, 'total': -33.6429}
+
+===== COST SUMMARY =====
+Stochastic | E_cost=75242415.64, VaR=105919832.22, CVaR=109144173.31, RiskAdjustedTotalCost=184386588.95
+CVaR       | E_cost=75242413.08, VaR=105919812.53, CVaR=109144179.14, RiskAdjustedTotalCost=184386592.22
+Deterministic | E_cost=75501567.97, VaR=105919996.77, CVaR=109183207.75, RiskAdjustedTotalCost=184684775.71
+
+===== Stochastic =====
+DA price pi: 1000.000000
+E[RT price]: 999.802522
+DA allocation by tech: {'solar': 31.4882, 'wind': 867.8268, 'thermal': 27023.72, 'total': 27923.035}
+Expected RT allocation by tech: {'solar': 190.6005, 'wind': 917.06, 'thermal': 27023.72, 'total': 28131.3805}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    8.023917  116.535275  1.085114e+02
+  solar_2   21.000000   31.110713  1.011071e+01
+  solar_3    2.464282   42.954500  4.049022e+01
+   wind_1  504.447782  561.634005  5.718622e+01
+   wind_2  183.000000  170.868849 -1.213115e+01
+   wind_3  180.379051  184.557176  4.178125e+00
+thermal_1 6922.330000 6922.330000  0.000000e+00
+thermal_2 6837.620000 6837.620000 -9.094947e-13
+thermal_3 6742.080000 6742.080000 -3.637979e-12
+thermal_4 6521.690000 6521.690000 -5.456968e-12
+DA load: 27923.035031
+E[RT load]: 28131.380518
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR =====
+DA price pi: 1100.000000
+E[RT price]: 989.785133
+DA allocation by tech: {'solar': 12.0, 'wind': 762.6763, 'thermal': 27023.72, 'total': 27798.3963}
+Expected RT allocation by tech: {'solar': 190.6005, 'wind': 917.06, 'thermal': 27023.72, 'total': 28131.3805}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    0.000000  116.535275  1.165353e+02
+  solar_2   12.000000   31.110713  1.911071e+01
+  solar_3    0.000000   42.954500  4.295450e+01
+   wind_1  431.148279  561.634005  1.304857e+02
+   wind_2  171.896811  170.868849 -1.027961e+00
+   wind_3  159.631226  184.557176  2.492595e+01
+thermal_1 6922.330000 6922.330000  0.000000e+00
+thermal_2 6837.620000 6837.620000 -9.094947e-13
+thermal_3 6742.080000 6742.080000 -3.637979e-12
+thermal_4 6521.690000 6521.690000 -5.456968e-12
+DA load: 27798.396315
+E[RT load]: 28131.380518
+DA supply - DA load: -0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== Deterministic =====
+DA price pi: 1000.000000
+E[RT price]: 669.519503
+DA allocation by tech: {'solar': 190.6005, 'wind': 917.06, 'thermal': 27023.72, 'total': 28131.3805}
+Expected RT allocation by tech: {'solar': 137.9722, 'wind': 593.3944, 'thermal': 27023.72, 'total': 27755.0866}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1  116.535275   83.042453 -3.349282e+01
+  solar_2   31.110713   24.957990 -6.152723e+00
+  solar_3   42.954500   29.971804 -1.298270e+01
+   wind_1  561.634005  324.847540 -2.367865e+02
+   wind_2  170.868849  131.838878 -3.902997e+01
+   wind_3  184.557176  136.707983 -4.784919e+01
+thermal_1 6922.330000 6922.330000  0.000000e+00
+thermal_2 6837.620000 6837.620000 -1.818989e-12
+thermal_3 6742.080000 6742.080000 -4.547474e-12
+thermal_4 6521.690000 6521.690000 -5.456968e-12
+DA load: 28131.380518
+E[RT load]: 27755.086648
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR - Stochastic DA difference =====
+      gen    stoch_DA     cvar_DA  cvar_minus_stoch
+  solar_1    8.023917    0.000000         -8.023917
+  solar_2   21.000000   12.000000         -9.000000
+  solar_3    2.464282    0.000000         -2.464282
+   wind_1  504.447782  431.148279        -73.299503
+   wind_2  183.000000  171.896811        -11.103189
+   wind_3  180.379051  159.631226        -20.747825
+thermal_1 6922.330000 6922.330000          0.000000
+thermal_2 6837.620000 6837.620000          0.000000
+thermal_3 6742.080000 6742.080000          0.000000
+thermal_4 6521.690000 6521.690000          0.000000
+Tech-level difference: {'solar': -19.4882, 'wind': -105.1505, 'thermal': 0.0, 'total': -124.6387}
+
+===== COST SUMMARY =====
+Stochastic | E_cost=48845653.33, VaR=63101990.05, CVaR=65391373.59, RiskAdjustedTotalCost=114237026.92
+CVaR       | E_cost=48845634.84, VaR=63102146.87, CVaR=65391444.72, RiskAdjustedTotalCost=114237079.56
+Deterministic | E_cost=49216620.54, VaR=63759371.38, CVaR=66183437.85, RiskAdjustedTotalCost=115400058.39
+
+===== Stochastic =====
+DA price pi: 1000.000000
+E[RT price]: 999.819867
+DA allocation by tech: {'solar': 18.9237, 'wind': 695.1523, 'thermal': 27023.72, 'total': 27737.7959}
+Expected RT allocation by tech: {'solar': 221.4344, 'wind': 755.5572, 'thermal': 27023.72, 'total': 28000.7116}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    6.859935  138.863199  1.320033e+02
+  solar_2   10.000000   34.331657  2.433166e+01
+  solar_3    2.063721   48.239534  4.617581e+01
+   wind_1  424.386008  464.677193  4.029118e+01
+   wind_2  134.000000  138.558087  4.558087e+00
+   wind_3  136.766275  152.321916  1.555564e+01
+thermal_1 6922.330000 6922.330000 -2.728484e-12
+thermal_2 6837.620000 6837.620000 -1.818989e-12
+thermal_3 6742.080000 6742.080000 -9.094947e-13
+thermal_4 6521.690000 6521.690000  1.818989e-12
+DA load: 27737.795939
+E[RT load]: 28000.711587
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR =====
+DA price pi: 1100.000000
+E[RT price]: 989.733530
+DA allocation by tech: {'solar': 16.1775, 'wind': 655.8666, 'thermal': 27023.72, 'total': 27695.7641}
+Expected RT allocation by tech: {'solar': 221.4344, 'wind': 755.5572, 'thermal': 27023.72, 'total': 28000.7116}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    4.413758  138.863199  1.344494e+02
+  solar_2   10.000000   34.331657  2.433166e+01
+  solar_3    1.763749   48.239534  4.647578e+01
+   wind_1  408.767032  464.677193  5.591016e+01
+   wind_2  126.000000  138.558087  1.255809e+01
+   wind_3  121.099550  152.321916  3.122237e+01
+thermal_1 6922.330000 6922.330000 -2.728484e-12
+thermal_2 6837.620000 6837.620000 -1.818989e-12
+thermal_3 6742.080000 6742.080000 -9.094947e-13
+thermal_4 6521.690000 6521.690000  1.818989e-12
+DA load: 27695.764089
+E[RT load]: 28000.711587
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== Deterministic =====
+DA price pi: 1000.000000
+E[RT price]: 656.535785
+DA allocation by tech: {'solar': 221.4344, 'wind': 755.5572, 'thermal': 27023.72, 'total': 28000.7116}
+Expected RT allocation by tech: {'solar': 170.1862, 'wind': 461.5162, 'thermal': 27023.72, 'total': 27655.4224}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1  138.863199  107.167912 -3.169529e+01
+  solar_2   34.331657   27.238235 -7.093423e+00
+  solar_3   48.239534   35.780015 -1.245952e+01
+   wind_1  464.677193  295.382843 -1.692944e+02
+   wind_2  138.558087   86.195128 -5.236296e+01
+   wind_3  152.321916   79.938239 -7.238368e+01
+thermal_1 6922.330000 6922.330000 -1.818989e-12
+thermal_2 6837.620000 6837.620000 -2.728484e-12
+thermal_3 6742.080000 6742.080000 -9.094947e-13
+thermal_4 6521.690000 6521.690000  1.818989e-12
+DA load: 28000.711587
+E[RT load]: 27655.422372
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR - Stochastic DA difference =====
+      gen    stoch_DA     cvar_DA  cvar_minus_stoch
+  solar_1    6.859935    4.413758         -2.446177
+  solar_2   10.000000   10.000000          0.000000
+  solar_3    2.063721    1.763749         -0.299971
+   wind_1  424.386008  408.767032        -15.618977
+   wind_2  134.000000  126.000000         -8.000000
+   wind_3  136.766275  121.099550        -15.666725
+thermal_1 6922.330000 6922.330000          0.000000
+thermal_2 6837.620000 6837.620000          0.000000
+thermal_3 6742.080000 6742.080000          0.000000
+thermal_4 6521.690000 6521.690000          0.000000
+Tech-level difference: {'solar': -2.7461, 'wind': -39.2857, 'thermal': 0.0, 'total': -42.0318}
+
+===== COST SUMMARY =====
+Stochastic | E_cost=55358631.32, VaR=80575574.53, CVaR=84128230.07, RiskAdjustedTotalCost=139486861.38
+CVaR       | E_cost=55358624.43, VaR=80575577.88, CVaR=84128195.68, RiskAdjustedTotalCost=139486820.11
+Deterministic | E_cost=55699697.55, VaR=80575664.36, CVaR=84210758.65, RiskAdjustedTotalCost=139910456.20
+
+===== Stochastic =====
+DA price pi: 1000.000000
+E[RT price]: 999.740808
+DA allocation by tech: {'solar': 46.8304, 'wind': 494.2518, 'thermal': 27023.72, 'total': 27564.8022}
+Expected RT allocation by tech: {'solar': 147.1657, 'wind': 736.4764, 'thermal': 27023.72, 'total': 27907.3622}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1   40.059175   84.024022  4.396485e+01
+  solar_2    5.000000   32.085710  2.708571e+01
+  solar_3    1.771246   31.055994  2.928475e+01
+   wind_1  246.548674  432.972520  1.864238e+02
+   wind_2  141.000000  163.348895  2.234889e+01
+   wind_3  106.703100  140.155032  3.345193e+01
+thermal_1 6922.330000 6922.330000  1.818989e-12
+thermal_2 6837.620000 6837.620000  6.366463e-12
+thermal_3 6742.080000 6742.080000 -4.547474e-12
+thermal_4 6521.690000 6521.690000  3.637979e-12
+DA load: 27564.802194
+E[RT load]: 27907.362172
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR =====
+DA price pi: 1100.000000
+E[RT price]: 989.699579
+DA allocation by tech: {'solar': 11.8278, 'wind': 413.3644, 'thermal': 27023.72, 'total': 27448.9122}
+Expected RT allocation by tech: {'solar': 147.1657, 'wind': 736.4764, 'thermal': 27023.72, 'total': 27907.3622}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1    8.827795   84.024022  7.519623e+01
+  solar_2    3.000000   32.085710  2.908571e+01
+  solar_3    0.000000   31.055994  3.105599e+01
+   wind_1  207.900129  432.972520  2.250724e+02
+   wind_2  132.000000  163.348895  3.134889e+01
+   wind_3   73.464238  140.155032  6.669079e+01
+thermal_1 6922.330000 6922.330000  1.818989e-12
+thermal_2 6837.620000 6837.620000  6.366463e-12
+thermal_3 6742.080000 6742.080000 -4.547474e-12
+thermal_4 6521.690000 6521.690000  3.637979e-12
+DA load: 27448.912162
+E[RT load]: 27907.362172
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== Deterministic =====
+DA price pi: 1000.000000
+E[RT price]: 730.557904
+DA allocation by tech: {'solar': 147.1657, 'wind': 736.4764, 'thermal': 27023.72, 'total': 27907.3622}
+Expected RT allocation by tech: {'solar': 109.1474, 'wind': 404.5704, 'thermal': 27023.72, 'total': 27537.4378}
+      gen          DA        E_RT   RT_minus_DA
+  solar_1   84.024022   63.707229 -2.031679e+01
+  solar_2   32.085710   22.905187 -9.180524e+00
+  solar_3   31.055994   22.534982 -8.521012e+00
+   wind_1  432.972520  204.017368 -2.289552e+02
+   wind_2  163.348895  109.068070 -5.428082e+01
+   wind_3  140.155032   91.484992 -4.867004e+01
+thermal_1 6922.330000 6922.330000  3.637979e-12
+thermal_2 6837.620000 6837.620000  7.275958e-12
+thermal_3 6742.080000 6742.080000 -4.547474e-12
+thermal_4 6521.690000 6521.690000  2.728484e-12
+DA load: 27907.362172
+E[RT load]: 27537.437827
+DA supply - DA load: 0.000000
+E[RT supply] - E[RT load]: 0.000000
+
+===== CVaR - Stochastic DA difference =====
+      gen    stoch_DA     cvar_DA  cvar_minus_stoch
+  solar_1   40.059175    8.827795        -31.231380
+  solar_2    5.000000    3.000000         -2.000000
+  solar_3    1.771246    0.000000         -1.771246
+   wind_1  246.548674  207.900129        -38.648545
+   wind_2  141.000000  132.000000         -9.000000
+   wind_3  106.703100   73.464238        -33.238863
+thermal_1 6922.330000 6922.330000          0.000000
+thermal_2 6837.620000 6837.620000          0.000000
+thermal_3 6742.080000 6742.080000          0.000000
+thermal_4 6521.690000 6521.690000          0.000000
+Tech-level difference: {'solar': -35.0026, 'wind': -80.8874, 'thermal': 0.0, 'total': -115.89}
+
+===== COST SUMMARY =====
+Stochastic | E_cost=54407904.67, VaR=66234575.73, CVaR=67822742.63, RiskAdjustedTotalCost=122230647.30
+CVaR       | E_cost=54407878.26, VaR=66234455.80, CVaR=67822664.03, RiskAdjustedTotalCost=122230542.30
+Deterministic | E_cost=54773298.83, VaR=66610666.99, CVaR=67982961.76, RiskAdjustedTotalCost=122756260.59
