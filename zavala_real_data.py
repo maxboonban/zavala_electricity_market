@@ -75,8 +75,8 @@ print(f"Thermal generators: {len(thermal_df)}")
 # Choose buses with non-trivial solar: columns with max > threshold
 solar_cols = [c for c in solar.columns if solar[c].max() > 50]
 wind_cols = [c for c in wind.columns if wind[c].max() > 50]
-# Pick 3 solar and 3 wind (unreliable)
-num_solar, num_wind = 3, 3
+# Pick x solar and y wind (unreliable)
+num_solar, num_wind = 10, 10
 solar_buses = solar_cols[:num_solar] if len(solar_cols) >= num_solar else list(solar.columns[:num_solar])
 wind_buses = wind_cols[:num_wind] if len(wind_cols) >= num_wind else list(wind.columns[:num_wind])
 
@@ -399,5 +399,18 @@ summary = pd.DataFrame({
 })
 summary["Std/Mean"] = summary["Std"] / summary["Mean"]
 display(summary)
+
+# %%
+from pathlib import Path
+
+LOG_DIR = Path("outputs/logs")
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+print("\n=== Summary dataframe ===")
+print(summary.to_string(index=False))
+
+with open(LOG_DIR / "summary_dataframe.log", "w") as f:
+    f.write(summary.to_string(index=False))
+    f.write("\n")
 
 
