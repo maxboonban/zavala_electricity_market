@@ -264,6 +264,6 @@ print(f"Stochastic Welfare Total = {stoch_ss}")
 plot_ss_and_tail_overlay(
     stoch_ss, cvar_ss, det_ss,
     stoch_tail_welfare, cvar_tail_welfare, det_tail_welfare,
-    savepath="visual_outputs/ss_vs_tail_overlay.png",
+    savepath="visual_outputs/ss_vs_tail_overlay_2.png",
     show=False  # or True if you want to display
 )

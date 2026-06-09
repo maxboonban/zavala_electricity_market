@@ -52,16 +52,16 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
 
     # Define the problem and solve it
     prob = cp.Problem(objective, constraints)
-    # prob.solve()
-    prob.solve(
-        solver=cp.GUROBI,
-        Method=2,        # barrier
-        Crossover=0,     # no crossover → central duals
-        FeasibilityTol=1e-9,
-        OptimalityTol=1e-9,
-        BarConvTol=1e-12,
-        # OutputFlag=0,  # uncomment to silence GUROBI logs
-    )
+    prob.solve(solver=cp.GUROBI, verbose=True)
+    # prob.solve(
+    #     solver=cp.GUROBI,
+    #     Method=2,        # barrier
+    #     Crossover=0,     # no crossover → central duals
+    #     FeasibilityTol=1e-9,
+    #     OptimalityTol=1e-9,
+    #     BarConvTol=1e-12,
+    #     # OutputFlag=0,  # uncomment to silence GUROBI logs
+    # )
 
     # # Print solver statistics for debugging
     # print(f"Solver: {prob.solver_stats.solver_name}, Status: {prob.status}, Iterations: {prob.solver_stats.num_iters}")
@@ -102,7 +102,7 @@ def _dirichlet_near_uniform(rng, n, kappa=500.0):
 
   
 def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100, r=None):
-    input_scenario = "s_htoy_mix_v2"  # "s_1", "s_2", "s_3", "s_7", "s_htoy", "s_htoy_mix"
+    input_scenario = "s_real10_mix"  # "s_1", "s_2", "s_3", "s_7", "s_htoy", "s_htoy_mix"
 
     if input_scenario == "s_1":
         # Sid's original synthetic case with uniform distribution
@@ -288,6 +288,142 @@ def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 
         D += np.where(shock_state == 2, rng.uniform(18, 30, size=S), 0.0) 
         D = np.clip(D, 190.0, 265.0)
         d_j_bar = D.reshape(S, 1)
+
+        return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
+    
+    elif input_scenario == "s_renewables":
+        rng = np.random.default_rng(12)
+        num_g = 5  # 3 renewables, 2 thermal
+        # Scenarios (enough for smooth tails, but not too many for numerics)
+        S = num_scenarios
+        probs = rng.dirichlet(np.full(S, 1000.0 / S))  # near-uniform probabilities
+
+        # Expect 5 generators: 3 renewables, 2 thermal
+        G = 5
+        if num_g != G:
+            raise ValueError(f"'s_renewables_small5' expects num_g=5, got {num_g}")
+
+        # --- Marginal offers α^g ---
+        mc_ren = rng.uniform(3.0, 7.0, size=3)       # cheap renewables
+        mc_thr = rng.uniform(45.0, 60.0, size=2)     # reliable thermal
+        mc_g_i = np.concatenate([mc_ren, mc_thr]).astype(float)
+
+        # --- Nameplate capacities ---
+        ren_nameplate = np.array([100, 90, 80], dtype=float)
+        thr_nameplate = np.array([60, 60], dtype=float)
+
+        # --- Weather regimes (correlated shocks) ---
+        # 0: normal, 1: strong renewables, 2: dunkelflaute (low renewable output)
+        regime = rng.choice([0, 1, 2], size=S, p=[0.60, 0.25, 0.15])
+
+        # correlated regime factors
+        ren_factor = np.ones(S)
+        ren_factor[regime == 0] = rng.uniform(0.45, 0.85, size=(regime == 0).sum())
+        ren_factor[regime == 1] = rng.uniform(0.85, 1.05, size=(regime == 1).sum())
+        ren_factor[regime == 2] = rng.uniform(0.10, 0.25, size=(regime == 2).sum())
+
+        # idiosyncratic jitter per generator (kept small for smooth tails)
+        J_ren = rng.uniform(0.94, 1.06, size=(S, 3))
+        J_thr = rng.uniform(0.985, 1.015, size=(S, 2))
+
+        # Build renewable caps per scenario (S,3)
+        g_ren = ren_nameplate.reshape(1, 3) * ren_factor.reshape(S, 1) * J_ren
+        g_ren = np.clip(g_ren, 0.0, ren_nameplate.reshape(1, 3))
+
+        # Thermal caps (S,2) — nearly constant
+        g_thr = thr_nameplate.reshape(1, 2) * J_thr
+        g_thr = np.clip(g_thr, 0.0, thr_nameplate.reshape(1, 2))
+
+        # Combine to (S,5)
+        g_i_bar = np.concatenate([g_ren, g_thr], axis=1).astype(float)
+
+        # --- Demand process (single inelastic load) ---
+        d_mean, d_sd = 280.0, 10.0
+        D = rng.normal(d_mean, d_sd, size=S)
+        D += np.where(regime == 1, rng.uniform(-8, 3, size=S), 0.0)
+        D += np.where(regime == 2, rng.uniform(10, 25, size=S), 0.0)
+        D = np.clip(D, 240.0, 330.0)
+        d_j_bar = D.reshape(S, 1)
+
+        # --- Demand marginal value (VOLL proxy) ---
+        mv_d_j = np.array([1000.0], dtype=float)
+
+        return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
+
+    if input_scenario == "s_htoy_renew_mixed":
+
+        rng = np.random.default_rng(777)
+
+        # number of scenarios
+        S = num_scenarios
+        num_g = 6
+        probs = rng.dirichlet(np.full(S, 1200.0 / S))  # near-uniform but smooth
+
+        # 6 generators: 4 renewables, 2 thermal
+        G = 6
+        if num_g != G:
+            raise ValueError(f"'s_htoy_renew_mixed' expects num_g=6, got {num_g}")
+
+        # --- base marginal costs (α^g) ---
+        mc_ren = rng.uniform(4.0, 8.0, size=4)      # renewables
+        mc_thr = rng.uniform(40.0, 60.0, size=2)    # reliable thermals
+        mc_g_i = np.concatenate([mc_ren, mc_thr]).astype(float)
+
+        # --- nameplates ---
+        ren_nameplate = np.array([100, 90, 85, 75], dtype=float)
+        thr_nameplate = np.array([60, 60], dtype=float)
+
+        # --- regimes (shared weather states) ---
+        # 0: normal, 1: strong renewable (good), 2: weak renewable (bad)
+        regime = rng.choice([0, 1, 2], size=S, p=[0.60, 0.25, 0.15])
+
+        # Base correlation factor per scenario
+        corr_factor = np.ones(S)
+        corr_factor[regime == 0] = rng.uniform(0.6, 0.9, size=(regime == 0).sum())
+        corr_factor[regime == 1] = rng.uniform(0.95, 1.15, size=(regime == 1).sum())  # good: can exceed mean
+        corr_factor[regime == 2] = rng.uniform(0.1, 0.35, size=(regime == 2).sum())   # bad: low output
+
+        # --- individual renewable variability patterns ---
+        #  R0: left-heavy (frequent low, occasional high)
+        f0 = np.clip(rng.beta(1.2, 5.5, size=S) * corr_factor, 0, 1.2)
+        #  R1: right-heavy (often high output)
+        f1 = np.clip(rng.beta(5.0, 2.0, size=S) * corr_factor, 0, 1.2)
+        #  R2: symmetric / moderately heavy (mixture)
+        mix_mask = rng.random(S) < 0.7
+        f2 = np.where(mix_mask,
+                    rng.beta(2.0, 5.0, size=S),
+                    rng.beta(4.5, 1.8, size=S))
+        f2 *= corr_factor
+        #  R3: bimodal (very low or very high)
+        bimask = rng.random(S) < 0.25
+        f3 = np.where(bimask,
+                    rng.uniform(0.05, 0.25, size=S),
+                    rng.uniform(0.8, 1.1, size=S))
+        f3 *= corr_factor
+
+        # stack all renewable factors
+        F_ren = np.column_stack([f0, f1, f2, f3])
+        J_ren = rng.uniform(0.95, 1.05, size=(S, 4))
+        g_ren = ren_nameplate.reshape(1, 4) * np.minimum(F_ren * J_ren, 1.2)
+        g_ren = np.clip(g_ren, 0.0, ren_nameplate.reshape(1, 4))
+
+        # --- reliable thermal caps ---
+        J_thr = rng.uniform(0.985, 1.015, size=(S, 2))
+        g_thr = thr_nameplate.reshape(1, 2) * J_thr
+        g_thr = np.clip(g_thr, 0.0, thr_nameplate.reshape(1, 2))
+
+        g_i_bar = np.concatenate([g_ren, g_thr], axis=1).astype(float)
+
+        # --- demand (one load, mildly correlated with regime) ---
+        d_mean, d_sd = 420.0, 10.0
+        D = rng.normal(d_mean, d_sd, size=S)
+        D += np.where(regime == 1, rng.uniform(-8, 2, size=S), 0.0)   # good renewable → slightly lower demand
+        D += np.where(regime == 2, rng.uniform(12, 25, size=S), 0.0)  # bad renewable → higher demand
+        D = np.clip(D, 380.0, 480.0)
+        d_j_bar = D.reshape(S, 1)
+
+        # --- demand marginal value (VOLL proxy) ---
+        mv_d_j = np.array([1000.0], dtype=float)
 
         return probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar
 
