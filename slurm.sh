@@ -11,16 +11,47 @@
 
 set -euo pipefail
 
-cd /users/$USER/scratch/zavala_electricity_market
+WORKDIR=/users/$USER/scratch/zavala_electricity_market
+LOG=outputs/logs/${SLURM_JOB_NAME}_${SLURM_JOB_ID}.log
 
+cd "$WORKDIR"
 mkdir -p outputs/logs outputs/results
 
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG"; }
+
+log "Job started — ID: $SLURM_JOB_ID, Node: $SLURMD_NODENAME"
+log "Working directory: $WORKDIR"
+
+log "Loading modules..."
 module load miniforge3/25.3.0-3
 source ${MAMBA_ROOT_PREFIX}/etc/profile.d/conda.sh
+
+# Create conda env from requirements.txt if it doesn't exist yet
+if ! conda env list | grep -q "^zavala-market "; then
+    log "Conda env 'zavala-market' not found — creating from requirements.txt..."
+    conda create -n zavala-market python=3.11 -y
+    conda run -n zavala-market pip install -r requirements.txt
+    log "Conda env created."
+else
+    log "Conda env 'zavala-market' already exists, skipping creation."
+fi
+
 conda activate zavala-market
+log "Conda environment activated: $(conda info --envs | grep '*' | awk '{print $1}')"
 
 export PYTHONUNBUFFERED=TRUE
 
+# --- Experiment parameters (change these per run) ---
+NUM_WIND=5
+NUM_SOLAR=3
+NUM_THERMAL=4
+EXPERIMENT_NAME="wind${NUM_WIND}_solar${NUM_SOLAR}_thermal${NUM_THERMAL}"
+
+log "Starting experiment: $EXPERIMENT_NAME"
 python -u zavala_real_data.py \
-  --data-dir dataset/IM-3-GO-WEST \
-  --experiment-name baseline_stochastic
+  --num-wind      $NUM_WIND \
+  --num-solar     $NUM_SOLAR \
+  --num-thermal   $NUM_THERMAL \
+  --experiment-name $EXPERIMENT_NAME
+
+log "Job completed successfully."

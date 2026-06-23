@@ -1,6 +1,7 @@
 numpy
 pandas
 scipy
+matplotlib
 cvxpy
 gurobipy
 jax

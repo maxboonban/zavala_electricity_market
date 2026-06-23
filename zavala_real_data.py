@@ -1,5 +1,6 @@
 # %%
 import os
+import argparse
 import numpy as np
 import pandas as pd
 
@@ -59,6 +60,28 @@ print("Data dir:", DATA_DIR)
 print("Files:", os.listdir(DATA_DIR) if os.path.isdir(DATA_DIR) else "not found")
 
 # %%
+parser = argparse.ArgumentParser(description="Zavala electricity market experiment")
+parser.add_argument("--num-wind",        type=int, default=10,          help="Number of wind generators")
+parser.add_argument("--num-solar",       type=int, default=10,          help="Number of solar generators")
+parser.add_argument("--num-thermal",     type=int, default=4,           help="Number of thermal generators")
+parser.add_argument("--num-instances",   type=int, default=10,          help="Number of instances to run")
+parser.add_argument("--num-scenarios",   type=int, default=500,         help="Scenarios per instance")
+parser.add_argument("--experiment-name", type=str, default="experiment", help="Name for output files")
+parser.add_argument("--data-dir",        type=str, default=None,        help="Override data directory")
+args = parser.parse_args()
+
+num_solar   = args.num_solar
+num_wind    = args.num_wind
+num_thermal = args.num_thermal
+
+if args.data_dir:
+    DATA_DIR = args.data_dir
+
+print(f"Experiment : {args.experiment_name}")
+print(f"Generators — solar: {num_solar}, wind: {num_wind}, thermal: {num_thermal}")
+print(f"Instances  : {args.num_instances}, Scenarios per instance: {args.num_scenarios}")
+
+# %%
 # Load nodal time series (rows = time, columns = bus_XXXXX)
 solar = pd.read_csv(os.path.join(DATA_DIR, "nodal_solar.csv"))
 wind = pd.read_csv(os.path.join(DATA_DIR, "nodal_wind.csv"))
@@ -76,13 +99,12 @@ print(f"Thermal generators: {len(thermal_df)}")
 solar_cols = [c for c in solar.columns if solar[c].max() > 50]
 wind_cols = [c for c in wind.columns if wind[c].max() > 50]
 # Pick x solar and y wind (unreliable)
-num_solar, num_wind = 10, 10
 solar_buses = solar_cols[:num_solar] if len(solar_cols) >= num_solar else list(solar.columns[:num_solar])
 wind_buses = wind_cols[:num_wind] if len(wind_cols) >= num_wind else list(wind.columns[:num_wind])
 
-# Reliable: aggregate thermal by bus, pick 4 buses with largest capacity
+# Reliable: aggregate thermal by bus, pick num_thermal buses with largest capacity
 thermal_by_bus = thermal_df.groupby("Bus")["Max_Cap"].sum().sort_values(ascending=False)
-thermal_buses_numeric = list(thermal_by_bus.head(4).index)  # e.g. [408441, 135041, ...]
+thermal_buses_numeric = list(thermal_by_bus.head(num_thermal).index)
 thermal_bus_cols = [f"bus_{b}" for b in thermal_buses_numeric]  # for load alignment if needed
 
 # Load: use total system load (sum over all buses)
@@ -95,9 +117,8 @@ print("Load: system total (sum over all buses)")
 
 # %%
 # Filter thermal_df for the selected buses
-selected_buses = [500991, 605141, 408441, 261001]
-thermal_selected = thermal_df[thermal_df['Bus'].isin(selected_buses)]
-display(thermal_selected)
+thermal_selected = thermal_df[thermal_df['Bus'].isin(thermal_buses_numeric)]
+print(thermal_selected)
 
 # %% [markdown]
 # Debug Logs
@@ -114,17 +135,17 @@ def _log(msg, logfile=None):
 def _tech_breakdown_da(g_da):
     g_da = np.asarray(g_da, dtype=float)
     return {
-        "solar": g_da[:3].sum(),
-        "wind": g_da[3:6].sum(),
-        "thermal": g_da[6:10].sum(),
+        "solar": g_da[:num_solar].sum(),
+        "wind": g_da[num_solar:num_solar+num_wind].sum(),
+        "thermal": g_da[num_solar+num_wind:].sum(),
         "total": g_da.sum(),
     }
 
 def _tech_breakdown_rt(G_rt, probs=None):
-    G_rt = np.asarray(G_rt, dtype=float)  # shape (S, 10)
-    solar = G_rt[:, :3].sum(axis=1)
-    wind = G_rt[:, 3:6].sum(axis=1)
-    thermal = G_rt[:, 6:10].sum(axis=1)
+    G_rt = np.asarray(G_rt, dtype=float)
+    solar = G_rt[:, :num_solar].sum(axis=1)
+    wind = G_rt[:, num_solar:num_solar+num_wind].sum(axis=1)
+    thermal = G_rt[:, num_solar+num_wind:].sum(axis=1)
     total = G_rt.sum(axis=1)
 
     if probs is None:
@@ -164,7 +185,7 @@ def _print_case_diag(name, probs, g_da, d_da, G_rt, D_rt, pi, Pi, logfile=None):
     _log("DA allocation by tech: " + str({k: round(v, 4) for k, v in da.items()}), logfile)
     _log("Expected RT allocation by tech: " + str({k: round(v, 4) for k, v in rt.items()}), logfile)
 
-    gen_names = [f"solar_{i+1}" for i in range(3)] + [f"wind_{i+1}" for i in range(3)] + [f"thermal_{i+1}" for i in range(4)]
+    gen_names = [f"solar_{i+1}" for i in range(num_solar)] + [f"wind_{i+1}" for i in range(num_wind)] + [f"thermal_{i+1}" for i in range(num_thermal)]
     g_da = np.asarray(g_da, dtype=float)
     exp_rt = np.dot(np.asarray(probs, dtype=float), np.asarray(G_rt, dtype=float))
 
@@ -181,7 +202,7 @@ def _print_case_diag(name, probs, g_da, d_da, G_rt, D_rt, pi, Pi, logfile=None):
     _log(f"E[RT supply] - E[RT load]: {exp_rt_supply - exp_rt_load:.6f}", logfile)
 
 def _print_stoch_vs_cvar_diff(z_g_i, cvar_g_i, logfile=None):
-    gen_names = [f"solar_{i+1}" for i in range(3)] + [f"wind_{i+1}" for i in range(3)] + [f"thermal_{i+1}" for i in range(4)]
+    gen_names = [f"solar_{i+1}" for i in range(num_solar)] + [f"wind_{i+1}" for i in range(num_wind)] + [f"thermal_{i+1}" for i in range(num_thermal)]
     z = np.asarray(z_g_i, dtype=float)
     c = np.asarray(cvar_g_i, dtype=float)
     df = pd.DataFrame({
@@ -193,9 +214,9 @@ def _print_stoch_vs_cvar_diff(z_g_i, cvar_g_i, logfile=None):
     _log("\n===== CVaR - Stochastic DA difference =====", logfile)
     _log(df.to_string(index=False), logfile)
     _log("Tech-level difference: " + str({
-        "solar": round((c[:3] - z[:3]).sum(), 4),
-        "wind": round((c[3:6] - z[3:6]).sum(), 4),
-        "thermal": round((c[6:10] - z[6:10]).sum(), 4),
+        "solar": round((c[:num_solar] - z[:num_solar]).sum(), 4),
+        "wind": round((c[num_solar:num_solar+num_wind] - z[num_solar:num_solar+num_wind]).sum(), 4),
+        "thermal": round((c[num_solar+num_wind:] - z[num_solar+num_wind:]).sum(), 4),
         "total": round((c - z).sum(), 4),
     }), logfile)
 
@@ -204,9 +225,9 @@ def _print_stoch_vs_cvar_diff(z_g_i, cvar_g_i, logfile=None):
 log_dir = "logs"
 os.makedirs(log_dir, exist_ok=True)
 
-debug_log = os.path.join(log_dir, "zavala_debug_log.txt")
+debug_log = os.path.join(log_dir, f"{args.experiment_name}_debug.txt")
 with open(debug_log, "w", encoding="utf-8") as f:
-    f.write("Zavala diagnostics log\n")
+    f.write(f"Zavala diagnostics log — {args.experiment_name}\n")
 
 # %% [markdown]
 # Build Real Data
@@ -231,15 +252,15 @@ def build_real_data_instance(solar_df, wind_df, load_total_vec, thermal_by_bus, 
     probs = probs / probs.sum()
 
     # Marginal costs: cheap for unreliable (solar/wind), higher for reliable (thermal)
-    mc_unrel = rng.uniform(8.0, 14.0, size=6)
-    mc_rel = rng.uniform(35.0, 55.0, size=4)
+    mc_unrel = rng.uniform(8.0, 14.0, size=len(solar_buses) + len(wind_buses))
+    mc_rel = rng.uniform(35.0, 55.0, size=len(thermal_buses_numeric))
     mc_g_i = np.concatenate([mc_unrel, mc_rel]).astype(float)
 
     # Single inelastic load (VOLL)
     mv_d_j = np.array([1000.0], dtype=float)
 
-    # Generator capacities per scenario (S x 10)
-    # Columns 0..2: solar, 3..5: wind, 6..9: thermal (constant)
+    # Generator capacities per scenario (S x num_solar+num_wind+num_thermal)
+    # Columns 0..num_solar-1: solar, num_solar..num_solar+num_wind-1: wind, rest: thermal
     solar_vals = solar_df.loc[start_idx:end_idx - 1, solar_buses].values  # (S, 3)
     wind_vals = wind_df.loc[start_idx:end_idx - 1, wind_buses].values    # (S, 3)
     unrel_caps = np.clip(np.hstack([solar_vals, wind_vals]), 0.0, None)  # (S, 6)
@@ -334,8 +355,8 @@ def run_zavala_one_instance(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, logfile=Non
     }
 
 # %%
-NUM_INSTANCES = 10
-NUM_SCENARIOS = 500
+NUM_INSTANCES = args.num_instances
+NUM_SCENARIOS = args.num_scenarios
 rng = np.random.default_rng(2025)
 
 max_start = T - NUM_SCENARIOS
@@ -398,7 +419,6 @@ summary = pd.DataFrame({
     ],
 })
 summary["Std/Mean"] = summary["Std"] / summary["Mean"]
-display(summary)
 
 # %%
 from pathlib import Path
@@ -409,7 +429,7 @@ LOG_DIR.mkdir(parents=True, exist_ok=True)
 print("\n=== Summary dataframe ===")
 print(summary.to_string(index=False))
 
-with open(LOG_DIR / "summary_dataframe.log", "w") as f:
+with open(LOG_DIR / f"{args.experiment_name}_summary.log", "w") as f:
     f.write(summary.to_string(index=False))
     f.write("\n")
 
