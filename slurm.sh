@@ -43,7 +43,7 @@ export PYTHONUNBUFFERED=TRUE
 export GRB_LICENSE_FILE=/users/$USER/gurobi.lic
 
 # --- Experiment parameters (change these per run) ---
-NUM_WIND=10
+NUM_WIND=15
 NUM_SOLAR=3
 NUM_THERMAL=4
 EXPERIMENT_NAME="wind${NUM_WIND}_solar${NUM_SOLAR}_thermal${NUM_THERMAL}"
