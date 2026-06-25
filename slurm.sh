@@ -40,6 +40,7 @@ conda activate zavala-market
 log "Conda environment activated: $(conda info --envs | grep '*' | awk '{print $1}')"
 
 export PYTHONUNBUFFERED=TRUE
+export GRB_LICENSE_FILE=/users/$USER/gurobi.lic
 
 # --- Experiment parameters (change these per run) ---
 NUM_WIND=5
