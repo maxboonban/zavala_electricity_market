@@ -448,7 +448,7 @@ from zavala_funcs import (
 # =========================
 # Run Zavala baseline (stochastic) + deterministic + CVaR
 # =========================
-num_instances = 10
+num_instances = 1000
 key = random.key(200)
 keys = random.split(key, num_instances)
 instances = []
