@@ -789,7 +789,7 @@ def price_distortion_system_1(pi_da, rt_prices, probs):
     diff = np.abs(pi_da - exp_rt)
     return float(diff.mean()), float(diff.max())
 
-def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
+def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, beta=0.95, lambda_cvar=0.1):
     num_g = len(mc_g_i)
     num_d = len(mv_d_j)
 
@@ -803,9 +803,7 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     mc_g_i_delta = mc_g_i / 10.0
     mv_d_j_delta = mv_d_j / 10.0
 
-    # --- CVaR knobs ---
-    beta = 0.95
-    lambda_cvar = 0.1  # set >0 to turn on CVaR regularization
+    # --- CVaR knobs (beta: tail confidence level, lambda_cvar: CVaR regularization weight; set lambda_cvar=0 to recover plain stochastic zavala()) ---
 
     # --- Build per-scenario loss L_p ---
     Lp = []

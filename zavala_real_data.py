@@ -66,6 +66,8 @@ parser.add_argument("--num-solar",       type=int, default=10,          help="Nu
 parser.add_argument("--num-thermal",     type=int, default=4,           help="Number of thermal generators")
 parser.add_argument("--num-instances",   type=int, default=10,          help="Number of instances to run")
 parser.add_argument("--num-scenarios",   type=int, default=500,         help="Scenarios per instance")
+parser.add_argument("--lambda-cvar",     type=float, default=0.1,       help="CVaR regularization weight (0 recovers plain stochastic clearing)")
+parser.add_argument("--beta",            type=float, default=0.95,      help="CVaR tail confidence level (e.g. 0.90, 0.95, 0.98)")
 parser.add_argument("--experiment-name", type=str, default="experiment", help="Name for output files")
 parser.add_argument("--data-dir",        type=str, default=None,        help="Override data directory")
 args = parser.parse_args()
@@ -80,6 +82,7 @@ if args.data_dir:
 print(f"Experiment : {args.experiment_name}")
 print(f"Generators — solar: {num_solar}, wind: {num_wind}, thermal: {num_thermal}")
 print(f"Instances  : {args.num_instances}, Scenarios per instance: {args.num_scenarios}")
+print(f"CVaR params: lambda_cvar={args.lambda_cvar}, beta={args.beta}")
 
 # %%
 # Load nodal time series (rows = time, columns = bus_XXXXX)
@@ -228,6 +231,7 @@ os.makedirs(log_dir, exist_ok=True)
 debug_log = os.path.join(log_dir, f"{args.experiment_name}_debug.txt")
 with open(debug_log, "w", encoding="utf-8") as f:
     f.write(f"Zavala diagnostics log — {args.experiment_name}\n")
+    f.write(f"CVaR params: lambda_cvar={args.lambda_cvar}, beta={args.beta}\n")
 
 # %% [markdown]
 # Build Real Data
@@ -292,7 +296,8 @@ print("Reliable (thermal) constant:", g_i_bar[0, 6:])
 print("Load sample:", d_j_bar[:5].ravel())
 
 # %%
-def run_zavala_one_instance(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, logfile=None):
+def run_zavala_one_instance(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, logfile=None,
+                             lambda_cvar=0.1, beta=0.95):
     """Run stochastic, CVaR, and deterministic Zavala for one instance. Returns dict of metrics.
     Same logic as run_zavala.py, no changes to external files.
     """
@@ -304,7 +309,9 @@ def run_zavala_one_instance(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, logfile=Non
     ss_stoch = compute_social_surplus(probs, mc_g_i, mv_d_j, g_da=z_g_i, d_da=z_d_j, G_rt=Z_G, D_rt=Z_D)
 
     # # ----- CVaR Zavala -----
-    cvar_g_i, cvar_d_j, C_G, C_D, cvar_pi, cvar_Pi, _ = zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar)
+    cvar_g_i, cvar_d_j, C_G, C_D, cvar_pi, cvar_Pi, _ = zavala_cvar(
+        probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, beta=beta, lambda_cvar=lambda_cvar
+    )
     cvar_dist = price_distortion(probs, cvar_pi, cvar_Pi)
     cvar_reg = expected_cumulative_regret(probs, cvar_g_i, cvar_d_j, cvar_pi, mc_g_i, mv_d_j, g_i_bar, d_j_bar)
     ss_cvar = compute_social_surplus(probs, mc_g_i, mv_d_j, g_da=cvar_g_i, d_da=cvar_d_j, G_rt=C_G, D_rt=C_D)
@@ -374,7 +381,8 @@ for i in range(NUM_INSTANCES):
         solar_buses, wind_buses, start_idx=start, num_scenarios=NUM_SCENARIOS, rng=rng
     )
     print(f"the shapes of probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar are {probs.shape}, {mc_g_i.shape}, {mv_d_j.shape}, {g_i_bar.shape}, {d_j_bar.shape}")
-    res = run_zavala_one_instance(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, logfile=debug_log)
+    res = run_zavala_one_instance(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, logfile=debug_log,
+                                   lambda_cvar=args.lambda_cvar, beta=args.beta)
     results_list.append(res)
     print(f"Instance {i+1}/{NUM_INSTANCES} (start={start}) done.")
 

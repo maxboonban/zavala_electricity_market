@@ -46,13 +46,17 @@ export GRB_LICENSE_FILE=/users/$USER/gurobi.lic
 NUM_WIND=20
 NUM_SOLAR=3
 NUM_THERMAL=4
-EXPERIMENT_NAME="wind${NUM_WIND}_solar${NUM_SOLAR}_thermal${NUM_THERMAL}"
+LAMBDA_CVAR=0.1
+BETA=0.95
+EXPERIMENT_NAME="wind${NUM_WIND}_solar${NUM_SOLAR}_thermal${NUM_THERMAL}_lambda${LAMBDA_CVAR}_beta${BETA}"
 
 log "Starting experiment: $EXPERIMENT_NAME"
 python -u zavala_real_data.py \
   --num-wind      $NUM_WIND \
   --num-solar     $NUM_SOLAR \
   --num-thermal   $NUM_THERMAL \
+  --lambda-cvar   $LAMBDA_CVAR \
+  --beta          $BETA \
   --experiment-name $EXPERIMENT_NAME
 
 log "Job completed successfully."
