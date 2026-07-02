@@ -48,7 +48,7 @@ NUM_SOLAR=3
 NUM_THERMAL=4
 LAMBDA_CVAR=0.1
 BETA=0.95
-EXPERIMENT_NAME="wind${NUM_WIND}_solar${NUM_SOLAR}_thermal${NUM_THERMAL}_lambda${LAMBDA_CVAR}_beta${BETA}"
+EXPERIMENT_NAME="wind${NUM_WIND}_solar${NUM_SOLAR}_thermal${NUM_THERMAL}_lambda${LAMBDA_CVAR}_beta${BETA}_${SLURM_JOB_ID}"
 
 log "Starting experiment: $EXPERIMENT_NAME"
 python -u zavala_real_data.py \
