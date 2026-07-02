@@ -840,7 +840,10 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, beta=0.95, lambda_cvar=
                 * probs[p] for p in range(len(probs))) for j in range(num_d))
     )
 
-    objective = cp.Minimize(expected_loss + lambda_cvar * cvar_term)
+    # objective = cp.Minimize(expected_loss + lambda_cvar * cvar_term)
+
+    # # Regularize lambda cvar
+    objective = cp.Minimize(expected_loss*(1-lambda_cvar) + lambda_cvar*cvar_term)
 
     # Define the constraints
     day_ahead_balance = [
