@@ -5,6 +5,131 @@ cite directly in the paper. Newest entries first.
 
 ---
 
+## 2026-11-04 — Decentralisation & insurance experiments (D1-D5), and a sign error in Eq. (111)-(112)
+
+### Headline
+
+Implemented Sections 8.3-8.7 (the agents' problems, the insurance market, the
+transfer constructions) and built five experiments. **All checks pass** at
+S=30 locally under CLARABEL. In the process, found and numerically confirmed a
+**sign error in Eq. (111)-(112)**.
+
+### The sign error
+
+Section 8.4 states the agent's per-scenario payoff is `u_k + r_k`, so the loss
+entering the CVaR constraint Eq. (97)/(101) is
+
+    -u_k - r_k = L_k - r_k.
+
+Flattening *that* requires
+
+    r_k(w) = +L_k(w) - ell(w)/N - delta_k        [corrected]
+
+giving insured loss `L_k - r_k = ell(w)/N + delta_k`. But Eq. (111)-(112) as
+printed give
+
+    r_k(w) = -L_k(w) + ell(w)/N + delta_k        [as printed]
+
+which flattens `L_k + r_k` instead. Against the actual CVaR constraint it does
+not hedge the agent at all — it roughly **doubles** its exposure.
+
+**Both signs satisfy market clearing Eq. (95)**, which is why the error survives
+that check: `sum_k r_k = -ell + ell = 0` either way.
+
+**Corroboration inside the paper.** Eq. (122) in Theorem 9 already uses the
+corrected sign, `r_k = L_k - t_k - w_k(ell - t*)`. With `w_k = 1/N` and
+`sum_k t_k = t*` it reduces exactly to the corrected equal-share rule. So
+Eq. (111)-(112) are the inconsistent pair, not Eq. (122).
+
+**Numerical evidence** (s_real10_mix, S=30, seed 2025, beta=0.95), maximum
+relative (UM) gap over all 11 agents — 0 means the planner's allocation is
+agent-optimal:
+
+| eps | corrected sign | Eq. (111)-(112) as printed |
+|-----|----------------|----------------------------|
+| 0.1 | 7.6e-11        | 9.0e-01                    |
+| 0.3 | 4.9e-10        | 1.6e+00                    |
+| 0.5 | 0.0            | 9.9e-01                    |
+| 1.0 | 0.0            | --                         |
+
+At `eps = 0` the gap is exactly 0 under both signs, because insurance is
+redundant there (Remark 10). That is also the control establishing that the
+agent model itself is correct: it reproduces risk-neutral (UM) exactly.
+
+### Experiment design
+
+| ID | Question | Verifies |
+|----|----------|----------|
+| D1 | Does the decentralised market reproduce the planner's allocation? | Thm 6, 7, 8; Eq. (94), (109) |
+| D2 | What breaks without the insurance market? | Section 8.2.2, Eq. (94) |
+| D3 | What do the equilibrium transfers look like? | Remarks 7, 8, 9; Eq. (113) |
+| D4 | Do heterogeneous confidence levels still clear? | Thm 9, Eq. (121)-(123) |
+| D5 | How do transfers scale with the risk weight? | Remark 10 |
+
+**Testing methodology.** Definition 3's (UM) makes insurance a *choice*
+variable, so each agent optimises over physical position **and** `r` at prices
+`q`; the test is whether its optimal objective equals the objective at
+(planner allocation, constructed transfer). Real-time optima are degenerate —
+several allocations tie — so allocation distance is reported as a diagnostic
+only and the objective value is the criterion.
+
+### Results at S=30 (local smoke run; cluster run at S=500 pending)
+
+- **D1.** (UM) gap 7.6e-11. Eq. (109) `gamma_k = gamma` holds to 5.2e-10:
+  every agent's CVaR multiplier equals the planner's. Market clears to 2.9e-10.
+- **D2.** Without insurance Eq. (94) **fails**, as Section 8.2.2 predicts:
+  `max_k max_w |gamma_k - gamma| = 8.0e-02`. Per-agent tail-scenario counts
+  range from 2 to 7 against the planner's 2 — agents disagree about where the
+  tail *is*, which is exactly the obstruction.
+- **D3.** Eq. (113) holds exactly: slope 1 to 2.2e-16, affine residual 1.5e-11.
+  Economically, **the unreliable units buy cover and the reliable units sell
+  it**: unreliable generators pay 13,198 more in premium than they expect back,
+  reliable generators collect +12,826. Tail premium `gamma . r` is positive for
+  every unreliable unit and negative for every reliable one.
+- **D4.** Theorem 9 verified — the construction the manuscript marks as not yet
+  proof-checked. With beta drawn from {0.90, 0.95, 0.99} and beta_min = 0.90,
+  the 10 agents in `S_>` hold a constant insured loss across the tail to
+  2.3e-13 (Eq. 121); the equal-share rule gives them a spread of 4.0e+03, i.e.
+  it violates Eq. (121) exactly as Theorem 9 predicts.
+- **D5.** At eps = 0 the tail premium vanishes (1.7e-09 relative) and insurance
+  is redundant. As eps rises the day-ahead price climbs steeply
+  (206.9 -> 295.1 -> 473.9 -> 638.0 -> 1000.0) while `E_rho[Pi]` stays near 200.
+
+### Modelling observations worth a sentence in the paper
+
+1. **The equal-share rule pools gross welfare, not just cost.** The load holds
+   most of the surplus, so its `L` is large and negative and it becomes the
+   dominant risk-bearer. The free constants `delta_k` shift the level but not
+   the shape. A cost-only or capacity-weighted pooling rule would distribute
+   differently; Remark 9 already notes `delta_k` is free, but the *shape* is
+   not.
+2. **`p0` tracks `E_rhotilde[Pi]`, not `E_rho[Pi]`.** At eps=0.1,
+   `p0 = 295.09` against `E_rhotilde[Pi] = 294.84` but `E_rho[Pi] = 205.38`.
+   The risk-neutral consistency property holds only under the tilted measure.
+   This is worth stating explicitly, since `price_distortion()` still measures
+   against the raw measure (flagged in the previous entry).
+3. **The repo's planner leaves day-ahead quantities free**, whereas Eq. (12)/
+   (18)/(65) impose `x, y >= 0`. The solutions seen so far satisfy it anyway;
+   `build_planner` now warns if a run ever violates it.
+
+### Files
+
+- `zavala_decentralized.py` — agent problems, transfer constructions, utilities.
+  `transfers_equal_share(..., as_printed=True)` reproduces Eq. (111)-(112)
+  verbatim for the comparison above.
+- `run_decentralized_experiments.py` — D1-D5 driver; writes JSON + log.
+- `slurm_decentralized.sh` — cluster script: Gurobi invariant check, then D1-D5
+  at eps=0.1, then D1/D3 at eps in {0.3, 0.5, 1.0}, all at S=500.
+
+### Not yet done
+
+- Cluster run at S=500 with Gurobi (local runs used CLARABEL at S=30; the local
+  Gurobi licence expired 2026-03-21).
+- Remark 11's jointly-heterogeneous `(eps_k, beta_k)` case is deferred in the
+  paper and not implemented.
+
+---
+
 ## 2026-11-04 — Fix CVaR real-time price identification (paper Eq. 67 / 107)
 
 ### Summary
