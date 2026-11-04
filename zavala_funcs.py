@@ -13,7 +13,7 @@ def beta_scaled(rng, shape, a, b, lo, hi):
     z = random.beta(rng, a, b, shape=shape)
     return lo + z * (hi - lo)
 
-def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
+def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, solver=None, verbose=True):
     num_g = len(mc_g_i)
     num_d = len(mv_d_j)
 
@@ -64,7 +64,11 @@ def zavala(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar):
     #     # OutputFlag=0,  # uncomment to silence GUROBI logs
     # )
 
-    prob.solve(solver=cp.GUROBI, verbose=True)
+    # Default solver is GUROBI (what the cluster runs); `solver` allows an
+    # open-source fallback for local checks. The model itself is unchanged.
+    prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+    if prob.status not in ("optimal", "optimal_inaccurate"):
+        raise RuntimeError(f"zavala solve failed: status={prob.status}")
 
     # # Print solver statistics for debugging
     # print(f"Solver: {prob.solver_stats.solver_name}, Status: {prob.status}, Iterations: {prob.solver_stats.num_iters}")
@@ -104,8 +108,20 @@ def _dirichlet_near_uniform(rng, n, kappa=500.0):
     return p / p.sum()
 
   
-def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100, r=None):
-    input_scenario = "s_htoy_mix_v2"  # "s_1", "s_2", "s_3", "s_7", "s_htoy", "s_htoy_mix", "s_real10_mix"
+def generate_instance(key, num_scenarios = 10, num_g = 10, num_d = 10, minval = 1, maxval = 100, r=None,
+                      input_scenario="s_real10_mix"):
+    """Build one synthetic market instance.
+
+    input_scenario selects the generating family. The default "s_real10_mix" is
+    the setup described in Section 9.1 / Table 2 of the paper: 10 generators
+    (6 unreliable at U[8,14]/MWh, 4 reliable at U[35,55]/MWh), near-uniform
+    Dirichlet scenario probabilities with kappa=1500, three common renewable
+    shock states (normal / mild shortfall / severe shortfall), and a single
+    inelastic load valued at $1000/MWh.
+
+    Other families (diagnostics and earlier toys): "s_1", "s_2", "s_3", "s_7",
+    "s_htoy", "s_htoy_mix", "s_htoy_mix_v2".
+    """
 
     if input_scenario == "s_1":
         # Sid's original synthetic case with uniform distribution
@@ -789,7 +805,8 @@ def price_distortion_system_1(pi_da, rt_prices, probs):
     diff = np.abs(pi_da - exp_rt)
     return float(diff.mean()), float(diff.max())
 
-def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, beta=0.95, lambda_cvar=0.1):
+def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, beta=0.95, lambda_cvar=0.1,
+                check_invariants=True, solver=None, verbose=True):
     num_g = len(mc_g_i)
     num_d = len(mv_d_j)
 
@@ -879,7 +896,12 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, beta=0.95, lambda_cvar=
     #     # OutputFlag=0,  # uncomment to silence GUROBI logs
     # )
 
-    prob.solve(solver=cp.GUROBI, verbose=True)
+    # Default solver is GUROBI (what the cluster runs). `solver` is provided so the
+    # pricing invariants can be checked locally with an open-source interior-point
+    # solver when no Gurobi licence is available; it does not change the model.
+    prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+    if prob.status not in ("optimal", "optimal_inaccurate"):
+        raise RuntimeError(f"zavala_cvar solve failed: status={prob.status}")
     # # Print solver statistics for debugging
     # print(f"Solver: {prob.solver_stats.solver_name}, Status: {prob.status}, Iterations: {prob.solver_stats.num_iters}")
 
@@ -887,9 +909,56 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, beta=0.95, lambda_cvar=
     d_j_jax = jnp.array([d_j[j].value for j in range(num_d)])
     G_i_jax = jnp.array([[G_i[p][i].value for i in range(num_g)] for p in range(len(probs))])
     D_j_jax = jnp.array([[D_j[p][j].value for j in range(num_d)] for p in range(len(probs))])
-    pi = day_ahead_balance[0].dual_value
-    Pi = jnp.array([real_time_balance[p].dual_value / (probs[p] + cvar_link[p].dual_value) for p in range(len(probs))])
-    cvar_link_dual = jnp.array([float(np.asarray(c.dual_value).ravel()[0]) if c.dual_value is not None else np.nan for c in cvar_link])
+    # --- Price identification, paper Eq. (67) and Eq. (107) ---------------------
+    # CVaR-tilted probability weight:   rho_tilde_w = (1 - eps) * rho_w + gamma_w
+    # Day-ahead price:                  p_0 = lambda
+    # Real-time price:                  p_w = nu_w / rho_tilde_w
+    # Insurance (Arrow-Debreu) price:   q_w = rho_tilde_w
+    #
+    # NOTE: the previous implementation divided by (rho_w + gamma_w), i.e. it
+    # omitted the (1 - eps) factor. That denominator is correct only for the
+    # un-normalised objective  E[loss] + eps*CVaR, which this function stopped
+    # using in commit 251f501 when the objective became
+    #   (1 - eps)*E[loss] + eps*CVaR   (paper Eq. 58).
+    eps = float(lambda_cvar)
+
+    probs_np = np.asarray(probs, dtype=float).reshape(-1)
+
+    # gamma_w: multiplier on the CVaR shortfall constraint, paper Eq. (62)
+    gamma = np.array([
+        float(np.asarray(c.dual_value).ravel()[0]) if c.dual_value is not None else np.nan
+        for c in cvar_link
+    ], dtype=float)
+
+    rho_tilde = (1.0 - eps) * probs_np + gamma          # Eq. (67)
+
+    pi = day_ahead_balance[0].dual_value                 # p_0 = lambda,  Eq. (107)
+    nu = np.array([
+        float(np.asarray(real_time_balance[p].dual_value).ravel()[0])
+        for p in range(len(probs))
+    ], dtype=float)
+    Pi = jnp.array(nu / rho_tilde)                       # p_w = nu_w / rho_tilde_w, Eq. (107)
+
+    if check_invariants and np.all(np.isfinite(gamma)):
+        # Eq. (69): sum_w gamma_w = eps
+        sum_gamma = float(gamma.sum())
+        # Eq. (67) + (69): sum_w rho_tilde_w = (1 - eps) + eps = 1
+        sum_rho_tilde = float(rho_tilde.sum())
+        # Eq. (70) with eta_w >= 0:  0 <= gamma_w <= eps * rho_w / (1 - beta)
+        gamma_ub = eps * probs_np / (1.0 - beta)
+        tol = 1e-6
+        if abs(sum_gamma - eps) > max(tol, tol * max(eps, 1.0)):
+            print(f"[CVaR-INVARIANT][FAIL] sum_w gamma_w = {sum_gamma:.12g}, expected eps = {eps:.12g} (paper Eq. 69)")
+        if abs(sum_rho_tilde - 1.0) > tol:
+            print(f"[CVaR-INVARIANT][FAIL] sum_w rho_tilde_w = {sum_rho_tilde:.12g}, expected 1 (paper Eq. 67+69)")
+        n_lo = int((gamma < -tol).sum())
+        n_hi = int((gamma > gamma_ub + tol).sum())
+        if n_lo or n_hi:
+            print(f"[CVaR-INVARIANT][FAIL] gamma_w outside [0, eps*rho_w/(1-beta)]: {n_lo} below, {n_hi} above (paper Eq. 70)")
+        if np.any(rho_tilde <= 0):
+            print(f"[CVaR-INVARIANT][FAIL] rho_tilde_w has {int((rho_tilde <= 0).sum())} non-positive entries; RT prices undefined there")
+
+    cvar_link_dual = jnp.array(gamma)
 
     return g_i_jax, d_j_jax, G_i_jax, D_j_jax, pi, Pi, cvar_link_dual
 

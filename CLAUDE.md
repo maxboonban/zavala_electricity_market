@@ -1,0 +1,5 @@
+You will push all your code changes and artifacts to the branch hrithik_final.
+Do not run any compute heavy experiments in this machine. I will run it on OSCAR. Whenever you want to run something compute heavy, you will push the code changes including virtual environment requirements to github. I will take a pull on OSCAR and directly run the commands you tell me to. The command should also involve push the results back into github so that you can view them here on this machine.
+This repository is to implement experiments to support my theoretical paper on risk-aware stochastic electricity market clearing. I have added the paper as a PDF in the folder /paper. Be thorough with all theory in this paper so that you can implement it in gurobi wiuthout any mistakes.
+Every change and experiment and result you run should be logged in detail so that I can add it to the paper.
+Be very honest and do not fabricate any result. The theory is sound and it should work.

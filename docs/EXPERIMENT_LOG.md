@@ -1,0 +1,133 @@
+# Experiment & Change Log
+
+Running log of code changes and experimental results, kept in enough detail to
+cite directly in the paper. Newest entries first.
+
+---
+
+## 2026-11-04 — Fix CVaR real-time price identification (paper Eq. 67 / 107)
+
+### Summary
+
+`zavala_cvar` computed real-time prices with the wrong probability weight in the
+denominator. The optimisation model itself was correct; only the dual readout was
+wrong. Fixed, and verified numerically against the paper's KKT identities.
+
+### The defect
+
+Paper Eq. (67) defines the CVaR-tilted probability weight
+
+    rho_tilde_w = (1 - eps) * rho_w + gamma_w
+
+and Eq. (107) identifies the prices as
+
+    p_0 = lambda                      (day-ahead)
+    p_w = nu_w / rho_tilde_w          (real-time, scenario w)
+    q_w = rho_tilde_w                 (Arrow-Debreu / insurance)
+
+where `eps` is the risk weight (`lambda_cvar` in code), `nu_w` is the multiplier on
+the real-time balance constraint, and `gamma_w` the multiplier on the CVaR shortfall
+constraint Eq. (62).
+
+`zavala_funcs.py` divided by `(rho_w + gamma_w)` — omitting the `(1 - eps)` factor:
+
+```python
+# before
+Pi = jnp.array([real_time_balance[p].dual_value / (probs[p] + cvar_link[p].dual_value) ...])
+# after
+rho_tilde = (1.0 - eps) * probs_np + gamma
+Pi = jnp.array(nu / rho_tilde)
+```
+
+**Origin.** That denominator is correct for the *un-normalised* objective
+`E[loss] + eps*CVaR`. Commit `251f501` ("regularized cvar objective") changed the
+objective to the normalised form of paper Eq. (58),
+`(1 - eps)*E[loss] + eps*CVaR`, but left the price formula untouched.
+
+### Magnitude of the error
+
+For any scenario with `gamma_w = 0` (all non-tail scenarios) the old price was too
+low by exactly a factor of `(1 - eps)`, i.e. a relative error of exactly `eps`.
+Measured on a 40-scenario `s_real10_mix` instance (seed 2025, beta=0.95):
+
+| eps | bias in E[Pi] (old - new), $/MWh | max per-scenario relative error |
+|-----|----------------------------------|---------------------------------|
+| 0.1 | -6.07                            | 10.0 %                          |
+| 0.3 | -14.78                           | 30.0 %                          |
+| 0.5 | -23.91                           | 50.0 %                          |
+| 1.0 | -85.85                           | 100.0 %                         |
+
+The old formula **systematically under-reported CVaR real-time prices.**
+
+### What this does and does not invalidate
+
+- **Not affected — all welfare results.** `compute_social_surplus` reads primal
+  allocations only. The LP solved was always the correct one, so dispatch,
+  expected welfare and tail welfare are sound. That covers Table 1, Table 3,
+  Table 4, Table 6, and Figures 1-3.
+- **Affected — every reported price under CVaR clearing.** In particular Table 5
+  (`E[RT price]` = 989.96 for CVaR) and the $100/MWh day-ahead premium discussion
+  in Appendix C, which is stated relative to that number. These need re-running.
+
+### Verification
+
+New script `verify_cvar_pricing.py` checks the planner's KKT identities directly.
+Run locally with CLARABEL (Gurobi licence on this machine expired 2026-03-21);
+reproduce on the cluster with `--solver GUROBI`. Full output in
+`logs/verify_cvar_pricing_local.log`.
+
+Checks, all passing on `s_real10_mix`, S=40, G=10, beta=0.95, eps in {0.1,0.3,0.5,1.0}:
+
+| Check | Identity | Result |
+|-------|----------|--------|
+| Eq. (69) | `sum_w gamma_w = eps` | max abs dev 2.1e-09 |
+| Eq. (67) | `sum_w rho_tilde_w = 1` | max abs dev 2.1e-09 |
+| Eq. (70) | `0 <= gamma_w <= eps*rho_w/(1-beta)` | satisfied |
+| Eq. (107) | `rho_tilde_w > 0` so `p_w` well defined | satisfied |
+| Remark 10 | `eps = 0` reproduces risk-neutral `zavala` | `|dpi| = 3.7e-07`, `max|dPi| = 3.4e-05`, `max|gamma| = 2.3e-09` |
+
+This also **confirms the CVXPY sign convention**: `cvar_link[p].dual_value` is
+exactly the paper's `gamma_w`, with no rescaling needed.
+
+Note: only 2 of 40 scenarios carry tail mass (`gamma_w > 0`) at beta=0.95, as
+expected — `(1-beta)*S = 2`.
+
+### Two inconsistencies in the paper (not code)
+
+The same stale normalisation appears in the manuscript, in two places that
+contradict Eq. (58), (67) and (107):
+
+1. **p. 19:** "Moreover, `sum_w rho_tilde_w = 1 + eps`, so the normalised weights
+   `rho_tilde_w/(1+eps)` define a probability measure." Under Eq. (58) the correct
+   sum is `(1-eps) + eps = 1`; no normalisation is needed. Stated correctly on
+   p. 21, p. 25 and p. 27 (Lemma 5 proof).
+2. **p. 26**, Walras' law proof: "since `p_0 = lambda/(1+eps)`" contradicts
+   Eq. (107)'s `p_0 := lambda`.
+
+Both read as leftovers from the pre-normalisation objective — the same root cause
+as the code defect.
+
+### Open modelling question
+
+`price_distortion()` computes `|pi - sum_w rho_w * Pi_w|` using the **raw**
+probabilities. Under the risk-aware model the natural analogue is the tilted
+measure, `|pi - sum_w rho_tilde_w * Pi_w|`. The paper does not state which it
+intends (Section 9 reports welfare, not distortion). Flagged; not changed.
+
+### Other changes in this commit
+
+- `generate_instance(...)` now takes `input_scenario` as a parameter, defaulting
+  to **`s_real10_mix`** — the setup in Section 9.1 / Table 2. It was hard-coded to
+  `s_htoy_mix_v2` (the 2-generator toy), so the repo as committed did not reproduce
+  the paper's synthetic experiment.
+- `zavala(...)` and `zavala_cvar(...)` take an optional `solver` (default unchanged:
+  Gurobi) and `verbose` flag, so invariants can be checked without a Gurobi licence.
+  The model is untouched.
+- Both now raise on non-optimal solver status instead of silently returning `None`
+  duals.
+
+### Still unimplemented
+
+The insurance market (Section 8.3-8.5): nothing computes `q_w`, `r^c` or `r^g`.
+`q_w = rho_tilde_w` is now available for free from the fix above. Section 9 makes
+no insurance claims, so this is not a gap in the current results.
