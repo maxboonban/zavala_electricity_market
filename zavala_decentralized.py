@@ -204,7 +204,7 @@ def _var_level(loss, probs, beta):
 
 def solve_agent(kind, probs, p0, Pi, cost_or_value, delta, cap_lo, cap_hi,
                 eps, beta, q=None, r_fixed=None, insurance=True,
-                solver=None, verbose=False):
+                solver=None, verbose=False, r_bound=None):
     """Solve one agent's risk-aware problem.
 
     kind : "producer" (Eq. 100-103) or "consumer" (Eq. 96-99).
@@ -255,6 +255,12 @@ def solve_agent(kind, probs, p0, Pi, cost_or_value, delta, cap_lo, cap_hi,
             r_var = cp.Variable(S)
             premium = q_vec @ r_var
             payoff = u + r_var
+            # At q = rho_tilde the objective is EXACTLY flat in r (Eq. 108 is an
+            # identity, not a pin), so the LP has an unbounded recession ray and
+            # any numerical noise in gamma makes it strictly improving. A box
+            # makes the problem well posed; callers must check it is not active.
+            if r_bound is not None:
+                cons += [r_var <= float(r_bound), r_var >= -float(r_bound)]
     else:
         premium = 0.0
         payoff = u
@@ -280,6 +286,9 @@ def solve_agent(kind, probs, p0, Pi, cost_or_value, delta, cap_lo, cap_hi,
     if cons_shortfall.dual_value is not None:
         gamma = np.asarray(cons_shortfall.dual_value, float).reshape(-1)
 
+    if r_var is not None and r_bound is not None and r_var.value is not None:
+        out["r_bound_active"] = bool(
+            np.max(np.abs(np.asarray(r_var.value, float))) > 0.999 * float(r_bound))
     out.update(
         da=float(a.value),
         rt=np.asarray(total.value, float).reshape(-1),

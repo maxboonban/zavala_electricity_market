@@ -318,3 +318,122 @@ flag set (CLARABEL substituted for GUROBI, reduced S). All exited 0.
 because the local Gurobi licence expired 2026-03-21. The pass/fail identities
 are structural and solver-independent, but the economic magnitudes in D3 and D5
 should be quoted from the OSCAR Gurobi run, not from these.
+
+---
+
+## 2026-11-05 — Theory audit + IM3 GO-WEST economic experiments (E1–E6)
+
+Two deliverables: a full adjudication of the manuscript's theory
+(`docs/THEORY_ERRATA.md`, 10 items + 5 empirical ones), and a new experiment
+suite on real Western Interconnection data that tests what the theory *buys*
+rather than only that its equations hold.
+
+### New files
+
+| File | Purpose |
+|---|---|
+| `verify_theory.py` | Adjudicates T1–T8. Each test can only pass if the corrected statement is right. |
+| `im3_data.py` | IM3 GO-WEST instance builder: real marginal costs, conditional scenario sampling, fleet sizing. |
+| `im3_experiments.py` | E1–E6 plus a recourse evaluator and CVaR/ρ_RA helpers. |
+| `run_im3_experiments.py` | Driver. |
+| `slurm_im3.sh` | OSCAR job: theory → D1–D5 → E1–E6 → seasonal robustness. |
+| `docs/THEORY_ERRATA.md` | The errata list with the numbers behind each verdict. |
+
+### Theory findings
+
+Confirmed errors **T1** (`Σρ̃ = 1`, not `1+ε`; contradicted three times by the
+paper itself), **T2** (`p₀ = λ`, not `λ/(1+ε)`), **T3**/**T4** (sign of
+Eq. 111–113). Two *gaps* rather than errors: **T9**, the agent's insured program
+is exactly flat in `r` at `q = ρ̃` so the argmax is a flat set and the LP is
+numerically unbounded; **T10**, the agent's optimum exists only because `α^± > 0`,
+which the paper never states.
+
+Two retractions/corrections of our own earlier claims:
+
+* **Theorem 9 "verified" was overstated.** D4 checked only Eq. (95) and Eq. (121),
+  which hold for *any* `{t_k}` and so cannot discriminate. The (UM) test now lives
+  in `verify_theory.py::test_T5` and passes (1.3e−05, solver tolerance).
+* **The suspected `t*` circularity in Eq. (122) is not an error.** Both readings
+  give identical objectives (1.1e−10) because a constant shift of `r` is
+  objective-neutral — which holds *precisely because* `Σρ̃ = 1` (T1).
+
+**Remark 11 verified** and promotable from a deferred remark: with ε,β
+anti-correlated so `β_P` falls outside the agents' own pool, `ε_min = 0.2`,
+`φ_min = 4.5`, `β_P = 0.957447` against `{0.90, 0.99}`; the resulting `q` is
+feasible for every agent (max violation 2.8e−09).
+
+### Data-layer corrections (all affect the published tables)
+
+* **Marginal costs were randomised** (`Uniform[35,55]`) despite real `Heat_Rate`
+  and `Fuel` columns. Now `mc = Heat_Rate × fuel_price + VOM`, giving
+  nuclear $13.70 < NG $21.22 < coal $23.27. **Caveat: 270 of 280 gas heat rates
+  are non-physical (mean 4.02 MMBtu/MWh) and are floored.**
+* **Scenarios were consecutive hours**, conflating the diurnal cycle (solar
+  0→13.8→0 GW within a day) with forecast uncertainty. Now conditioned on a
+  delivery hour and sampled across days.
+* **The published instances sit in permanent scarcity**: full WECC load (mean
+  82 GW) against a few-bus fleet, so price pins to VOLL. Load *level* is now
+  scaled to a 15% reserve margin; *shape* untouched. Market prices at
+  **$21.92/MWh** with a sensible merit order.
+* **`delta_scale` is now a parameter of `zavala_cvar`** (default 0.1, reproducing
+  all earlier results exactly). It was hard-coded as `mc/10` with the comment
+  "just a heuristic".
+
+### Results (local smoke, CLARABEL, S=50–80 — magnitudes pending OSCAR/Gurobi)
+
+**E1 — value of the missing insurance market.** $27,839/h = **1.03 $/MWh**
+= $244M/yr, 0.11% of risk-adjusted welfare. Decomposes into E[ℓ] +55,765 (worse)
+against CVaR −222,916 (better). Without insurance the agents' tail sets range
+over 3–60 scenarios against the planner's 3; `max|γ_k − γ| = 0.10` where Eq. (94)
+requires 0.
+
+**E2 — incidence.** The **load is the residual risk bearer** (π = +1.55M/h):
+its loss spikes exactly where the market prices heavily, so it is the natural
+buyer of cover. Renewables are mildly negative (they sell cover). π is *exactly*
+zero for coal and nuclear — a property of the dataset, not the theory: thermal
+capacity is scenario-invariant, so an infra-marginal unit has constant `L` and
+`Σ(q−ρ)L = L·0 = 0`. Forced outages would change this.
+
+**E3 — decarbonisation.** Scaling renewables *on top of* an unchanged thermal
+fleet leaves the insurance value flat (1.31 → 1.25 $/MWh), because firm capacity
+still covers peak and the tail never moves. Redesigned as substitution at fixed
+total capacity (thermal retires as renewables enter): **still flat**
+(1.3075 → 1.1988 $/MWh from 15% to 75% renewable share). Reported as a negative
+result.
+
+**E4 — out-of-sample.** Clearing on one scenario set and evaluating the day-ahead
+commitment on a disjoint set from the same conditional pool:
+tail loss **−211,356 ± 14,134, improved in 5/5 replications**; expected loss
++38,005 (worse); planner objective −36,803, 5/5. Risk-aware clearing genuinely
+reduces held-out tail loss rather than fitting the in-sample tail.
+
+**E5 — paired statistics.** Repairs Tables 1 and 3.
+
+| method | mean | unpaired ± | paired diff | paired ± | wins |
+|---|---|---|---|---|---|
+| risk-neutral | −19,646,193 | 416,371 | — | — | — |
+| CVaR ε=0.1 | −19,707,113 | 425,760 | −60,920 | 29,956 | 5/5 |
+| CVaR ε=0.3 | −19,884,763 | 433,269 | −238,570 | 22,833 | 5/5 |
+| CVaR ε=1.0 | −20,324,748 | 379,285 | −678,555 | 44,455 | 5/5 |
+
+The unpaired interval is **14× wider** than the paired one. At ε=0.1 the effect is
+invisible unpaired and clearly significant paired — exactly Table 1's situation.
+
+**E6 — what the headline number depends on.** The insurance value is linear in
+the deviation bid price to **0.003%**:
+
+| `delta_scale` | 0.02 | 0.05 | 0.10 | 0.20 | 0.40 |
+|---|---|---|---|---|---|
+| $/MWh | 0.1931 | 0.4827 | 0.9655 | 1.9309 | 3.8621 |
+
+**value = 9.655 × `delta_scale` $/MWh = 0.9655% of the load's deviation bid price.**
+The paper should quote this slope, not a point value.
+
+### Honest caveats
+
+* All magnitudes above are CLARABEL at S=50–80 (local Gurobi licence expired
+  2026-03-21). Pass/fail identities are structural; **economic magnitudes will
+  move** on the S=500 Gurobi run.
+* E3 is a negative result and is reported as one.
+* The single inelastic load at VOLL means essentially all tail risk lands on it;
+  a richer demand side would redistribute the incidence in E2.

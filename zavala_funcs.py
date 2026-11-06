@@ -806,7 +806,15 @@ def price_distortion_system_1(pi_da, rt_prices, probs):
     return float(diff.mean()), float(diff.max())
 
 def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, beta=0.95, lambda_cvar=0.1,
-                check_invariants=True, solver=None, verbose=True):
+                check_invariants=True, solver=None, verbose=True, delta_scale=0.1):
+    """Risk-aware two-stage clearing (paper Eq. 58-65).
+
+    `delta_scale` sets the deviation bid prices alpha^+/alpha^- of paper Eq. (3)
+    as a fraction of each agent's marginal cost / valuation. It was previously
+    hard-coded at 0.1 and labelled "just a heuristic" -- but the economic value
+    of risk-aware clearing is close to LINEAR in it, so it must be reported and
+    swept, not buried. 0.1 reproduces every earlier result exactly.
+    """
     num_g = len(mc_g_i)
     num_d = len(mv_d_j)
 
@@ -816,9 +824,9 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, beta=0.95, lambda_cvar=
     d_j = [cp.Variable() for j in range(num_d)]
     D_j = [[cp.Variable() for j in range(num_d)] for p in range(len(probs))]
 
-    # Compute incremental bids (just a heuristic)
-    mc_g_i_delta = mc_g_i / 10.0
-    mv_d_j_delta = mv_d_j / 10.0
+    # Deviation bid prices alpha^+/alpha^- (paper Eq. 3), see `delta_scale`.
+    mc_g_i_delta = mc_g_i * delta_scale
+    mv_d_j_delta = mv_d_j * delta_scale
 
     # --- CVaR knobs (beta: tail confidence level, lambda_cvar: CVaR regularization weight; set lambda_cvar=0 to recover plain stochastic zavala()) ---
 
