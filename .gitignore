@@ -209,3 +209,10 @@ __marimo__/
 
 .DS_Store
 figuresgurobi.lic
+
+# --- Experiment artifacts: override the blanket *.log rule above ---
+# Paper-ready run logs must round-trip from OSCAR back to the repo.
+!logs/
+!logs/**/*.log
+!outputs/logs/
+!outputs/logs/**

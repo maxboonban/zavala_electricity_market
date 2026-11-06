@@ -1,0 +1,89 @@
+==============================================================================
+Decentralisation and insurance-transfer experiments
+==============================================================================
+args: {'experiments': ['D1', 'D2', 'D3'], 'scenarios': 30, 'eps': 0.1, 'beta': 0.95, 'seed': 2025, 'scenario': 's_real10_mix', 'solver': 'CLARABEL', 'eps_sweep': [0.0, 0.1, 0.3, 0.5, 1.0], 'het_betas': [0.9, 0.95, 0.99], 'out': 'outputs/results', 'tag': 'smoke', 'dump_transfers': False}
+Planner: S=30, producers=10, consumers=1, eps=0.1, beta=0.95, scenario=s_real10_mix, seed=2025
+  p0 = 295.092965,  E_rho[Pi] = 205.380890,  E_rhotilde[Pi] = 294.842801
+  tail scenarios with gamma_w > 0: 2 of 30 (expected ~(1-beta)S = 2)
+  [PASS] Eq.(110)  sum_k L_k(w) = ell(w)  (price terms cancel)   max|diff| = 2.910e-10
+
+==============================================================================
+D1  Decentralisation with insurance  (Theorems 6, 7, 8)
+==============================================================================
+Definition 3 (UM) requires (x*, X*, r*) to solve the agent's problem, with
+insurance a CHOICE variable. So the test is: let each agent optimise freely
+over physical position AND insurance at prices q, then check its optimal
+objective equals the objective at (planner allocation, constructed r).
+Degenerate real-time optima make raw allocation distance a poor criterion,
+so the objective value is the primary test and allocations are diagnostic.
+  [PASS] Eq.(95)  insurance market clears state-by-state   max|sum_k r_k(w)| = 2.910e-10
+  [PASS] (UM) planner allocation + constructed transfer is agent-optimal   max relative objective gap = 7.640e-11
+  [FAIL]      day-ahead quantities coincide with the planner's   max|DA diff| = 2.273e+00
+  [PASS] Eq.(94)/(109)  agents' CVaR multipliers equal the planner's   max|gamma_k - gamma| = 5.206e-10
+
+  Control: the same test with Eq. (111)-(112) exactly as printed
+  max relative (UM) gap with the printed sign = 9.027e-01
+  (a large gap here is the evidence that Eq. 111-112 need r -> -r;
+   Eq. 122 in Theorem 9 already uses the corrected sign)
+
+==============================================================================
+D2  Decentralisation WITHOUT insurance  (Section 8.2.2, Eq. 94)
+==============================================================================
+Same prices, no insurance market. Eq. (94) requires every agent's CVaR
+multiplier to equal the planner's; with heterogeneous exposures it cannot.
+We measure the resulting dispersion and the allocation error.
+  max_k max_w |gamma_k(w) - gamma(w)| = 7.996862e-02
+  mean over agents                    = 3.335336e-02
+  >> Eq. (94) FAILS without insurance
+  max_k |allocation_k - planner_k|    = 1.116809e+02
+  per-agent tail-scenario counts: min=2, max=7, planner=2
+  (differing tail sets across agents is precisely the obstruction in 8.2.2)
+
+==============================================================================
+D3  Anatomy of the equilibrium transfers  (Remarks 7, 8, 9)
+==============================================================================
+
+  Eq.(113), sign-corrected: insured loss L_k - r_k must be ell(w)/N + const
+  [PASS] Eq.(113)  slope = 1 for every agent (common tail set)   max|slope - 1| = 2.220e-16
+  [PASS] Eq.(113)  insured loss is exactly affine in ell(w)   max residual = 1.455e-11
+
+  Premium decomposition (Remark 8): q = (1-eps)rho + gamma, so
+  premium = (1-eps) * E_rho[payout] + tail premium gamma . r
+
+         agent        premium   E_rho[payout]     tail prem          net      |r|_max
+         gen_0      16034.406       14105.607      3339.360    -1928.800    33455.908
+         gen_1      16202.326       11157.561      6160.522    -5044.766    62541.579
+         gen_2      16076.611       12937.694      4432.686    -3138.917    45966.783
+         gen_3      14414.417       11963.394      3647.362    -2451.023    38380.542
+         gen_4      15944.667       15938.289      1600.207       -6.378    18196.791
+         gen_5      16004.741       15376.933      2165.502     -627.809    23437.065
+         gen_6      10714.391       13723.024     -1636.331     3008.633    21225.110
+         gen_7       9994.246       13388.273     -2055.200     3394.027    21225.110
+         gen_8      11104.328       14129.836     -1612.525     3025.508    21225.110
+         gen_9       9684.927       13083.091     -2089.854     3398.163    21683.119
+        load_0    -136175.061     -135803.700    -13951.730      371.360   150552.421
+         TOTAL     -9.854e-11      -8.817e-11
+  (totals are ~0 by Eq. 95; a positive 'net' means the agent is a net
+   insurance buyer, i.e. it is paid in bad states and pays for the cover)
+
+  By technology: unreliable gens net = -13197.692, reliable gens net = +12826.332, loads net = +371.360
+
+  Risk reduction: CVaR of each agent's loss, uninsured vs insured
+         gen_0  CVaR      20430.141 ->     -12963.461   (+33393.602)
+         gen_1  CVaR      48641.756 ->     -12963.461   (+61605.217)
+         gen_2  CVaR      31363.403 ->     -12963.461   (+44326.863)
+         gen_3  CVaR      24973.441 ->     -12963.461   (+37936.902)
+         gen_4  CVaR       3632.627 ->     -12963.461   (+16596.087)
+         gen_5  CVaR       9647.018 ->     -12963.461   (+22610.479)
+         gen_6  CVaR         -0.000 ->     -12963.461   (+12963.460)
+         gen_7  CVaR         -0.000 ->     -12963.461   (+12963.461)
+         gen_8  CVaR         -0.000 ->     -12963.461   (+12963.461)
+         gen_9  CVaR         -0.000 ->     -12963.461   (+12963.461)
+        load_0  CVaR    -138674.967 ->     -12963.461   (-125711.506)
+
+==============================================================================
+1 check(s) FAILED
+==============================================================================
+
+Results written to outputs/results/decentralized_smoke.json
+Log written to logs/decentralized_smoke.log

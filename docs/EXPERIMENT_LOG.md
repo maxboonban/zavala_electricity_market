@@ -256,3 +256,65 @@ intends (Section 9 reports welfare, not distortion). Flagged; not changed.
 The insurance market (Section 8.3-8.5): nothing computes `q_w`, `r^c` or `r^g`.
 `q_w = rho_tilde_w` is now available for free from the fix above. Section 9 makes
 no insurance claims, so this is not a gap in the current results.
+
+---
+
+## 2026-11-05 — Pre-flight verification of the OSCAR decentralisation run
+
+Audit of `slurm_decentralized.sh` before submission. Three defects found and fixed;
+no change to any experiment's logic or results.
+
+### 1. Result logs were silently gitignored (blocking)
+
+`.gitignore` inherited a blanket `*.log` rule from the GitHub Python template.
+Both `logs/decentralized_<tag>.log` (the full paper-ready narrative log) and
+`logs/verify_cvar_pricing_gurobi.log` matched it, so the documented
+round-trip (`git add logs outputs && git push`) would have pushed the JSON
+results but **silently dropped every human-readable log**. Verified with
+`git check-ignore`. Fixed with explicit negations; re-verified all four
+artifact paths now stage.
+
+### 2. GPU partition requested for a pure-CPU workload
+
+All three SLURM scripts requested `--partition=gpu --gres=gpu:nvidia_rtx_a5000:1`.
+The workload is cvxpy + Gurobi linear programming, which is CPU-only; `jax` is
+used solely for PRNG-keyed instance generation and `requirements.txt` pins the
+CPU `jaxlib` wheel. Confirmed by grep: no `cuda`/`device` reference anywhere in
+`zavala_funcs.py`, `zavala_real_data.py`, `run_decentralized_experiments.py`,
+`zavala_decentralized.py`. Switched to `--partition=batch` (OSCAR's default
+general-purpose CPU partition). Queue time only — no effect on results.
+
+### 3. `logs/` not created by the job script
+
+The script `mkdir -p outputs/logs outputs/results` but then piped the Gurobi
+sanity check through `tee logs/...`. Under `set -euo pipefail` a missing `logs/`
+would abort the job at step one. Added `logs` to the `mkdir`, and added
+`outputs/logs/.gitkeep` so the SBATCH `--output` directory exists at submission
+time (SLURM resolves `--output` *before* the script body runs).
+
+### 4. Added a Gurobi licence preflight
+
+A trivial one-variable LP now runs before any experiment, so an expired or
+missing licence fails in seconds with an actionable message instead of a cryptic
+solver error partway through D3.
+
+### Runtime and scale validation
+
+| S | configuration | wall time | result |
+|---|---|---|---|
+| 30 | D1, CLARABEL | 4.9 s | pass |
+| 80 | D1, CLARABEL | 5.4 s | pass |
+| 200 | **D1–D5, CLARABEL** | **81.8 s** | **ALL CHECKS PASSED** |
+| 40 | D1–D5 + eps sweep {0.3,0.5,1.0} | ~60 s | ALL CHECKS PASSED |
+
+The S=200 run is the important one: all identities that were previously only
+confirmed at the S=30 smoke scale continue to hold an order of magnitude
+larger. The `--time=04:00:00` limit is generous by a wide margin.
+
+Every command in `slurm_decentralized.sh` was dry-run locally with its exact
+flag set (CLARABEL substituted for GUROBI, reduced S). All exited 0.
+
+**Caveat carried forward:** every number to date is CLARABEL, not Gurobi,
+because the local Gurobi licence expired 2026-03-21. The pass/fail identities
+are structural and solver-independent, but the economic magnitudes in D3 and D5
+should be quoted from the OSCAR Gurobi run, not from these.

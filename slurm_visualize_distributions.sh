@@ -4,8 +4,7 @@
 #SBATCH --output=outputs/logs/%x_%j.out
 #SBATCH --error=outputs/logs/%x_%j.err
 #SBATCH --time=04:00:00
-#SBATCH --partition=gpu
-#SBATCH --gres=gpu:nvidia_rtx_a5000:1
+#SBATCH --partition=batch
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=4
 
@@ -15,7 +14,7 @@ WORKDIR=/users/$USER/scratch/zavala_electricity_market
 LOG=outputs/logs/${SLURM_JOB_NAME}_${SLURM_JOB_ID}.log
 
 cd "$WORKDIR"
-mkdir -p outputs/logs outputs/results
+mkdir -p outputs/logs outputs/results logs
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG"; }
 

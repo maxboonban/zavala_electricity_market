@@ -4,8 +4,7 @@
 #SBATCH --output=outputs/logs/%x_%j.out
 #SBATCH --error=outputs/logs/%x_%j.err
 #SBATCH --time=04:00:00
-#SBATCH --partition=gpu
-#SBATCH --gres=gpu:nvidia_rtx_a5000:1
+#SBATCH --partition=batch
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=4
 
@@ -15,7 +14,7 @@ WORKDIR=/users/$USER/scratch/zavala_electricity_market
 LOG=outputs/logs/${SLURM_JOB_NAME}_${SLURM_JOB_ID}.log
 
 cd "$WORKDIR"
-mkdir -p outputs/logs outputs/results
+mkdir -p outputs/logs outputs/results logs
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG"; }
 
@@ -47,6 +46,22 @@ SCENARIOS=500
 BETA=0.95
 SEED=2025
 TAG="dec_S${SCENARIOS}_b${BETA}_${SLURM_JOB_ID}"
+
+# Fail fast and legibly if the Gurobi licence is not usable on this node,
+# rather than surfacing a cryptic solver error deep inside an experiment.
+log "Preflight: Gurobi licence check"
+python - <<'PYEOF'
+import sys
+try:
+    import gurobipy as gp
+    m = gp.Model(); m.setParam("OutputFlag", 0)
+    x = m.addVar(ub=1); m.setObjective(x, gp.GRB.MAXIMIZE); m.optimize()
+    print(f"[preflight] Gurobi OK (v{gp.gurobi.version()}), trivial LP obj = {m.objVal:.1f}")
+except Exception as e:
+    print(f"[preflight][FATAL] Gurobi unusable: {e}", file=sys.stderr)
+    print("[preflight] Re-run with --solver CLARABEL, or renew the licence.", file=sys.stderr)
+    sys.exit(1)
+PYEOF
 
 log "Sanity: CVaR pricing invariants under Gurobi"
 python -u verify_cvar_pricing.py --solver GUROBI --scenarios 40 \

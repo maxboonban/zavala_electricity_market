@@ -1,0 +1,42 @@
+/Users/hrithiknambiar/Desktop/Research/prj_market/.venv/lib/python3.11/site-packages/cvxpy/problems/problem.py:167: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  warnings.warn("Objective contains too many subexpressions. "
+Solver: CLARABEL
+
+--- eps=0.1, beta=0.95, S=40, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.1000000003 eps=0.1 diff=+2.665e-10
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1.00000000027 diff=+2.665e-10
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=+1.784e-12 max=5.794e-02 ub_max=6.877e-02
+  [PASS] rho_tilde > 0 (RT prices well defined)  min=1.437e-02
+  info: 2/40 scenarios carry tail mass (gamma_w > 0); pi=138.522004  E[Pi]=82.098952
+  info: old (buggy) denominator would change E[Pi] by -6.067308 ($/MWh), max per-scenario relative change 10.000%
+
+--- eps=0.3, beta=0.95, S=40, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.3000000021 eps=0.3 diff=+2.056e-09
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1.00000000206 diff=+2.056e-09
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=+1.646e-11 max=1.738e-01 ub_max=2.063e-01
+  [PASS] rho_tilde > 0 (RT prices well defined)  min=1.118e-02
+  info: 2/40 scenarios carry tail mass (gamma_w > 0); pi=246.865128  E[Pi]=76.812264
+  info: old (buggy) denominator would change E[Pi] by -14.778635 ($/MWh), max per-scenario relative change 30.000%
+
+--- eps=0.5, beta=0.95, S=40, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.5000000002 eps=0.5 diff=+1.501e-10
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1.00000000015 diff=+1.501e-10
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=+1.833e-12 max=2.897e-01 ub_max=3.439e-01
+  [PASS] rho_tilde > 0 (RT prices well defined)  min=7.985e-03
+  info: 2/40 scenarios carry tail mass (gamma_w > 0); pi=360.183967  E[Pi]=77.033036
+  info: old (buggy) denominator would change E[Pi] by -23.906210 ($/MWh), max per-scenario relative change 50.000%
+
+--- eps=1.0, beta=0.95, S=40, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=1 eps=1 diff=+7.552e-11
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1.00000000008 diff=+7.552e-11
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=+6.406e-12 max=5.794e-01 ub_max=6.877e-01
+  [PASS] rho_tilde > 0 (RT prices well defined)  min=6.406e-12
+  info: 2/40 scenarios carry tail mass (gamma_w > 0); pi=627.764169  E[Pi]=115.773157
+  info: old (buggy) denominator would change E[Pi] by -85.852031 ($/MWh), max per-scenario relative change 100.000%
+
+--- Remark 10: eps = 0 reduces to risk-neutral `zavala` ---
+  [PASS] pi(eps=0) == pi_risk_neutral  |diff|=3.680e-07
+  [PASS] Pi(eps=0) == Pi_risk_neutral  max|diff|=3.407e-05
+  [PASS] gamma(eps=0) == 0  max|gamma|=2.333e-09
+
+ALL CHECKS PASSED

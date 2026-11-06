@@ -1,0 +1,66 @@
+==============================================================================
+Decentralisation and insurance-transfer experiments
+==============================================================================
+args: {'experiments': ['D1', 'D4', 'D5'], 'scenarios': 30, 'eps': 0.1, 'beta': 0.95, 'seed': 2025, 'scenario': 's_real10_mix', 'solver': 'CLARABEL', 'eps_sweep': [0.0, 0.1, 0.3, 0.5, 1.0], 'het_betas': [0.9, 0.95, 0.99], 'out': 'outputs/results', 'tag': 'smoke2', 'dump_transfers': False}
+Planner: S=30, producers=10, consumers=1, eps=0.1, beta=0.95, scenario=s_real10_mix, seed=2025
+  p0 = 295.092965,  E_rho[Pi] = 205.380890,  E_rhotilde[Pi] = 294.842801
+  tail scenarios with gamma_w > 0: 2 of 30 (expected ~(1-beta)S = 2)
+  [PASS] Eq.(110)  sum_k L_k(w) = ell(w)  (price terms cancel)   max|diff| = 2.910e-10
+
+==============================================================================
+D1  Decentralisation with insurance  (Theorems 6, 7, 8)
+==============================================================================
+Definition 3 (UM) requires (x*, X*, r*) to solve the agent's problem, with
+insurance a CHOICE variable. So the test is: let each agent optimise freely
+over physical position AND insurance at prices q, then check its optimal
+objective equals the objective at (planner allocation, constructed r).
+Degenerate real-time optima make raw allocation distance a poor criterion,
+so the objective value is the primary test and allocations are diagnostic.
+  [PASS] Eq.(95)  insurance market clears state-by-state   max|sum_k r_k(w)| = 2.910e-10
+  [PASS] (UM) planner allocation + constructed transfer is agent-optimal   max relative objective gap = 7.640e-11
+  [info] max|DA diff| vs planner = 2.273e+00 (alternative optima; (UM) is settled by the objective test above)
+  [PASS] Eq.(94)/(109)  agents' CVaR multipliers equal the planner's   max|gamma_k - gamma| = 5.206e-10
+
+  Control: the same test with Eq. (111)-(112) exactly as printed
+  max relative (UM) gap with the printed sign = 9.027e-01
+  (a large gap here is the evidence that Eq. 111-112 need r -> -r;
+   Eq. 122 in Theorem 9 already uses the corrected sign)
+
+==============================================================================
+D4  Heterogeneous confidence levels  (Theorem 9, Eq. 121-123)
+==============================================================================
+Agents get different beta_k; the planner must use beta_min (Eq. 117-120).
+Agents in S_> (beta_k > beta_min) need a CONSTANT insured loss across the
+tail (Eq. 121), which the equal-share construction cannot deliver. This
+verifies the construction the manuscript flags as not yet proof-checked.
+  beta_producers = [0.9, 0.99, 0.99, 0.95, 0.99, 0.99, 0.95, 0.99, 0.99, 0.99]
+  beta_consumers = [0.95]
+  beta_min = 0.9  (planner must clear at this level)
+  [NOTE] planner solution in hand used beta=0.95; re-solving at beta_min
+  [PASS] Eq.(95)  heterogeneous transfers clear state-by-state   max|sum_k r_k| = 1.201e-09
+  [PASS] Eq.(121)  S_> agents have constant insured loss across the tail   max spread over tail = 2.274e-13  (10 agents in S_>)
+  contrast: equal-share construction gives S_> agents a tail spread of 4.000e+03 (non-constant => violates Eq. 121, as Theorem 9 predicts)
+  risk-bearing weights w_k: [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  |S_min| = 1, agents in S_>: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+==============================================================================
+D5  Transfers as the risk weight varies  (Remark 10)
+==============================================================================
+At eps = 0 insurance is priced at q = rho, so premium = expected payout and
+every agent is indifferent: the market is redundant. As eps grows, q tilts
+toward the tail and the premium separates from the expected payout.
+
+     eps   sum|gamma|   max tail prem      mean|r|        E[Pi]           p0
+    0.00     0.000000           0.000    29915.394      206.778      206.946
+    0.10     0.100000       13951.730    26442.918      205.381      295.093
+    0.30     0.300000       29760.212    20479.264      205.241      473.919
+    0.50     0.500000       26486.689    14008.050      188.827      637.953
+    1.00     1.000000       17272.094    12898.605      199.944     1000.000
+  [FAIL] Remark 10  eps=0 makes insurance redundant (tail premium = 0)   max tail premium at eps=0 = 5.159e-05
+
+==============================================================================
+1 check(s) FAILED
+==============================================================================
+
+Results written to outputs/results/decentralized_smoke2.json
+Log written to logs/decentralized_smoke2.log
