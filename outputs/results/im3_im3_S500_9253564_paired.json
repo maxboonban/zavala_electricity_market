@@ -1,0 +1,166 @@
+{
+  "config": {
+    "experiments": [
+      "E5"
+    ],
+    "scenarios": 300,
+    "eps": 0.3,
+    "beta": 0.95,
+    "seed": 2025,
+    "solver": "GUROBI",
+    "hour_of_day": 18,
+    "season": "summer",
+    "sampling": "conditional",
+    "num_solar": 6,
+    "num_wind": 6,
+    "num_thermal": 6,
+    "renewable_scale": 1.0,
+    "shares": [
+      0.15,
+      0.3,
+      0.45,
+      0.6,
+      0.75
+    ],
+    "reps": 30,
+    "train": 200,
+    "test": 200,
+    "eps_list": [
+      0.1,
+      0.3,
+      0.5,
+      1.0
+    ],
+    "deltas": [
+      0.02,
+      0.05,
+      0.1,
+      0.2,
+      0.4
+    ],
+    "out": "outputs/results",
+    "tag": "im3_S500_9253564_paired"
+  },
+  "meta": {
+    "tech": [
+      "solar",
+      "solar",
+      "solar",
+      "solar",
+      "solar",
+      "solar",
+      "wind",
+      "wind",
+      "wind",
+      "wind",
+      "wind",
+      "wind",
+      "BIT (Bituminous Coal)",
+      "NG (Natural Gas)",
+      "NUC (Nuclear)",
+      "NG (Natural Gas)",
+      "NG (Natural Gas)",
+      "NUC (Nuclear)"
+    ],
+    "is_renewable": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "solar_buses": [
+      "bus_261331",
+      "bus_204901",
+      "bus_500241",
+      "bus_400041",
+      "bus_252891",
+      "bus_284011"
+    ],
+    "wind_buses": [
+      "bus_252891",
+      "bus_100931",
+      "bus_211211",
+      "bus_605141",
+      "bus_606631",
+      "bus_530021"
+    ],
+    "thermal_buses": [
+      500991,
+      605141,
+      408441,
+      261001,
+      403691,
+      261331
+    ],
+    "n_heat_rate_floored": 270,
+    "hour_of_day": 18,
+    "season": "summer",
+    "sampling": "conditional",
+    "renewable_scale": 1.0,
+    "thermal_scale": 1.0,
+    "voll": 1000.0,
+    "seed": 2025,
+    "load_scale": 0.2362680966458012,
+    "reserve_margin": 0.15,
+    "renewable_capacity_mw": 6495.696821521572,
+    "thermal_capacity_mw": 36732.79,
+    "mean_load_mw": 26766.64255597323,
+    "renewable_share": 0.15026426551409264
+  },
+  "E5": {
+    "0.1": {
+      "mean": -19762884.72558454,
+      "unpaired_ci": 113482.68697533627,
+      "paired_diff": -31643.4825936644,
+      "paired_ci": 4764.870987147534,
+      "wins": 30,
+      "n": 30,
+      "significant_paired": true,
+      "significant_unpaired": false
+    },
+    "0.3": {
+      "mean": -19957863.159000218,
+      "unpaired_ci": 114123.40941010161,
+      "paired_diff": -226621.91600934777,
+      "paired_ci": 6403.701532263965,
+      "wins": 30,
+      "n": 30,
+      "significant_paired": true,
+      "significant_unpaired": false
+    },
+    "0.5": {
+      "mean": -20313667.009425674,
+      "unpaired_ci": 98669.9978804283,
+      "paired_diff": -582425.7664348005,
+      "paired_ci": 20532.329184939037,
+      "wins": 30,
+      "n": 30,
+      "significant_paired": true,
+      "significant_unpaired": true
+    },
+    "1.0": {
+      "mean": -20369988.864510473,
+      "unpaired_ci": 98598.09967775183,
+      "paired_diff": -638747.6215195998,
+      "paired_ci": 16436.46966698102,
+      "wins": 30,
+      "n": 30,
+      "significant_paired": true,
+      "significant_unpaired": true
+    }
+  }
+}

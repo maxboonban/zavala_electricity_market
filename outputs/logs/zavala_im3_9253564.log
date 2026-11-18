@@ -1,0 +1,20 @@
+[2026-11-17 20:30:50] Job started — ID: 9253564, Node: node2411
+[2026-11-17 20:30:50] Loading modules...
+[2026-11-17 20:30:53] Conda env 'zavala-market' already exists, skipping creation.
+[2026-11-17 20:30:54] Conda environment activated
+[2026-11-17 20:30:54] Preflight: Gurobi licence check
+[2026-11-17 20:30:55] Theory verification (docs/THEORY_ERRATA.md)
+[2026-11-17 20:30:55]   verify_theory eps=0.1
+[2026-11-17 20:31:38]   verify_theory eps=0.3
+[2026-11-17 20:32:14]   verify_theory eps=0.5
+[2026-11-17 20:32:51] CVaR pricing invariants
+[2026-11-17 20:33:24] D1-D5 decentralisation suite (S=500)
+[2026-11-17 20:37:16] E1-E3,E6 at the headline configuration (summer, delivery hour 18)
+[2026-11-17 20:58:38] E4 out-of-sample validation (30 replications)
+[2026-11-17 21:41:01] E5 paired statistics (30 replications)
+[2026-11-17 22:57:36] E1 robustness: season=winter hour=8
+[2026-11-17 23:00:25] E1 robustness: season=winter hour=18
+[2026-11-17 23:03:15] E1 robustness: season=summer hour=8
+[2026-11-17 23:06:06] E1 robustness: season=summer hour=18
+[2026-11-17 23:08:59] Job completed successfully.
+[2026-11-17 23:08:59] Pushing results to GitHub (branch hrithik_final)

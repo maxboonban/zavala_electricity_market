@@ -1,0 +1,200 @@
+{
+  "config": {
+    "experiments": [
+      "E1",
+      "E2"
+    ],
+    "scenarios": 500,
+    "eps": 0.3,
+    "beta": 0.95,
+    "seed": 2025,
+    "solver": "GUROBI",
+    "hour_of_day": 18,
+    "season": "summer",
+    "sampling": "conditional",
+    "num_solar": 6,
+    "num_wind": 6,
+    "num_thermal": 6,
+    "renewable_scale": 1.0,
+    "shares": [
+      0.15,
+      0.3,
+      0.45,
+      0.6,
+      0.75
+    ],
+    "reps": 20,
+    "train": 200,
+    "test": 200,
+    "eps_list": [
+      0.1,
+      0.3,
+      0.5,
+      1.0
+    ],
+    "deltas": [
+      0.02,
+      0.05,
+      0.1,
+      0.2,
+      0.4
+    ],
+    "out": "outputs/results",
+    "tag": "im3_S500_9253564_summer_h18"
+  },
+  "meta": {
+    "tech": [
+      "solar",
+      "solar",
+      "solar",
+      "solar",
+      "solar",
+      "solar",
+      "wind",
+      "wind",
+      "wind",
+      "wind",
+      "wind",
+      "wind",
+      "BIT (Bituminous Coal)",
+      "NG (Natural Gas)",
+      "NUC (Nuclear)",
+      "NG (Natural Gas)",
+      "NG (Natural Gas)",
+      "NUC (Nuclear)"
+    ],
+    "is_renewable": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "solar_buses": [
+      "bus_261331",
+      "bus_204901",
+      "bus_400041",
+      "bus_500241",
+      "bus_252891",
+      "bus_284011"
+    ],
+    "wind_buses": [
+      "bus_252891",
+      "bus_211211",
+      "bus_100931",
+      "bus_605141",
+      "bus_606631",
+      "bus_530021"
+    ],
+    "thermal_buses": [
+      500991,
+      605141,
+      408441,
+      261001,
+      403691,
+      261331
+    ],
+    "n_heat_rate_floored": 270,
+    "hour_of_day": 18,
+    "season": "summer",
+    "sampling": "conditional",
+    "renewable_scale": 1.0,
+    "thermal_scale": 1.0,
+    "voll": 1000.0,
+    "seed": 2025,
+    "load_scale": 0.2362680966458012,
+    "reserve_margin": 0.15,
+    "renewable_capacity_mw": 6510.235939916772,
+    "thermal_capacity_mw": 36732.79,
+    "mean_load_mw": 26817.92123859685,
+    "renewable_share": 0.15054996264512802
+  },
+  "E1": {
+    "rho_rn": -24160417.995538663,
+    "rho_ra": -24193203.787858095,
+    "gap": 32785.7923194319,
+    "gap_per_mwh": 1.2225329483124143,
+    "gap_pct": 0.13570043500690243,
+    "gap_annual_musd": 287.20354071822345,
+    "E_rn": -26223388.331997406,
+    "E_ra": -26174392.41254375,
+    "CVaR_rn": -19346820.543801602,
+    "CVaR_ra": -19570430.33025824,
+    "served_mwh": 26817.921238596835,
+    "planner_tail": 26,
+    "agent_tail_min": 25,
+    "agent_tail_max": 25,
+    "max_gamma_dev": 0.012000000000000344,
+    "p0_rn": 21.816143141742124,
+    "p0_ra": 20.65577727804828
+  },
+  "E2": {
+    "by_tech": {
+      "solar": {
+        "own": -2787.27142415707,
+        "cap": 1952.6960759584133,
+        "net": -628425.7844827856,
+        "per_mw": -1.4273964384288704,
+        "n": 6.0
+      },
+      "wind": {
+        "own": -8529.325972197294,
+        "cap": 4557.539863958358,
+        "net": -634167.8390308258,
+        "per_mw": -1.8714758897993098,
+        "n": 6.0
+      },
+      "BIT (Bituminous Coal)": {
+        "own": 0.0,
+        "cap": 6922.330000000001,
+        "net": -104273.08550977142,
+        "per_mw": 0.0,
+        "n": 1.0
+      },
+      "NG (Natural Gas)": {
+        "own": -6206.657756425854,
+        "cap": 18267.88,
+        "net": -319025.9142857401,
+        "per_mw": -0.3397579662459932,
+        "n": 3.0
+      },
+      "NUC (Nuclear)": {
+        "own": 8.469669410260394e-12,
+        "cap": 11542.580000000002,
+        "net": -208546.17101954285,
+        "per_mw": 7.337761064043215e-16,
+        "n": 2.0
+      },
+      "LOAD": {
+        "own": 1998711.879838438,
+        "cap": 26817.92123859685,
+        "net": 1894438.7943286665,
+        "per_mw": 74.52896374987688,
+        "n": 1.0
+      }
+    },
+    "renewable_own": -11316.597396354364,
+    "thermal_own": -6206.657756425846,
+    "load_own": 1998711.879838438,
+    "pool_share": -104273.08550977142,
+    "renewable_per_mw": -1.7382776140213188,
+    "thermal_per_mw": -0.16896777392694223,
+    "ratio": 10.287628070266878,
+    "clearing": 1.1175870895385742e-08,
+    "renewable_share": 0.15054996264512802,
+    "insurance_volume": 24604619163.100662
+  }
+}

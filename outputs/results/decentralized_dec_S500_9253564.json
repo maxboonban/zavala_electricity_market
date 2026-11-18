@@ -1,0 +1,535 @@
+{
+  "meta": {
+    "experiments": [
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5"
+    ],
+    "scenarios": 500,
+    "eps": 0.1,
+    "beta": 0.95,
+    "seed": 2025,
+    "scenario": "s_real10_mix",
+    "solver": "GUROBI",
+    "eps_sweep": [
+      0.0,
+      0.1,
+      0.3,
+      0.5,
+      1.0
+    ],
+    "het_betas": [
+      0.9,
+      0.95,
+      0.99
+    ],
+    "out": "outputs/results",
+    "tag": "dec_S500_9253564",
+    "dump_transfers": false
+  },
+  "planner": {
+    "p0": 177.59932265514516,
+    "E_Pi": 103.03733725199605,
+    "E_Pi_tilted": 177.2782034996314,
+    "n_tail": 25
+  },
+  "results": {
+    "D1": {
+      "rows": [
+        {
+          "kind": "producer",
+          "idx": 0,
+          "status": "optimal",
+          "obj_free": 2173.5858884140716,
+          "obj_at_planner": 2173.585888414076,
+          "rel_obj_gap": -2.0921526649138515e-15,
+          "da_gap": 0.04428934360493031,
+          "max_gamma_dev": 1.734723475976807e-18
+        },
+        {
+          "kind": "producer",
+          "idx": 1,
+          "status": "optimal",
+          "obj_free": 2272.103969284151,
+          "obj_at_planner": 2272.1039692841478,
+          "rel_obj_gap": 1.401006071569937e-15,
+          "da_gap": 0.0,
+          "max_gamma_dev": 1.734723475976807e-18
+        },
+        {
+          "kind": "producer",
+          "idx": 2,
+          "status": "optimal",
+          "obj_free": 2028.240464762023,
+          "obj_at_planner": 2028.2404647620242,
+          "rel_obj_gap": -5.605195226935535e-16,
+          "da_gap": 0.024823864608816137,
+          "max_gamma_dev": 1.734723475976807e-18
+        },
+        {
+          "kind": "producer",
+          "idx": 3,
+          "status": "optimal",
+          "obj_free": 2835.07398219516,
+          "obj_at_planner": 2835.073982195161,
+          "rel_obj_gap": -3.208010469866887e-16,
+          "da_gap": 0.0,
+          "max_gamma_dev": 1.734723475976807e-18
+        },
+        {
+          "kind": "producer",
+          "idx": 4,
+          "status": "optimal",
+          "obj_free": 2265.708018416964,
+          "obj_at_planner": 2265.7080184169645,
+          "rel_obj_gap": -2.0070871762381512e-16,
+          "da_gap": 0.0,
+          "max_gamma_dev": 1.734723475976807e-18
+        },
+        {
+          "kind": "producer",
+          "idx": 5,
+          "status": "optimal",
+          "obj_free": 2038.5500643203823,
+          "obj_at_planner": 2038.5500643203777,
+          "rel_obj_gap": 2.2307391849023297e-15,
+          "da_gap": 0.0,
+          "max_gamma_dev": 1.734723475976807e-18
+        },
+        {
+          "kind": "producer",
+          "idx": 6,
+          "status": "optimal",
+          "obj_free": 4342.971647256905,
+          "obj_at_planner": 4342.971647256905,
+          "rel_obj_gap": 0.0,
+          "da_gap": 0.0,
+          "max_gamma_dev": 1.734723475976807e-18
+        },
+        {
+          "kind": "producer",
+          "idx": 7,
+          "status": "optimal",
+          "obj_free": 4716.220374917366,
+          "obj_at_planner": 4716.220374917368,
+          "rel_obj_gap": -3.856879575051086e-16,
+          "da_gap": 0.0,
+          "max_gamma_dev": 1.734723475976807e-18
+        },
+        {
+          "kind": "producer",
+          "idx": 8,
+          "status": "optimal",
+          "obj_free": 4048.0174769696487,
+          "obj_at_planner": 4048.0174769696496,
+          "rel_obj_gap": -2.246765748782728e-16,
+          "da_gap": 0.0,
+          "max_gamma_dev": 1.734723475976807e-18
+        },
+        {
+          "kind": "producer",
+          "idx": 9,
+          "status": "optimal",
+          "obj_free": 5031.745230454479,
+          "obj_at_planner": 5031.745230454479,
+          "rel_obj_gap": 0.0,
+          "da_gap": 0.0,
+          "max_gamma_dev": 1.734723475976807e-18
+        },
+        {
+          "kind": "consumer",
+          "idx": 0,
+          "status": "optimal",
+          "obj_free": 181366.84624336395,
+          "obj_at_planner": 181366.84624336398,
+          "rel_obj_gap": -1.6046940805091376e-16,
+          "da_gap": 0.0,
+          "max_gamma_dev": 1.734723475976807e-18
+        }
+      ],
+      "max_um_gap": 2.2307391849023297e-15,
+      "max_um_gap_printed_sign": 1.188780254273399,
+      "r_prod": null,
+      "r_cons": null
+    },
+    "D2": {
+      "rows": [
+        {
+          "kind": "producer",
+          "idx": 0,
+          "status": "optimal",
+          "obj_agent": 2010.2519862753284,
+          "obj_at_planner": 1081.1365943088745,
+          "alloc_gap": 39.6971818052063,
+          "max_gamma_dev": 0.01509818665005783,
+          "tail_count": 25
+        },
+        {
+          "kind": "producer",
+          "idx": 1,
+          "status": "optimal",
+          "obj_agent": 2099.260641097218,
+          "obj_at_planner": 1289.289245394932,
+          "alloc_gap": 39.21882509122338,
+          "max_gamma_dev": 0.011049613469881666,
+          "tail_count": 28
+        },
+        {
+          "kind": "producer",
+          "idx": 2,
+          "status": "optimal",
+          "obj_agent": 1879.2289011401567,
+          "obj_at_planner": 1664.0801015827428,
+          "alloc_gap": 47.96411743451123,
+          "max_gamma_dev": 0.011049613469881666,
+          "tail_count": 29
+        },
+        {
+          "kind": "producer",
+          "idx": 3,
+          "status": "optimal",
+          "obj_agent": 2511.7760904811835,
+          "obj_at_planner": 2100.4366665532734,
+          "alloc_gap": 57.26314847339028,
+          "max_gamma_dev": 0.011049613469881666,
+          "tail_count": 26
+        },
+        {
+          "kind": "producer",
+          "idx": 4,
+          "status": "optimal",
+          "obj_agent": 2025.1964151752493,
+          "obj_at_planner": 1535.7319980499856,
+          "alloc_gap": 53.457915259874284,
+          "max_gamma_dev": 0.011049613469881666,
+          "tail_count": 27
+        },
+        {
+          "kind": "producer",
+          "idx": 5,
+          "status": "optimal",
+          "obj_agent": 1756.9287071182032,
+          "obj_at_planner": 1479.2540569472233,
+          "alloc_gap": 51.80862572325531,
+          "max_gamma_dev": 0.011049613469881666,
+          "tail_count": 26
+        },
+        {
+          "kind": "producer",
+          "idx": 6,
+          "status": "optimal",
+          "obj_agent": 4186.575730323016,
+          "obj_at_planner": 2065.3666181315302,
+          "alloc_gap": 30.712841590473616,
+          "max_gamma_dev": 0.011049613469881666,
+          "tail_count": 27
+        },
+        {
+          "kind": "producer",
+          "idx": 7,
+          "status": "optimal",
+          "obj_agent": 4597.075134498454,
+          "obj_at_planner": 2255.582811509573,
+          "alloc_gap": 30.38075978536135,
+          "max_gamma_dev": 0.011049613469881666,
+          "tail_count": 21
+        },
+        {
+          "kind": "producer",
+          "idx": 8,
+          "status": "optimal",
+          "obj_agent": 3859.9498240532344,
+          "obj_at_planner": 1914.472962524769,
+          "alloc_gap": 26.268395017976154,
+          "max_gamma_dev": 0.01509818665005783,
+          "tail_count": 22
+        },
+        {
+          "kind": "producer",
+          "idx": 9,
+          "status": "optimal",
+          "obj_agent": 4936.3449788741755,
+          "obj_at_planner": 2412.610078020885,
+          "alloc_gap": 32.93950494483262,
+          "max_gamma_dev": 0.011049613469881666,
+          "tail_count": 29
+        },
+        {
+          "kind": "consumer",
+          "idx": 0,
+          "status": "optimal",
+          "obj_agent": 180622.908012463,
+          "obj_at_planner": 179864.92819846945,
+          "alloc_gap": 218.72207340201754,
+          "max_gamma_dev": 0.010160616291068361,
+          "tail_count": 22
+        }
+      ]
+    },
+    "D3": {
+      "premiums": [
+        {
+          "agent": "gen_0",
+          "premium": 17200.874417072755,
+          "expected_payout": 14515.588638164709,
+          "tail_premium": 4136.844642724522,
+          "net": -2685.2857789080463,
+          "max_abs": 55962.92775244592
+        },
+        {
+          "agent": "gen_1",
+          "premium": 17102.356336202683,
+          "expected_payout": 14442.571141982116,
+          "tail_premium": 4104.042308418776,
+          "net": -2659.785194220567,
+          "max_abs": 56371.819142985434
+        },
+        {
+          "agent": "gen_2",
+          "premium": 17346.219840724807,
+          "expected_payout": 16727.2936426233,
+          "tail_premium": 2291.6555623638433,
+          "net": -618.9261981015079,
+          "max_abs": 32473.02204562641
+        },
+        {
+          "agent": "gen_3",
+          "premium": 16539.38632329167,
+          "expected_payout": 15155.975508817326,
+          "tail_premium": 2899.008365356078,
+          "net": -1383.410814474344,
+          "max_abs": 42966.926963182435
+        },
+        {
+          "agent": "gen_4",
+          "premium": 17108.752287069867,
+          "expected_payout": 15687.193084916198,
+          "tail_premium": 2990.2785106452875,
+          "net": -1421.5592021536686,
+          "max_abs": 42160.22345553707
+        },
+        {
+          "agent": "gen_5",
+          "premium": 17335.910241166453,
+          "expected_payout": 16678.805964849067,
+          "tail_premium": 2324.9848728022907,
+          "net": -657.1042763173864,
+          "max_abs": 32997.361340019605
+        },
+        {
+          "agent": "gen_6",
+          "premium": 15031.488658229926,
+          "expected_payout": 17415.88274646804,
+          "tail_premium": -642.805813591306,
+          "net": 2384.394088238114,
+          "max_abs": 23303.261952676145
+        },
+        {
+          "agent": "gen_7",
+          "premium": 14658.239930569463,
+          "expected_payout": 17204.531420492436,
+          "tail_premium": -825.8383478737242,
+          "net": 2546.2914899229727,
+          "max_abs": 23129.261010118236
+        },
+        {
+          "agent": "gen_8",
+          "premium": 15326.442828517182,
+          "expected_payout": 17583.542363808883,
+          "tail_premium": -498.7452989108099,
+          "net": 2257.0995352917016,
+          "max_abs": 23303.261952676145
+        },
+        {
+          "agent": "gen_9",
+          "premium": 14342.715075032353,
+          "expected_payout": 17030.056679924313,
+          "tail_premium": -984.3359368995243,
+          "net": 2687.3416048919607,
+          "max_abs": 23303.261952676145
+        },
+        {
+          "agent": "load_0",
+          "premium": -161992.38593787714,
+          "expected_payout": -162441.44119204633,
+          "tail_premium": -15795.088865035425,
+          "net": -449.0552541691868,
+          "max_abs": 196138.7622370298
+        }
+      ],
+      "risk_reduction": [
+        {
+          "agent": "gen_0",
+          "cvar_uninsured": 35944.9472129565,
+          "cvar_insured": -16347.99215534069,
+          "reduction": 52292.939368297186
+        },
+        {
+          "agent": "gen_1",
+          "cvar_uninsured": 34520.578167739244,
+          "cvar_insured": -16347.99215534069,
+          "reduction": 50868.57032307993
+        },
+        {
+          "agent": "gen_2",
+          "cvar_uninsured": 10210.167100090537,
+          "cvar_insured": -16347.99215534069,
+          "reduction": 26558.159255431226
+        },
+        {
+          "agent": "gen_3",
+          "cvar_uninsured": 19988.46465463895,
+          "cvar_insured": -16347.99215534069,
+          "reduction": 36336.45680997964
+        },
+        {
+          "agent": "gen_4",
+          "cvar_uninsured": 20854.553154781963,
+          "cvar_insured": -16347.99215534069,
+          "reduction": 37202.54531012265
+        },
+        {
+          "agent": "gen_5",
+          "cvar_uninsured": 12494.816646413803,
+          "cvar_insured": -16347.99215534069,
+          "reduction": 28842.808801754494
+        },
+        {
+          "agent": "gen_6",
+          "cvar_uninsured": 1.2292707824352006e-14,
+          "cvar_insured": -16347.99215534069,
+          "reduction": 16347.99215534069
+        },
+        {
+          "agent": "gen_7",
+          "cvar_uninsured": 5.641814520790502e-14,
+          "cvar_insured": -16347.99215534069,
+          "reduction": 16347.99215534069
+        },
+        {
+          "agent": "gen_8",
+          "cvar_uninsured": 2.2679042143262663e-15,
+          "cvar_insured": -16347.99215534069,
+          "reduction": 16347.99215534069
+        },
+        {
+          "agent": "gen_9",
+          "cvar_uninsured": 4.3209889289806356e-14,
+          "cvar_insured": -16347.99215534069,
+          "reduction": 16347.99215534069
+        },
+        {
+          "agent": "load_0",
+          "cvar_uninsured": -159279.70035674944,
+          "cvar_insured": -16347.992155340691,
+          "reduction": -142931.70820140874
+        }
+      ],
+      "slopes": [
+        0.9999999999999999,
+        0.9999999999999999,
+        0.9999999999999999,
+        0.9999999999999999,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999999999999999,
+        0.9999999999999999
+      ]
+    },
+    "D4": {
+      "beta_prod": [
+        0.9,
+        0.99,
+        0.99,
+        0.95,
+        0.99,
+        0.99,
+        0.95,
+        0.99,
+        0.99,
+        0.99
+      ],
+      "beta_cons": [
+        0.95
+      ],
+      "beta_min": 0.9,
+      "w": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "S_gt": [
+        0,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "tail_spread_hetero": 3.637978807091713e-12,
+      "tail_spread_equalshare": 4499.812158027635
+    },
+    "D5": {
+      "rows": [
+        {
+          "eps": 0.0,
+          "sum_abs_gamma": 0.0,
+          "max_tail_premium": 0.0,
+          "mean_abs_r": 33207.12827696343,
+          "E_Pi": 103.15187294708605,
+          "p0": 103.4230228933973
+        },
+        {
+          "eps": 0.1,
+          "sum_abs_gamma": 0.10000000000000002,
+          "max_tail_premium": 15795.088865035425,
+          "mean_abs_r": 30240.945281902383,
+          "E_Pi": 103.03733725199605,
+          "p0": 177.59932265514516
+        },
+        {
+          "eps": 0.3,
+          "sum_abs_gamma": 0.3,
+          "max_tail_premium": 37013.45114372776,
+          "mean_abs_r": 24543.55299183701,
+          "E_Pi": 100.84110755550165,
+          "p0": 324.6450156631212
+        },
+        {
+          "eps": 0.5,
+          "sum_abs_gamma": 0.5000000000000001,
+          "max_tail_premium": 44494.97672766929,
+          "mean_abs_r": 19515.31890682601,
+          "E_Pi": 97.12225697178843,
+          "p0": 466.1864068630738
+        },
+        {
+          "eps": 1.0,
+          "sum_abs_gamma": 1.0000000000000002,
+          "max_tail_premium": NaN,
+          "mean_abs_r": NaN,
+          "E_Pi": NaN,
+          "p0": 791.7369055339694
+        }
+      ]
+    }
+  },
+  "n_failed_checks": 0
+}

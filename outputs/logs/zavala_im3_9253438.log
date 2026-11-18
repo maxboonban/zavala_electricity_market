@@ -1,0 +1,10 @@
+[2026-11-17 20:24:55] Job started — ID: 9253438, Node: node1834
+[2026-11-17 20:24:55] Loading modules...
+[2026-11-17 20:24:58] Conda env 'zavala-market' already exists, skipping creation.
+[2026-11-17 20:24:59] Conda environment activated
+[2026-11-17 20:24:59] Preflight: Gurobi licence check
+[2026-11-17 20:25:00] Theory verification (docs/THEORY_ERRATA.md)
+[2026-11-17 20:25:00]   verify_theory eps=0.1
+[2026-11-17 20:25:55]   verify_theory eps=0.3
+[2026-11-17 20:26:44]   verify_theory eps=0.5
+[2026-11-17 20:27:32] CVaR pricing invariants

@@ -1,0 +1,92 @@
+==============================================================================
+IM3 GO-WEST economic experiments
+==============================================================================
+  solver=GUROBI  S=500  eps=0.3  beta=0.95
+  delivery hour=8  season=winter  sampling=conditional  seed=2025
+
+  fleet: 6 solar + 6 wind + 6 thermal buses, 1 load (VOLL $1000/MWh)
+  thermal capacity 36,733 MW,  mean renewable 6,225 MW  (share 14.5%)
+  mean load 28,106 MW  (real WECC shape, level scaled by 0.3274 to a 15% reserve margin)
+  marginal costs $/MWh: solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, BIT (Bituminous Coal)=23.27, NG (Natural Gas)=22.46, NUC (Nuclear)=13.70, NG (Natural Gas)=21.22, NG (Natural Gas)=22.10, NUC (Nuclear)=15.39
+  NOTE 270 of 280 thermal heat rates were floored to physical minima (the dataset's gas heat rates are not physical)
+
+==============================================================================
+E1  The price of the missing insurance market
+==============================================================================
+  Without Arrow-Debreu securities Eq. (94) fails and the risk-aware
+  allocation cannot be decentralised. At eps = 0 every agent's gamma is
+  zero, so (94) holds trivially: an energy-only market DOES support the
+  risk-neutral allocation. The risk-adjusted welfare difference between
+  the two is the value of completing the market.
+
+  risk-adjusted loss rho_RA[l]  (eps=0.3, beta=0.95):
+    risk-neutral commitment (energy-only market) :     -26331538.29 $/h
+    risk-aware commitment   (with insurance)     :     -26345390.14 $/h
+    VALUE OF THE INSURANCE MARKET                :         13851.86 $/h   (0.0526% of risk-adjusted welfare)
+    per MWh served (28,106 MWh/h)          :           0.4928 $/MWh
+    annualised (x8760)                           : $121.34 M/yr
+
+  decomposition (loss, so lower is better):
+    E[l]        risk-neutral   -27560323.91   risk-aware   -27520757.22   delta    +39566.69
+    CVaR_b[l]   risk-neutral   -23464371.85   risk-aware   -23602866.98   delta   -138495.13
+    (risk-aware clearing gives up expected welfare to cut the tail;
+     the insurance market is what makes that trade decentralisable.)
+
+  Eq. (94) without insurance, on this fleet:
+    planner tail scenarios: 27 of 500
+    agents' tail scenarios: min 25, max 26  -> the agents do not agree on where the tail is
+    max_k |gamma_k - gamma| = 0.012000   (Eq. 94 requires 0)
+
+==============================================================================
+E2  Risk incidence by generation technology
+==============================================================================
+  At equilibrium the insurance price is q = rho_tilde, so the premium an
+  agent pays in excess of its expected payout is sum_w (q_w - rho_w) r_w.
+  Under the corrected Eq. (111)-(112), r_k = L_k - l/N - delta_k, and that
+  splits exactly into
+      OWN RISK   pi_k := sum_w (q_w - rho_w) L_kw     (agent-specific)
+      POOL SHARE       -(1/N) sum_w (q_w - rho_w) l_w (identical for all)
+  The delta_k drop out of both. pi_k is the economically meaningful term:
+  the equilibrium price of the tail risk that agent k's OWN profit stream
+  brings to the market. The pool share is a flat rebate that the
+  equal-share rule hands every agent regardless of contribution.
+
+  Eq.(95) clearing check: max_w |sum_k r_k(w)| = 1.118e-08
+
+  flat pool share handed to every agent: -61,861.42 $/h
+
+  technology                 n   own risk pi_k $/h   $/MW capacity   equal-share net
+  ----------------------------------------------------------------------------------
+  solar                      6            3,464.11           1.103       -367,704.43
+  wind                       6           -2,670.89          -0.866       -373,839.44
+  BIT (Bituminous Coal)      1                0.00           0.000        -61,861.42
+  NG (Natural Gas)           3               28.96           0.002       -185,555.31
+  NUC (Nuclear)              2               -0.00          -0.000       -123,722.85
+  LOAD                       1        1,174,544.88          41.790      1,112,683.46
+  ----------------------------------------------------------------------------------
+  RENEWABLE (solar+wind)                    793.23           0.127
+  THERMAL                                    28.96           0.001
+  LOAD                                1,174,544.88
+
+  share of total |tail-risk premium|  (renewable share 14.5%):
+    renewables   0.1%    thermal   0.0%    load  99.3%
+  The load is the residual risk bearer: pi_LOAD > 0 means its loss spikes
+  exactly in the scenarios the market prices most heavily, so it is the
+  natural BUYER of cover. Renewables are mildly negative (they earn more
+  in scarcity when they do produce), so they SELL cover.
+  pi is EXACTLY zero for coal and nuclear, and that is a property of the
+  dataset, not of the theory: thermal capacity in thermal_gens.csv is
+  constant across scenarios, so an infra-marginal unit has a constant L
+  and sum_w (q_w - rho_w) L = L * 0 = 0. Modelling forced outages would
+  give thermal genuine tail exposure; we flag this rather than hide it.
+  NOTE the equal-share column is nearly identical across generators: the
+  flat pool share swamps the signal. That is a property of the Eq. (111)
+  rule, not of the market, and is worth saying in the paper -- a
+  contribution-weighted delta_k would allocate the rebate sensibly.
+
+==============================================================================
+done in 165.6s
+==============================================================================
+
+Results written to outputs/results/im3_im3_S500_9253564_winter_h8.json
+Log written to logs/im3_im3_S500_9253564_winter_h8.log

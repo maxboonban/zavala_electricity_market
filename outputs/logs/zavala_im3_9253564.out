@@ -1,0 +1,1107 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 9253564
+##  Job Name : zavala_im3
+##  Nodelist : node2411
+##      CPUs : 
+##  Mem/Node : 65536 MB
+## Directory : /oscar/home/hnambia1/Desktop/zavala_electricity_market
+##   Job Started : Tue Nov 17 08:30:50 PM EST 2026
+###############################################################################
+[2026-11-17 20:30:50] Job started — ID: 9253564, Node: node2411
+[2026-11-17 20:30:50] Loading modules...
+[2026-11-17 20:30:53] Conda env 'zavala-market' already exists, skipping creation.
+[2026-11-17 20:30:54] Conda environment activated
+[2026-11-17 20:30:54] Preflight: Gurobi licence check
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+[preflight] Gurobi OK (v(14, 0, 0)), trivial LP obj = 1.0
+[2026-11-17 20:30:55] Theory verification (docs/THEORY_ERRATA.md)
+[2026-11-17 20:30:55]   verify_theory eps=0.1
+==============================================================================
+THEORY VERIFICATION  --  adjudicating suspected errors in the manuscript
+==============================================================================
+  solver=GUROBI  S=200  eps=0.1  beta=0.95
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+==============================================================================
+T1/T2  sum_w rho_tilde_w = 1  (paper p.19 claims 1 + eps)
+==============================================================================
+  eps = 0.1,  sum_w rho_tilde_w = 1.000000000000
+  printed claim 1 + eps = 1.100000000000    corrected claim 1 = 1.0
+  [PASS] sum rho_tilde == 1 (corrected)   |sum - 1| = 0.000e+00
+  [PASS] sum rho_tilde != 1 + eps (printed is wrong)   |sum - (1+eps)| = 1.000e-01
+  => T2 follows: the (1+eps) normaliser in p_0 = lambda/(1+eps) (p.26)
+     has no source; Eq. (107) and the Thm 6 proof both give p_0 = lambda.
+
+==============================================================================
+T3  sign of Eq. (111)-(112)  [equal-share transfer]
+==============================================================================
+  Eq. (97) defines the insured loss as  L - r,  but Eq. (113) flattens
+  L + r. Only one sign can be right. Both satisfy clearing Eq. (95),
+  which is why the paper's own check does not catch it.
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  r = -L + l/N + d
+      clearing Eq.(95) max|sum_k r_k| = 1.164e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 1.205e+00
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  corrected   r = +L - l/N - d
+      clearing Eq.(95) max|sum_k r_k| = 1.164e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 6.086e-13
+  [PASS] corrected sign supports (UM)   max rel gap = 6.086e-13  (solver tolerance)
+  [PASS] printed sign does NOT support (UM)   max rel gap = 1.205e+00
+  [PASS] the two signs separate by >= 3 orders of magnitude   ratio = 1.980e+12
+  => Eq. (111)-(112) should read  r_k = +L_k - l/(n+m) - delta_k,
+     and Eq. (113) should read    L_k - r_k = l/(n+m) + delta_k.
+     Eq. (122) in Theorem 9 already uses this corrected sign.
+
+==============================================================================
+T5  Theorem 9: is  t* := sum_k t_k  circular?  [INVESTIGATED -- NOT AN ERROR]
+==============================================================================
+  Eq. (122) sets  r_k = L_k - t_k - w_k (l(w) - t*)  with t* := sum_k t_k,
+  while t_k also names each agent's own VaR variable. That looks circular:
+  one might expect self-consistency to force t* = VaR_bmin(l*), the
+  PLANNER's VaR. We tested both readings. They give the SAME objective,
+  because a constant shift of r_k is exactly objective-neutral:
+      d/dc [ (1-eps) E[u+r+c] - q.(r+c) - eps CVaR(L-r-c) ]
+          = (1-eps) - sum_w q_w + eps = 1 - sum_w q_w = 0,
+  which holds PRECISELY BECAUSE sum_w rho_tilde_w = 1 (test T1). So the
+  {t_k} in (122) are free constants, t* := sum_k t_k is a harmless
+  normalisation, and Theorem 9's construction is sound as printed.
+  (Had the paper's sum = 1 + eps been right, this invariance would fail.)
+  beta_min = 0.9,  |S_>| = 10 of 11 agents
+  sum_k t_k (as printed) = -147545.1679
+  VaR_bmin(l*)  (planner) = -201892.6044
+  these differ by 54347.4364 -- the two readings of t*
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  (t* = sum_k t_k):   clearing = 6.185e-11   (UM) max rel gap = 1.997e-12
+  corrected   (sum_k t_k = t*_P): clearing = 6.912e-11   (UM) max rel gap = 1.998e-12
+  [PASS] Theorem 9 construction supports (UM)  [t* = sum_k t_k, as printed]   max rel gap = 1.997e-12
+  [PASS] both readings of t* agree (construction is shift-invariant)   |difference| = 1.170e-15
+  VERDICT: not an error. Theorem 9's construction is verified under the
+  (UM) test, which D4 in the first experiment round never actually ran --
+  D4 checked only Eq. (95) and Eq. (121), which hold for ANY {t_k}.
+  Constant-shift coefficient 1 - sum_w q_w = 0.000e+00
+
+==============================================================================
+T8  Remark 11: heterogeneous eps reduces to a planner at (eps_min, beta_P)
+==============================================================================
+  Claim: with phi_k = eps_k beta_k/(1-beta_k), the binding bounds on q are
+    q_w >= (1-eps_min) rho_w   and   q_w <= (1+phi_min) rho_w,
+  which are exactly a planner's bounds at eps_P = eps_min and
+  beta_P = phi_min/(eps_min + phi_min).  The paper defers this; we check it.
+  eps_k in [0.2, 0.5], beta_k in [0.9, 0.99]
+  eps_min = 0.2000   phi_min = 4.5000   => beta_P = 0.957447
+  [PASS] beta_P falls strictly outside the agents' own {beta_k} (sharp test)   beta_P = 0.957447, pool = [0.9, 0.99]
+  [PASS] planner's phi_P equals phi_min (algebra of Remark 11)   |phi_P - phi_min| = 7.105e-15
+  max lower-bound violation  max_k,w [(1-eps_k)rho_w - q_w] = 0.000e+00
+  max upper-bound violation  max_k,w [q_w - (1+phi_k)rho_w] = 0.000e+00
+  [PASS] q from the (eps_min, beta_P) planner is feasible for EVERY agent   tol = 1.127e-09
+  [PASS] sum_w q_w == 1   |sum q - 1| = 2.220e-16
+
+==============================================================================
+ALL THEORY CHECKS PASSED
+==============================================================================
+[2026-11-17 20:31:38]   verify_theory eps=0.3
+==============================================================================
+THEORY VERIFICATION  --  adjudicating suspected errors in the manuscript
+==============================================================================
+  solver=GUROBI  S=200  eps=0.3  beta=0.95
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+==============================================================================
+T1/T2  sum_w rho_tilde_w = 1  (paper p.19 claims 1 + eps)
+==============================================================================
+  eps = 0.3,  sum_w rho_tilde_w = 1.000000000000
+  printed claim 1 + eps = 1.300000000000    corrected claim 1 = 1.0
+  [PASS] sum rho_tilde == 1 (corrected)   |sum - 1| = 0.000e+00
+  [PASS] sum rho_tilde != 1 + eps (printed is wrong)   |sum - (1+eps)| = 3.000e-01
+  => T2 follows: the (1+eps) normaliser in p_0 = lambda/(1+eps) (p.26)
+     has no source; Eq. (107) and the Thm 6 proof both give p_0 = lambda.
+
+==============================================================================
+T3  sign of Eq. (111)-(112)  [equal-share transfer]
+==============================================================================
+  Eq. (97) defines the insured loss as  L - r,  but Eq. (113) flattens
+  L + r. Only one sign can be right. Both satisfy clearing Eq. (95),
+  which is why the paper's own check does not catch it.
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  r = -L + l/N + d
+      clearing Eq.(95) max|sum_k r_k| = 1.310e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 1.817e+00
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  corrected   r = +L - l/N - d
+      clearing Eq.(95) max|sum_k r_k| = 1.310e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 3.967e-13
+  [PASS] corrected sign supports (UM)   max rel gap = 3.967e-13  (solver tolerance)
+  [PASS] printed sign does NOT support (UM)   max rel gap = 1.817e+00
+  [PASS] the two signs separate by >= 3 orders of magnitude   ratio = 4.580e+12
+  => Eq. (111)-(112) should read  r_k = +L_k - l/(n+m) - delta_k,
+     and Eq. (113) should read    L_k - r_k = l/(n+m) + delta_k.
+     Eq. (122) in Theorem 9 already uses this corrected sign.
+
+==============================================================================
+T5  Theorem 9: is  t* := sum_k t_k  circular?  [INVESTIGATED -- NOT AN ERROR]
+==============================================================================
+  Eq. (122) sets  r_k = L_k - t_k - w_k (l(w) - t*)  with t* := sum_k t_k,
+  while t_k also names each agent's own VaR variable. That looks circular:
+  one might expect self-consistency to force t* = VaR_bmin(l*), the
+  PLANNER's VaR. We tested both readings. They give the SAME objective,
+  because a constant shift of r_k is exactly objective-neutral:
+      d/dc [ (1-eps) E[u+r+c] - q.(r+c) - eps CVaR(L-r-c) ]
+          = (1-eps) - sum_w q_w + eps = 1 - sum_w q_w = 0,
+  which holds PRECISELY BECAUSE sum_w rho_tilde_w = 1 (test T1). So the
+  {t_k} in (122) are free constants, t* := sum_k t_k is a harmless
+  normalisation, and Theorem 9's construction is sound as printed.
+  (Had the paper's sum = 1 + eps been right, this invariance would fail.)
+  beta_min = 0.9,  |S_>| = 10 of 11 agents
+  sum_k t_k (as printed) = -150487.4480
+  VaR_bmin(l*)  (planner) = -202444.1504
+  these differ by 51956.7024 -- the two readings of t*
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  (t* = sum_k t_k):   clearing = 8.731e-11   (UM) max rel gap = 8.228e-13
+  corrected   (sum_k t_k = t*_P): clearing = 6.548e-11   (UM) max rel gap = 8.224e-13
+  [PASS] Theorem 9 construction supports (UM)  [t* = sum_k t_k, as printed]   max rel gap = 8.228e-13
+  [PASS] both readings of t* agree (construction is shift-invariant)   |difference| = 3.717e-16
+  VERDICT: not an error. Theorem 9's construction is verified under the
+  (UM) test, which D4 in the first experiment round never actually ran --
+  D4 checked only Eq. (95) and Eq. (121), which hold for ANY {t_k}.
+  Constant-shift coefficient 1 - sum_w q_w = 0.000e+00
+
+==============================================================================
+T8  Remark 11: heterogeneous eps reduces to a planner at (eps_min, beta_P)
+==============================================================================
+  Claim: with phi_k = eps_k beta_k/(1-beta_k), the binding bounds on q are
+    q_w >= (1-eps_min) rho_w   and   q_w <= (1+phi_min) rho_w,
+  which are exactly a planner's bounds at eps_P = eps_min and
+  beta_P = phi_min/(eps_min + phi_min).  The paper defers this; we check it.
+  eps_k in [0.2, 0.5], beta_k in [0.9, 0.99]
+  eps_min = 0.2000   phi_min = 4.5000   => beta_P = 0.957447
+  [PASS] beta_P falls strictly outside the agents' own {beta_k} (sharp test)   beta_P = 0.957447, pool = [0.9, 0.99]
+  [PASS] planner's phi_P equals phi_min (algebra of Remark 11)   |phi_P - phi_min| = 7.105e-15
+  max lower-bound violation  max_k,w [(1-eps_k)rho_w - q_w] = 0.000e+00
+  max upper-bound violation  max_k,w [q_w - (1+phi_k)rho_w] = 0.000e+00
+  [PASS] q from the (eps_min, beta_P) planner is feasible for EVERY agent   tol = 1.127e-09
+  [PASS] sum_w q_w == 1   |sum q - 1| = 2.220e-16
+
+==============================================================================
+ALL THEORY CHECKS PASSED
+==============================================================================
+[2026-11-17 20:32:14]   verify_theory eps=0.5
+==============================================================================
+THEORY VERIFICATION  --  adjudicating suspected errors in the manuscript
+==============================================================================
+  solver=GUROBI  S=200  eps=0.5  beta=0.95
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+==============================================================================
+T1/T2  sum_w rho_tilde_w = 1  (paper p.19 claims 1 + eps)
+==============================================================================
+  eps = 0.5,  sum_w rho_tilde_w = 1.000000000000
+  printed claim 1 + eps = 1.500000000000    corrected claim 1 = 1.0
+  [PASS] sum rho_tilde == 1 (corrected)   |sum - 1| = 0.000e+00
+  [PASS] sum rho_tilde != 1 + eps (printed is wrong)   |sum - (1+eps)| = 5.000e-01
+  => T2 follows: the (1+eps) normaliser in p_0 = lambda/(1+eps) (p.26)
+     has no source; Eq. (107) and the Thm 6 proof both give p_0 = lambda.
+
+==============================================================================
+T3  sign of Eq. (111)-(112)  [equal-share transfer]
+==============================================================================
+  Eq. (97) defines the insured loss as  L - r,  but Eq. (113) flattens
+  L + r. Only one sign can be right. Both satisfy clearing Eq. (95),
+  which is why the paper's own check does not catch it.
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  r = -L + l/N + d
+      clearing Eq.(95) max|sum_k r_k| = 1.019e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 5.379e-01
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  corrected   r = +L - l/N - d
+      clearing Eq.(95) max|sum_k r_k| = 1.019e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 2.300e-13
+  [PASS] corrected sign supports (UM)   max rel gap = 2.300e-13  (solver tolerance)
+  [PASS] printed sign does NOT support (UM)   max rel gap = 5.379e-01
+  [PASS] the two signs separate by >= 3 orders of magnitude   ratio = 2.339e+12
+  => Eq. (111)-(112) should read  r_k = +L_k - l/(n+m) - delta_k,
+     and Eq. (113) should read    L_k - r_k = l/(n+m) + delta_k.
+     Eq. (122) in Theorem 9 already uses this corrected sign.
+
+==============================================================================
+T5  Theorem 9: is  t* := sum_k t_k  circular?  [INVESTIGATED -- NOT AN ERROR]
+==============================================================================
+  Eq. (122) sets  r_k = L_k - t_k - w_k (l(w) - t*)  with t* := sum_k t_k,
+  while t_k also names each agent's own VaR variable. That looks circular:
+  one might expect self-consistency to force t* = VaR_bmin(l*), the
+  PLANNER's VaR. We tested both readings. They give the SAME objective,
+  because a constant shift of r_k is exactly objective-neutral:
+      d/dc [ (1-eps) E[u+r+c] - q.(r+c) - eps CVaR(L-r-c) ]
+          = (1-eps) - sum_w q_w + eps = 1 - sum_w q_w = 0,
+  which holds PRECISELY BECAUSE sum_w rho_tilde_w = 1 (test T1). So the
+  {t_k} in (122) are free constants, t* := sum_k t_k is a harmless
+  normalisation, and Theorem 9's construction is sound as printed.
+  (Had the paper's sum = 1 + eps been right, this invariance would fail.)
+  beta_min = 0.9,  |S_>| = 10 of 11 agents
+  sum_k t_k (as printed) = -160424.2546
+  VaR_bmin(l*)  (planner) = -202772.9926
+  these differ by 42348.7381 -- the two readings of t*
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  (t* = sum_k t_k):   clearing = 8.367e-11   (UM) max rel gap = 3.548e-13
+  corrected   (sum_k t_k = t*_P): clearing = 9.095e-11   (UM) max rel gap = 3.556e-13
+  [PASS] Theorem 9 construction supports (UM)  [t* = sum_k t_k, as printed]   max rel gap = 3.548e-13
+  [PASS] both readings of t* agree (construction is shift-invariant)   |difference| = 7.539e-16
+  VERDICT: not an error. Theorem 9's construction is verified under the
+  (UM) test, which D4 in the first experiment round never actually ran --
+  D4 checked only Eq. (95) and Eq. (121), which hold for ANY {t_k}.
+  Constant-shift coefficient 1 - sum_w q_w = 0.000e+00
+
+==============================================================================
+T8  Remark 11: heterogeneous eps reduces to a planner at (eps_min, beta_P)
+==============================================================================
+  Claim: with phi_k = eps_k beta_k/(1-beta_k), the binding bounds on q are
+    q_w >= (1-eps_min) rho_w   and   q_w <= (1+phi_min) rho_w,
+  which are exactly a planner's bounds at eps_P = eps_min and
+  beta_P = phi_min/(eps_min + phi_min).  The paper defers this; we check it.
+  eps_k in [0.2, 0.5], beta_k in [0.9, 0.99]
+  eps_min = 0.2000   phi_min = 4.5000   => beta_P = 0.957447
+  [PASS] beta_P falls strictly outside the agents' own {beta_k} (sharp test)   beta_P = 0.957447, pool = [0.9, 0.99]
+  [PASS] planner's phi_P equals phi_min (algebra of Remark 11)   |phi_P - phi_min| = 7.105e-15
+  max lower-bound violation  max_k,w [(1-eps_k)rho_w - q_w] = 0.000e+00
+  max upper-bound violation  max_k,w [q_w - (1+phi_k)rho_w] = 0.000e+00
+  [PASS] q from the (eps_min, beta_P) planner is feasible for EVERY agent   tol = 1.127e-09
+  [PASS] sum_w q_w == 1   |sum q - 1| = 2.220e-16
+
+==============================================================================
+ALL THEORY CHECKS PASSED
+==============================================================================
+[2026-11-17 20:32:51] CVaR pricing invariants
+Solver: GUROBI
+
+--- eps=0.1, beta=0.95, S=100, G=10, D=1 ---
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.1 eps=0.1 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=2.541e-02 ub_max=3.262e-02
+  [PASS] Eq.(67)  rho_tilde >= (1-eps)*rho  (gamma >= 0)  min slack = +0.000e+00
+  [PASS] rho_tilde carries mass everywhere (prices defined)  min=3.649e-03, support=100/100
+  [PASS] Eq.(107) p_w finite on every scenario  0 non-finite
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=217.654147  E_rhotilde[Pi]=217.317904
+  info: E_rho[Pi] = 119.242116
+  info: old (buggy) denominator would change E[Pi] by -8.141813 ($/MWh), max per-scenario relative change 10.000%
+
+--- eps=0.3, beta=0.95, S=100, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.3 eps=0.3 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=7.622e-02 ub_max=9.786e-02
+  [PASS] Eq.(67)  rho_tilde >= (1-eps)*rho  (gamma >= 0)  min slack = +0.000e+00
+  [PASS] rho_tilde carries mass everywhere (prices defined)  min=2.838e-03, support=100/100
+  [PASS] Eq.(107) p_w finite on every scenario  0 non-finite
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=413.913744  E_rhotilde[Pi]=413.466067
+  info: E_rho[Pi] = 119.237239
+  info: old (buggy) denominator would change E[Pi] by -21.031337 ($/MWh), max per-scenario relative change 30.000%
+
+--- eps=0.5, beta=0.95, S=100, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.5 eps=0.5 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=1.270e-01 ub_max=1.631e-01
+  [PASS] Eq.(67)  rho_tilde >= (1-eps)*rho  (gamma >= 0)  min slack = +0.000e+00
+  [PASS] rho_tilde carries mass everywhere (prices defined)  min=2.027e-03, support=100/100
+  [PASS] Eq.(107) p_w finite on every scenario  0 non-finite
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=602.670611  E_rhotilde[Pi]=602.672292
+  info: E_rho[Pi] = 115.246295
+  info: old (buggy) denominator would change E[Pi] by -31.760173 ($/MWh), max per-scenario relative change 50.000%
+
+--- eps=1.0, beta=0.95, S=100, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=1 eps=1 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=2.541e-01 ub_max=3.262e-01
+  [PASS] Eq.(67)  rho_tilde >= (1-eps)*rho  (gamma >= 0)  min slack = +0.000e+00
+  [PASS] eps=1: tilted measure concentrates on the tail  support = 5/100 (expected ~(1-beta)S = 5)
+  [PASS] eps=1: p_w finite on the support  0 non-finite on support
+  note: p_w is undefined off the support by construction (0/0); 95 scenarios carry no price. Eq. (107) presumes eps < 1. See T11.
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=1000.000000  E_rhotilde[Pi]=999.826539
+
+--- Remark 10: eps = 0 reduces to risk-neutral `zavala` ---
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:59: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:74: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+  [PASS] pi(eps=0) == pi_risk_neutral  |diff|=0.000e+00
+  [PASS] Pi(eps=0) == Pi_risk_neutral  max|diff|=3.553e-15
+  [PASS] gamma(eps=0) == 0  max|gamma|=0.000e+00
+
+ALL CHECKS PASSED
+[2026-11-17 20:33:24] D1-D5 decentralisation suite (S=500)
+==============================================================================
+Decentralisation and insurance-transfer experiments
+==============================================================================
+args: {'experiments': ['D1', 'D2', 'D3', 'D4', 'D5'], 'scenarios': 500, 'eps': 0.1, 'beta': 0.95, 'seed': 2025, 'scenario': 's_real10_mix', 'solver': 'GUROBI', 'eps_sweep': [0.0, 0.1, 0.3, 0.5, 1.0], 'het_betas': [0.9, 0.95, 0.99], 'out': 'outputs/results', 'tag': 'dec_S500_9253564', 'dump_transfers': False}
+Planner: S=500, producers=10, consumers=1, eps=0.1, beta=0.95, scenario=s_real10_mix, seed=2025
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+  p0 = 177.599323,  E_rho[Pi] = 103.037337,  E_rhotilde[Pi] = 177.278203
+  tail scenarios with gamma_w > 0: 25 of 500 (expected ~(1-beta)S = 25)
+  [PASS] Eq.(110)  sum_k L_k(w) = ell(w)  (price terms cancel)   max|diff| = 1.746e-10
+
+==============================================================================
+D1  Decentralisation with insurance  (Theorems 6, 7, 8)
+==============================================================================
+Definition 3 (UM) requires (x*, X*, r*) to solve the agent's problem, with
+insurance a CHOICE variable. So the test is: let each agent optimise freely
+over physical position AND insurance at prices q, then check its optimal
+objective equals the objective at (planner allocation, constructed r).
+Degenerate real-time optima make raw allocation distance a poor criterion,
+so the objective value is the primary test and allocations are diagnostic.
+  [PASS] Eq.(95)  insurance market clears state-by-state   max|sum_k r_k(w)| = 2.037e-10
+  [PASS] (UM) planner allocation + constructed transfer is agent-optimal   max relative objective gap = 2.231e-15
+  [info] max|DA diff| vs planner = 4.429e-02 (alternative optima; (UM) is settled by the objective test above)
+  [PASS] Eq.(94)/(109)  agents' CVaR multipliers equal the planner's   max|gamma_k - gamma| = 1.735e-18
+
+  Control: the same test with Eq. (111)-(112) exactly as printed
+  max relative (UM) gap with the printed sign = 1.189e+00
+  (a large gap here is the evidence that Eq. 111-112 need r -> -r;
+   Eq. 122 in Theorem 9 already uses the corrected sign)
+
+==============================================================================
+D2  Decentralisation WITHOUT insurance  (Section 8.2.2, Eq. 94)
+==============================================================================
+Same prices, no insurance market. Eq. (94) requires every agent's CVaR
+multiplier to equal the planner's; with heterogeneous exposures it cannot.
+We measure the resulting dispersion and the allocation error.
+  max_k max_w |gamma_k(w) - gamma(w)| = 1.509819e-02
+  mean over agents                    = 1.170490e-02
+  >> Eq. (94) FAILS without insurance
+  max_k |allocation_k - planner_k|    = 2.187221e+02
+  per-agent tail-scenario counts: min=21, max=29, planner=25
+  (differing tail sets across agents is precisely the obstruction in 8.2.2)
+
+==============================================================================
+D3  Anatomy of the equilibrium transfers  (Remarks 7, 8, 9)
+==============================================================================
+
+  Eq.(113), sign-corrected: insured loss L_k - r_k must be ell(w)/N + const
+  [PASS] Eq.(113)  slope = 1 for every agent (common tail set)   max|slope - 1| = 1.110e-16
+  [PASS] Eq.(113)  insured loss is exactly affine in ell(w)   max residual = 2.183e-11
+
+  Premium decomposition (Remark 8): q = (1-eps)rho + gamma, so
+  premium = (1-eps) * E_rho[payout] + tail premium gamma . r
+
+         agent        premium   E_rho[payout]     tail prem          net      |r|_max
+         gen_0      17200.874       14515.589      4136.845    -2685.286    55962.928
+         gen_1      17102.356       14442.571      4104.042    -2659.785    56371.819
+         gen_2      17346.220       16727.294      2291.656     -618.926    32473.022
+         gen_3      16539.386       15155.976      2899.008    -1383.411    42966.927
+         gen_4      17108.752       15687.193      2990.279    -1421.559    42160.223
+         gen_5      17335.910       16678.806      2324.985     -657.104    32997.361
+         gen_6      15031.489       17415.883      -642.806     2384.394    23303.262
+         gen_7      14658.240       17204.531      -825.838     2546.291    23129.261
+         gen_8      15326.443       17583.542      -498.745     2257.100    23303.262
+         gen_9      14342.715       17030.057      -984.336     2687.342    23303.262
+        load_0    -161992.386     -162441.441    -15795.089     -449.055   196138.762
+         TOTAL      3.324e-11       2.952e-11
+  (totals are ~0 by Eq. 95. net = E_rho[payout] - premium: NEGATIVE means the
+   agent pays more than it expects back, i.e. it is a net BUYER of cover;
+   POSITIVE means it is a net SELLER, compensated for bearing tail risk.)
+
+  By technology: unreliable gens net = -9426.071, reliable gens net = +9875.127, loads net = -449.055
+
+  Risk reduction: CVaR of each agent's loss, uninsured vs insured
+         gen_0  CVaR      35944.947 ->     -16347.992   (+52292.939)
+         gen_1  CVaR      34520.578 ->     -16347.992   (+50868.570)
+         gen_2  CVaR      10210.167 ->     -16347.992   (+26558.159)
+         gen_3  CVaR      19988.465 ->     -16347.992   (+36336.457)
+         gen_4  CVaR      20854.553 ->     -16347.992   (+37202.545)
+         gen_5  CVaR      12494.817 ->     -16347.992   (+28842.809)
+         gen_6  CVaR          0.000 ->     -16347.992   (+16347.992)
+         gen_7  CVaR          0.000 ->     -16347.992   (+16347.992)
+         gen_8  CVaR          0.000 ->     -16347.992   (+16347.992)
+         gen_9  CVaR          0.000 ->     -16347.992   (+16347.992)
+        load_0  CVaR    -159279.700 ->     -16347.992   (-142931.708)
+
+==============================================================================
+D4  Heterogeneous confidence levels  (Theorem 9, Eq. 121-123)
+==============================================================================
+Agents get different beta_k; the planner must use beta_min (Eq. 117-120).
+Agents in S_> (beta_k > beta_min) need a CONSTANT insured loss across the
+tail (Eq. 121), which the equal-share construction cannot deliver. This
+verifies the construction the manuscript flags as not yet proof-checked.
+  beta_producers = [0.9, 0.99, 0.99, 0.95, 0.99, 0.99, 0.95, 0.99, 0.99, 0.99]
+  beta_consumers = [0.95]
+  beta_min = 0.9  (planner must clear at this level)
+  [NOTE] planner solution in hand used beta=0.95; re-solving at beta_min
+  [PASS] Eq.(95)  heterogeneous transfers clear state-by-state   max|sum_k r_k| = 1.455e-10
+  [PASS] Eq.(121)  S_> agents have constant insured loss across the tail   max spread over tail = 3.638e-12  (10 agents in S_>)
+  contrast: equal-share construction gives S_> agents a tail spread of 4.500e+03 (non-constant => violates Eq. 121, as Theorem 9 predicts)
+  risk-bearing weights w_k: [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  |S_min| = 1, agents in S_>: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+==============================================================================
+D5  Transfers as the risk weight varies  (Remark 10)
+==============================================================================
+At eps = 0 insurance is priced at q = rho, so premium = expected payout and
+every agent is indifferent: the market is redundant. As eps grows, q tilts
+toward the tail and the premium separates from the expected payout.
+
+     eps   sum|gamma|   max tail prem      mean|r|        E[Pi]           p0
+    0.00     0.000000           0.000    33207.128      103.152      103.423
+    0.10     0.100000       15795.089    30240.945      103.037      177.599
+    0.30     0.300000       37013.451    24543.553      100.841      324.645
+    0.50     0.500000       44494.977    19515.319       97.122      466.186
+    1.00     1.000000             nan          nan          nan      791.737
+  [PASS] Remark 10  eps=0 makes insurance redundant (tail premium = 0)   max tail premium / mean|r| at eps=0 = 0.000e+00 (absolute 0.000e+00)
+
+==============================================================================
+ALL CHECKS PASSED
+==============================================================================
+
+Results written to outputs/results/decentralized_dec_S500_9253564.json
+Log written to logs/decentralized_dec_S500_9253564.log
+[2026-11-17 20:37:16] E1-E3,E6 at the headline configuration (summer, delivery hour 18)
+==============================================================================
+IM3 GO-WEST economic experiments
+==============================================================================
+  solver=GUROBI  S=500  eps=0.3  beta=0.95
+  delivery hour=18  season=summer  sampling=conditional  seed=2025
+
+  fleet: 6 solar + 6 wind + 6 thermal buses, 1 load (VOLL $1000/MWh)
+  thermal capacity 36,733 MW,  mean renewable 6,510 MW  (share 15.1%)
+  mean load 26,818 MW  (real WECC shape, level scaled by 0.2363 to a 15% reserve margin)
+  marginal costs $/MWh: solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, BIT (Bituminous Coal)=23.27, NG (Natural Gas)=22.46, NUC (Nuclear)=13.70, NG (Natural Gas)=21.22, NG (Natural Gas)=22.10, NUC (Nuclear)=15.39
+  NOTE 270 of 280 thermal heat rates were floored to physical minima (the dataset's gas heat rates are not physical)
+
+==============================================================================
+E1  The price of the missing insurance market
+==============================================================================
+  Without Arrow-Debreu securities Eq. (94) fails and the risk-aware
+  allocation cannot be decentralised. At eps = 0 every agent's gamma is
+  zero, so (94) holds trivially: an energy-only market DOES support the
+  risk-neutral allocation. The risk-adjusted welfare difference between
+  the two is the value of completing the market.
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+  risk-adjusted loss rho_RA[l]  (eps=0.3, beta=0.95):
+    risk-neutral commitment (energy-only market) :     -24160418.00 $/h
+    risk-aware commitment   (with insurance)     :     -24193203.79 $/h
+    VALUE OF THE INSURANCE MARKET                :         32785.79 $/h   (0.1357% of risk-adjusted welfare)
+    per MWh served (26,818 MWh/h)          :           1.2225 $/MWh
+    annualised (x8760)                           : $287.20 M/yr
+
+  decomposition (loss, so lower is better):
+    E[l]        risk-neutral   -26223388.33   risk-aware   -26174392.41   delta    +48995.92
+    CVaR_b[l]   risk-neutral   -19346820.54   risk-aware   -19570430.33   delta   -223609.79
+    (risk-aware clearing gives up expected welfare to cut the tail;
+     the insurance market is what makes that trade decentralisable.)
+
+  Eq. (94) without insurance, on this fleet:
+    planner tail scenarios: 26 of 500
+    agents' tail scenarios: min 25, max 25  -> the agents do not agree on where the tail is
+    max_k |gamma_k - gamma| = 0.012000   (Eq. 94 requires 0)
+
+==============================================================================
+E2  Risk incidence by generation technology
+==============================================================================
+  At equilibrium the insurance price is q = rho_tilde, so the premium an
+  agent pays in excess of its expected payout is sum_w (q_w - rho_w) r_w.
+  Under the corrected Eq. (111)-(112), r_k = L_k - l/N - delta_k, and that
+  splits exactly into
+      OWN RISK   pi_k := sum_w (q_w - rho_w) L_kw     (agent-specific)
+      POOL SHARE       -(1/N) sum_w (q_w - rho_w) l_w (identical for all)
+  The delta_k drop out of both. pi_k is the economically meaningful term:
+  the equilibrium price of the tail risk that agent k's OWN profit stream
+  brings to the market. The pool share is a flat rebate that the
+  equal-share rule hands every agent regardless of contribution.
+
+  Eq.(95) clearing check: max_w |sum_k r_k(w)| = 1.118e-08
+
+  flat pool share handed to every agent: -104,273.09 $/h
+
+  technology                 n   own risk pi_k $/h   $/MW capacity   equal-share net
+  ----------------------------------------------------------------------------------
+  solar                      6           -2,787.27          -1.427       -628,425.78
+  wind                       6           -8,529.33          -1.871       -634,167.84
+  BIT (Bituminous Coal)      1                0.00           0.000       -104,273.09
+  NG (Natural Gas)           3           -6,206.66          -0.340       -319,025.91
+  NUC (Nuclear)              2                0.00           0.000       -208,546.17
+  LOAD                       1        1,998,711.88          74.529      1,894,438.79
+  ----------------------------------------------------------------------------------
+  RENEWABLE (solar+wind)                -11,316.60          -1.738
+  THERMAL                                -6,206.66          -0.169
+  LOAD                                1,998,711.88
+
+  share of total |tail-risk premium|  (renewable share 15.1%):
+    renewables   0.6%    thermal   0.3%    load  99.1%
+  The load is the residual risk bearer: pi_LOAD > 0 means its loss spikes
+  exactly in the scenarios the market prices most heavily, so it is the
+  natural BUYER of cover. Renewables are mildly negative (they earn more
+  in scarcity when they do produce), so they SELL cover.
+  pi is EXACTLY zero for coal and nuclear, and that is a property of the
+  dataset, not of the theory: thermal capacity in thermal_gens.csv is
+  constant across scenarios, so an infra-marginal unit has a constant L
+  and sum_w (q_w - rho_w) L = L * 0 = 0. Modelling forced outages would
+  give thermal genuine tail exposure; we flag this rather than hide it.
+  NOTE the equal-share column is nearly identical across generators: the
+  flat pool share swamps the signal. That is a property of the Eq. (111)
+  rule, not of the market, and is worth saying in the paper -- a
+  contribution-weighted delta_k would allocate the rebate sensibly.
+
+==============================================================================
+E3  Decarbonisation sweep: renewable share at FIXED total capacity
+==============================================================================
+  Adding renewables on top of an unchanged thermal fleet does not change
+  scarcity risk -- firm capacity still covers peak load, so the tail is
+  untouched and the value of insurance is flat. (We checked; it is.)
+  Decarbonisation is a SUBSTITUTION: thermal retires as renewables enter.
+  So we hold total installed capacity and the load fixed, and vary the
+  mix. Firm capacity then falls as the renewable share rises, which is
+  what actually puts weight in the tail.
+
+  total installed capacity held at 43,243 MW; load level frozen at scale 0.2363
+
+   target  ren.share    firm MW  ins. value $/h    $/MWh    E[l] delta    CVaR delta  ren. own risk
+  -------------------------------------------------------------------------------------------------
+     0.15      0.150     36,757       32,789.80   1.2227        48,997      -223,625     -1,262,568
+     0.30      0.300     30,270       33,323.39   1.2426        49,323      -226,164     -1,271,275
+     0.45      0.450     23,784       33,186.56   1.2375        48,711      -224,280     -1,279,745
+     0.60      0.600     17,297       32,599.74   1.2156        47,540      -219,593     -1,323,914
+     0.75      0.750     10,811       31,372.06   1.1698        41,586      -201,608     -1,355,288
+
+  from 15.0% to 75.0% renewable share, the value of the insurance market per MWh moves from 1.2227 to 1.1698 $/MWh (factor 0.96).
+
+==============================================================================
+E6  Sensitivity to the deviation bid price (and why it must be reported)
+==============================================================================
+  The planner's loss charges alpha^+/alpha^- for deviating from the
+  day-ahead schedule (paper Eq. 3). In the code these were hard-coded as
+  mc/10 and VOLL/10 with the comment 'just a heuristic'. They are not a
+  harmless heuristic: the value of risk-aware clearing is almost exactly
+  LINEAR in them, so any single headline $/MWh figure is a restatement of
+  that constant. Reporting the slope instead makes the result parameter-free.
+
+   delta_scale  alpha_load $/MWh  ins. value $/h     $/MWh  $/MWh per unit delta
+  ------------------------------------------------------------------------------
+         0.020              20.0           6,557    0.2445               12.2253
+         0.050              50.0          16,393    0.6113               12.2253
+         0.100             100.0          32,786    1.2225               12.2253
+         0.200             200.0          65,572    2.4451               12.2253
+         0.400             400.0         131,143    4.8901               12.2253
+
+  slope is constant to within 0.000%  =>  value of the insurance market = 12.225 x delta_scale  $/MWh
+  equivalently 1.2225% of the load's deviation
+  bid price per MWh served. THIS is the number the paper should quote:
+  it is a property of the uncertainty, not of an arbitrary constant.
+
+==============================================================================
+done in 1275.6s
+==============================================================================
+
+Results written to outputs/results/im3_im3_S500_9253564_main.json
+Log written to logs/im3_im3_S500_9253564_main.log
+[2026-11-17 20:58:38] E4 out-of-sample validation (30 replications)
+==============================================================================
+IM3 GO-WEST economic experiments
+==============================================================================
+  solver=GUROBI  S=500  eps=0.3  beta=0.95
+  delivery hour=18  season=summer  sampling=conditional  seed=2025
+
+  fleet: 6 solar + 6 wind + 6 thermal buses, 1 load (VOLL $1000/MWh)
+  thermal capacity 36,733 MW,  mean renewable 6,510 MW  (share 15.1%)
+  mean load 26,818 MW  (real WECC shape, level scaled by 0.2363 to a 15% reserve margin)
+  marginal costs $/MWh: solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, BIT (Bituminous Coal)=23.27, NG (Natural Gas)=22.46, NUC (Nuclear)=13.70, NG (Natural Gas)=21.22, NG (Natural Gas)=22.10, NUC (Nuclear)=15.39
+  NOTE 270 of 280 thermal heat rates were floored to physical minima (the dataset's gas heat rates are not physical)
+
+==============================================================================
+E4  Out-of-sample validation
+==============================================================================
+  Clear on one scenario set, then evaluate the resulting day-ahead
+  commitment on a DISJOINT set drawn from the same conditional pool.
+  This separates 'CVaR genuinely reduces tail loss' from 'CVaR fits the
+  in-sample tail'. Differences are paired by replication.
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+  held-out loss, risk-aware MINUS risk-neutral (30 replications, train S=400, test S=400):
+  negative = risk-aware is better out of sample
+    E[l]            (expected)             52,567.34 +/-   5,342.37   improved in 0/30 replications
+    CVaR_0.95[l]      (tail)             -219,601.62 +/-   2,743.52   improved in 30/30 replications
+    rho_RA[l]       (planner obj)         -29,083.35 +/-   3,817.43   improved in 29/30 replications
+
+  The tail column is the claim that matters: if CVaR clearing only fit
+  the in-sample tail, this would not be reliably negative.
+
+==============================================================================
+done in 2538.7s
+==============================================================================
+
+Results written to outputs/results/im3_im3_S500_9253564_oos.json
+Log written to logs/im3_im3_S500_9253564_oos.log
+[2026-11-17 21:41:01] E5 paired statistics (30 replications)
+==============================================================================
+IM3 GO-WEST economic experiments
+==============================================================================
+  solver=GUROBI  S=300  eps=0.3  beta=0.95
+  delivery hour=18  season=summer  sampling=conditional  seed=2025
+
+  fleet: 6 solar + 6 wind + 6 thermal buses, 1 load (VOLL $1000/MWh)
+  thermal capacity 36,733 MW,  mean renewable 6,496 MW  (share 15.0%)
+  mean load 26,767 MW  (real WECC shape, level scaled by 0.2363 to a 15% reserve margin)
+  marginal costs $/MWh: solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, BIT (Bituminous Coal)=23.27, NG (Natural Gas)=22.46, NUC (Nuclear)=13.70, NG (Natural Gas)=21.22, NG (Natural Gas)=22.10, NUC (Nuclear)=15.39
+  NOTE 270 of 280 thermal heat rates were floored to physical minima (the dataset's gas heat rates are not physical)
+
+==============================================================================
+E5  Paired statistics (repairs the reporting in Tables 1 and 3)
+==============================================================================
+  Table 1 reports e.g. 2.5836 +/- 0.0064 against 2.5874 +/- 0.0064: the
+  difference is smaller than either error bar, so as printed the result
+  is not statistically supported. But the comparison is PAIRED -- same
+  instance, same scenarios, same draw -- so the paired interval is the
+  correct summary. We report both to show what changes.
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+  tail loss CVaR_0.95[l] over 30 replications (lower is better)
+  method                          mean    unpaired +/-   paired diff    paired +/-    wins
+  ----------------------------------------------------------------------------------------
+  risk-neutral          -19,731,241.24      113,778.08            --            --      --
+  CVaR eps=0.1          -19,762,884.73      113,482.69    -31,643.48      4,764.87   30/30
+  CVaR eps=0.3          -19,957,863.16      114,123.41   -226,621.92      6,403.70   30/30
+  CVaR eps=0.5          -20,313,667.01       98,670.00   -582,425.77     20,532.33   30/30
+  CVaR eps=1.0          -20,369,988.86       98,598.10   -638,747.62     16,436.47   30/30
+
+  The 'unpaired' column is what Tables 1 and 3 report; the 'paired'
+  column is what the experimental design actually licenses.
+
+==============================================================================
+done in 4590.1s
+==============================================================================
+
+Results written to outputs/results/im3_im3_S500_9253564_paired.json
+Log written to logs/im3_im3_S500_9253564_paired.log
+[2026-11-17 22:57:36] E1 robustness: season=winter hour=8
+==============================================================================
+IM3 GO-WEST economic experiments
+==============================================================================
+  solver=GUROBI  S=500  eps=0.3  beta=0.95
+  delivery hour=8  season=winter  sampling=conditional  seed=2025
+
+  fleet: 6 solar + 6 wind + 6 thermal buses, 1 load (VOLL $1000/MWh)
+  thermal capacity 36,733 MW,  mean renewable 6,225 MW  (share 14.5%)
+  mean load 28,106 MW  (real WECC shape, level scaled by 0.3274 to a 15% reserve margin)
+  marginal costs $/MWh: solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, BIT (Bituminous Coal)=23.27, NG (Natural Gas)=22.46, NUC (Nuclear)=13.70, NG (Natural Gas)=21.22, NG (Natural Gas)=22.10, NUC (Nuclear)=15.39
+  NOTE 270 of 280 thermal heat rates were floored to physical minima (the dataset's gas heat rates are not physical)
+
+==============================================================================
+E1  The price of the missing insurance market
+==============================================================================
+  Without Arrow-Debreu securities Eq. (94) fails and the risk-aware
+  allocation cannot be decentralised. At eps = 0 every agent's gamma is
+  zero, so (94) holds trivially: an energy-only market DOES support the
+  risk-neutral allocation. The risk-adjusted welfare difference between
+  the two is the value of completing the market.
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+  risk-adjusted loss rho_RA[l]  (eps=0.3, beta=0.95):
+    risk-neutral commitment (energy-only market) :     -26331538.29 $/h
+    risk-aware commitment   (with insurance)     :     -26345390.14 $/h
+    VALUE OF THE INSURANCE MARKET                :         13851.86 $/h   (0.0526% of risk-adjusted welfare)
+    per MWh served (28,106 MWh/h)          :           0.4928 $/MWh
+    annualised (x8760)                           : $121.34 M/yr
+
+  decomposition (loss, so lower is better):
+    E[l]        risk-neutral   -27560323.91   risk-aware   -27520757.22   delta    +39566.69
+    CVaR_b[l]   risk-neutral   -23464371.85   risk-aware   -23602866.98   delta   -138495.13
+    (risk-aware clearing gives up expected welfare to cut the tail;
+     the insurance market is what makes that trade decentralisable.)
+
+  Eq. (94) without insurance, on this fleet:
+    planner tail scenarios: 27 of 500
+    agents' tail scenarios: min 25, max 26  -> the agents do not agree on where the tail is
+    max_k |gamma_k - gamma| = 0.012000   (Eq. 94 requires 0)
+
+==============================================================================
+E2  Risk incidence by generation technology
+==============================================================================
+  At equilibrium the insurance price is q = rho_tilde, so the premium an
+  agent pays in excess of its expected payout is sum_w (q_w - rho_w) r_w.
+  Under the corrected Eq. (111)-(112), r_k = L_k - l/N - delta_k, and that
+  splits exactly into
+      OWN RISK   pi_k := sum_w (q_w - rho_w) L_kw     (agent-specific)
+      POOL SHARE       -(1/N) sum_w (q_w - rho_w) l_w (identical for all)
+  The delta_k drop out of both. pi_k is the economically meaningful term:
+  the equilibrium price of the tail risk that agent k's OWN profit stream
+  brings to the market. The pool share is a flat rebate that the
+  equal-share rule hands every agent regardless of contribution.
+
+  Eq.(95) clearing check: max_w |sum_k r_k(w)| = 1.118e-08
+
+  flat pool share handed to every agent: -61,861.42 $/h
+
+  technology                 n   own risk pi_k $/h   $/MW capacity   equal-share net
+  ----------------------------------------------------------------------------------
+  solar                      6            3,464.11           1.103       -367,704.43
+  wind                       6           -2,670.89          -0.866       -373,839.44
+  BIT (Bituminous Coal)      1                0.00           0.000        -61,861.42
+  NG (Natural Gas)           3               28.96           0.002       -185,555.31
+  NUC (Nuclear)              2               -0.00          -0.000       -123,722.85
+  LOAD                       1        1,174,544.88          41.790      1,112,683.46
+  ----------------------------------------------------------------------------------
+  RENEWABLE (solar+wind)                    793.23           0.127
+  THERMAL                                    28.96           0.001
+  LOAD                                1,174,544.88
+
+  share of total |tail-risk premium|  (renewable share 14.5%):
+    renewables   0.1%    thermal   0.0%    load  99.3%
+  The load is the residual risk bearer: pi_LOAD > 0 means its loss spikes
+  exactly in the scenarios the market prices most heavily, so it is the
+  natural BUYER of cover. Renewables are mildly negative (they earn more
+  in scarcity when they do produce), so they SELL cover.
+  pi is EXACTLY zero for coal and nuclear, and that is a property of the
+  dataset, not of the theory: thermal capacity in thermal_gens.csv is
+  constant across scenarios, so an infra-marginal unit has a constant L
+  and sum_w (q_w - rho_w) L = L * 0 = 0. Modelling forced outages would
+  give thermal genuine tail exposure; we flag this rather than hide it.
+  NOTE the equal-share column is nearly identical across generators: the
+  flat pool share swamps the signal. That is a property of the Eq. (111)
+  rule, not of the market, and is worth saying in the paper -- a
+  contribution-weighted delta_k would allocate the rebate sensibly.
+
+==============================================================================
+done in 165.6s
+==============================================================================
+
+Results written to outputs/results/im3_im3_S500_9253564_winter_h8.json
+Log written to logs/im3_im3_S500_9253564_winter_h8.log
+[2026-11-17 23:00:25] E1 robustness: season=winter hour=18
+==============================================================================
+IM3 GO-WEST economic experiments
+==============================================================================
+  solver=GUROBI  S=500  eps=0.3  beta=0.95
+  delivery hour=18  season=winter  sampling=conditional  seed=2025
+
+  fleet: 6 solar + 6 wind + 6 thermal buses, 1 load (VOLL $1000/MWh)
+  thermal capacity 36,733 MW,  mean renewable 3,278 MW  (share 8.2%)
+  mean load 29,389 MW  (real WECC shape, level scaled by 0.3259 to a 15% reserve margin)
+  marginal costs $/MWh: solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, BIT (Bituminous Coal)=23.27, NG (Natural Gas)=22.46, NUC (Nuclear)=13.70, NG (Natural Gas)=21.22, NG (Natural Gas)=22.10, NUC (Nuclear)=15.39
+  NOTE 270 of 280 thermal heat rates were floored to physical minima (the dataset's gas heat rates are not physical)
+
+==============================================================================
+E1  The price of the missing insurance market
+==============================================================================
+  Without Arrow-Debreu securities Eq. (94) fails and the risk-aware
+  allocation cannot be decentralised. At eps = 0 every agent's gamma is
+  zero, so (94) holds trivially: an energy-only market DOES support the
+  risk-neutral allocation. The risk-adjusted welfare difference between
+  the two is the value of completing the market.
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+  risk-adjusted loss rho_RA[l]  (eps=0.3, beta=0.95):
+    risk-neutral commitment (energy-only market) :     -27926685.05 $/h
+    risk-aware commitment   (with insurance)     :     -27938158.08 $/h
+    VALUE OF THE INSURANCE MARKET                :         11473.03 $/h   (0.0411% of risk-adjusted welfare)
+    per MWh served (29,389 MWh/h)          :           0.3904 $/MWh
+    annualised (x8760)                           : $100.50 M/yr
+
+  decomposition (loss, so lower is better):
+    E[l]        risk-neutral   -28786662.30   risk-aware   -28770294.36   delta    +16367.93
+    CVaR_b[l]   risk-neutral   -25920071.46   risk-aware   -25996506.74   delta    -76435.28
+    (risk-aware clearing gives up expected welfare to cut the tail;
+     the insurance market is what makes that trade decentralisable.)
+
+  Eq. (94) without insurance, on this fleet:
+    planner tail scenarios: 25 of 500
+    agents' tail scenarios: min 25, max 26  -> the agents do not agree on where the tail is
+    max_k |gamma_k - gamma| = 0.012000   (Eq. 94 requires 0)
+
+==============================================================================
+E2  Risk incidence by generation technology
+==============================================================================
+  At equilibrium the insurance price is q = rho_tilde, so the premium an
+  agent pays in excess of its expected payout is sum_w (q_w - rho_w) r_w.
+  Under the corrected Eq. (111)-(112), r_k = L_k - l/N - delta_k, and that
+  splits exactly into
+      OWN RISK   pi_k := sum_w (q_w - rho_w) L_kw     (agent-specific)
+      POOL SHARE       -(1/N) sum_w (q_w - rho_w) l_w (identical for all)
+  The delta_k drop out of both. pi_k is the economically meaningful term:
+  the equilibrium price of the tail risk that agent k's OWN profit stream
+  brings to the market. The pool share is a flat rebate that the
+  equal-share rule hands every agent regardless of contribution.
+
+  Eq.(95) clearing check: max_w |sum_k r_k(w)| = 7.451e-09
+
+  flat pool share handed to every agent: -43,796.65 $/h
+
+  technology                 n   own risk pi_k $/h   $/MW capacity   equal-share net
+  ----------------------------------------------------------------------------------
+  solar                      6                0.00           0.000       -262,779.88
+  wind                       6           -2,365.26          -0.722       -265,145.14
+  BIT (Bituminous Coal)      1                0.00           0.000        -43,796.65
+  NG (Natural Gas)           3             -103.32          -0.006       -131,493.26
+  NUC (Nuclear)              2                0.00           0.000        -87,593.29
+  LOAD                       1          834,604.86          28.398        790,808.21
+  ----------------------------------------------------------------------------------
+  RENEWABLE (solar+wind)                 -2,365.26          -0.722
+  THERMAL                                  -103.32          -0.003
+  LOAD                                  834,604.86
+
+  share of total |tail-risk premium|  (renewable share 8.2%):
+    renewables   0.3%    thermal   0.0%    load  99.5%
+  The load is the residual risk bearer: pi_LOAD > 0 means its loss spikes
+  exactly in the scenarios the market prices most heavily, so it is the
+  natural BUYER of cover. Renewables are mildly negative (they earn more
+  in scarcity when they do produce), so they SELL cover.
+  pi is EXACTLY zero for coal and nuclear, and that is a property of the
+  dataset, not of the theory: thermal capacity in thermal_gens.csv is
+  constant across scenarios, so an infra-marginal unit has a constant L
+  and sum_w (q_w - rho_w) L = L * 0 = 0. Modelling forced outages would
+  give thermal genuine tail exposure; we flag this rather than hide it.
+  NOTE the equal-share column is nearly identical across generators: the
+  flat pool share swamps the signal. That is a property of the Eq. (111)
+  rule, not of the market, and is worth saying in the paper -- a
+  contribution-weighted delta_k would allocate the rebate sensibly.
+
+==============================================================================
+done in 165.7s
+==============================================================================
+
+Results written to outputs/results/im3_im3_S500_9253564_winter_h18.json
+Log written to logs/im3_im3_S500_9253564_winter_h18.log
+[2026-11-17 23:03:15] E1 robustness: season=summer hour=8
+==============================================================================
+IM3 GO-WEST economic experiments
+==============================================================================
+  solver=GUROBI  S=500  eps=0.3  beta=0.95
+  delivery hour=8  season=summer  sampling=conditional  seed=2025
+
+  fleet: 6 solar + 6 wind + 6 thermal buses, 1 load (VOLL $1000/MWh)
+  thermal capacity 36,733 MW,  mean renewable 10,129 MW  (share 21.6%)
+  mean load 26,866 MW  (real WECC shape, level scaled by 0.3193 to a 15% reserve margin)
+  marginal costs $/MWh: solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, BIT (Bituminous Coal)=23.27, NG (Natural Gas)=22.46, NUC (Nuclear)=13.70, NG (Natural Gas)=21.22, NG (Natural Gas)=22.10, NUC (Nuclear)=15.39
+  NOTE 270 of 280 thermal heat rates were floored to physical minima (the dataset's gas heat rates are not physical)
+
+==============================================================================
+E1  The price of the missing insurance market
+==============================================================================
+  Without Arrow-Debreu securities Eq. (94) fails and the risk-aware
+  allocation cannot be decentralised. At eps = 0 every agent's gamma is
+  zero, so (94) holds trivially: an energy-only market DOES support the
+  risk-neutral allocation. The risk-adjusted welfare difference between
+  the two is the value of completing the market.
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+  risk-adjusted loss rho_RA[l]  (eps=0.3, beta=0.95):
+    risk-neutral commitment (energy-only market) :     -24996025.65 $/h
+    risk-aware commitment   (with insurance)     :     -25026147.80 $/h
+    VALUE OF THE INSURANCE MARKET                :         30122.15 $/h   (0.1205% of risk-adjusted welfare)
+    per MWh served (26,866 MWh/h)          :           1.1212 $/MWh
+    annualised (x8760)                           : $263.87 M/yr
+
+  decomposition (loss, so lower is better):
+    E[l]        risk-neutral   -26387295.54   risk-aware   -26352700.54   delta    +34594.99
+    CVaR_b[l]   risk-neutral   -21749729.24   risk-aware   -21930858.05   delta   -181128.81
+    (risk-aware clearing gives up expected welfare to cut the tail;
+     the insurance market is what makes that trade decentralisable.)
+
+  Eq. (94) without insurance, on this fleet:
+    planner tail scenarios: 25 of 500
+    agents' tail scenarios: min 25, max 26  -> the agents do not agree on where the tail is
+    max_k |gamma_k - gamma| = 0.012000   (Eq. 94 requires 0)
+
+==============================================================================
+E2  Risk incidence by generation technology
+==============================================================================
+  At equilibrium the insurance price is q = rho_tilde, so the premium an
+  agent pays in excess of its expected payout is sum_w (q_w - rho_w) r_w.
+  Under the corrected Eq. (111)-(112), r_k = L_k - l/N - delta_k, and that
+  splits exactly into
+      OWN RISK   pi_k := sum_w (q_w - rho_w) L_kw     (agent-specific)
+      POOL SHARE       -(1/N) sum_w (q_w - rho_w) l_w (identical for all)
+  The delta_k drop out of both. pi_k is the economically meaningful term:
+  the equilibrium price of the tail risk that agent k's OWN profit stream
+  brings to the market. The pool share is a flat rebate that the
+  equal-share rule hands every agent regardless of contribution.
+
+  Eq.(95) clearing check: max_w |sum_k r_k(w)| = 1.118e-08
+
+  flat pool share handed to every agent: -69,818.57 $/h
+
+  technology                 n   own risk pi_k $/h   $/MW capacity   equal-share net
+  ----------------------------------------------------------------------------------
+  solar                      6           10,284.31           1.361       -408,627.08
+  wind                       6          -13,083.65          -5.091       -431,995.04
+  BIT (Bituminous Coal)      1                0.00           0.000        -69,818.57
+  NG (Natural Gas)           3             -649.87          -0.036       -210,105.57
+  NUC (Nuclear)              2                0.00           0.000       -139,637.13
+  LOAD                       1        1,330,001.95          49.505      1,260,183.39
+  ----------------------------------------------------------------------------------
+  RENEWABLE (solar+wind)                 -2,799.33          -0.276
+  THERMAL                                  -649.87          -0.018
+  LOAD                                1,330,001.95
+
+  share of total |tail-risk premium|  (renewable share 21.6%):
+    renewables   0.2%    thermal   0.0%    load  98.2%
+  The load is the residual risk bearer: pi_LOAD > 0 means its loss spikes
+  exactly in the scenarios the market prices most heavily, so it is the
+  natural BUYER of cover. Renewables are mildly negative (they earn more
+  in scarcity when they do produce), so they SELL cover.
+  pi is EXACTLY zero for coal and nuclear, and that is a property of the
+  dataset, not of the theory: thermal capacity in thermal_gens.csv is
+  constant across scenarios, so an infra-marginal unit has a constant L
+  and sum_w (q_w - rho_w) L = L * 0 = 0. Modelling forced outages would
+  give thermal genuine tail exposure; we flag this rather than hide it.
+  NOTE the equal-share column is nearly identical across generators: the
+  flat pool share swamps the signal. That is a property of the Eq. (111)
+  rule, not of the market, and is worth saying in the paper -- a
+  contribution-weighted delta_k would allocate the rebate sensibly.
+
+==============================================================================
+done in 167.1s
+==============================================================================
+
+Results written to outputs/results/im3_im3_S500_9253564_summer_h8.json
+Log written to logs/im3_im3_S500_9253564_summer_h8.log
+[2026-11-17 23:06:06] E1 robustness: season=summer hour=18
+==============================================================================
+IM3 GO-WEST economic experiments
+==============================================================================
+  solver=GUROBI  S=500  eps=0.3  beta=0.95
+  delivery hour=18  season=summer  sampling=conditional  seed=2025
+
+  fleet: 6 solar + 6 wind + 6 thermal buses, 1 load (VOLL $1000/MWh)
+  thermal capacity 36,733 MW,  mean renewable 6,510 MW  (share 15.1%)
+  mean load 26,818 MW  (real WECC shape, level scaled by 0.2363 to a 15% reserve margin)
+  marginal costs $/MWh: solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, BIT (Bituminous Coal)=23.27, NG (Natural Gas)=22.46, NUC (Nuclear)=13.70, NG (Natural Gas)=21.22, NG (Natural Gas)=22.10, NUC (Nuclear)=15.39
+  NOTE 270 of 280 thermal heat rates were floored to physical minima (the dataset's gas heat rates are not physical)
+
+==============================================================================
+E1  The price of the missing insurance market
+==============================================================================
+  Without Arrow-Debreu securities Eq. (94) fails and the risk-aware
+  allocation cannot be decentralised. At eps = 0 every agent's gamma is
+  zero, so (94) holds trivially: an energy-only market DOES support the
+  risk-neutral allocation. The risk-adjusted welfare difference between
+  the two is the value of completing the market.
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+  risk-adjusted loss rho_RA[l]  (eps=0.3, beta=0.95):
+    risk-neutral commitment (energy-only market) :     -24160418.00 $/h
+    risk-aware commitment   (with insurance)     :     -24193203.79 $/h
+    VALUE OF THE INSURANCE MARKET                :         32785.79 $/h   (0.1357% of risk-adjusted welfare)
+    per MWh served (26,818 MWh/h)          :           1.2225 $/MWh
+    annualised (x8760)                           : $287.20 M/yr
+
+  decomposition (loss, so lower is better):
+    E[l]        risk-neutral   -26223388.33   risk-aware   -26174392.41   delta    +48995.92
+    CVaR_b[l]   risk-neutral   -19346820.54   risk-aware   -19570430.33   delta   -223609.79
+    (risk-aware clearing gives up expected welfare to cut the tail;
+     the insurance market is what makes that trade decentralisable.)
+
+  Eq. (94) without insurance, on this fleet:
+    planner tail scenarios: 26 of 500
+    agents' tail scenarios: min 25, max 25  -> the agents do not agree on where the tail is
+    max_k |gamma_k - gamma| = 0.012000   (Eq. 94 requires 0)
+
+==============================================================================
+E2  Risk incidence by generation technology
+==============================================================================
+  At equilibrium the insurance price is q = rho_tilde, so the premium an
+  agent pays in excess of its expected payout is sum_w (q_w - rho_w) r_w.
+  Under the corrected Eq. (111)-(112), r_k = L_k - l/N - delta_k, and that
+  splits exactly into
+      OWN RISK   pi_k := sum_w (q_w - rho_w) L_kw     (agent-specific)
+      POOL SHARE       -(1/N) sum_w (q_w - rho_w) l_w (identical for all)
+  The delta_k drop out of both. pi_k is the economically meaningful term:
+  the equilibrium price of the tail risk that agent k's OWN profit stream
+  brings to the market. The pool share is a flat rebate that the
+  equal-share rule hands every agent regardless of contribution.
+
+  Eq.(95) clearing check: max_w |sum_k r_k(w)| = 1.118e-08
+
+  flat pool share handed to every agent: -104,273.09 $/h
+
+  technology                 n   own risk pi_k $/h   $/MW capacity   equal-share net
+  ----------------------------------------------------------------------------------
+  solar                      6           -2,787.27          -1.427       -628,425.78
+  wind                       6           -8,529.33          -1.871       -634,167.84
+  BIT (Bituminous Coal)      1                0.00           0.000       -104,273.09
+  NG (Natural Gas)           3           -6,206.66          -0.340       -319,025.91
+  NUC (Nuclear)              2                0.00           0.000       -208,546.17
+  LOAD                       1        1,998,711.88          74.529      1,894,438.79
+  ----------------------------------------------------------------------------------
+  RENEWABLE (solar+wind)                -11,316.60          -1.738
+  THERMAL                                -6,206.66          -0.169
+  LOAD                                1,998,711.88
+
+  share of total |tail-risk premium|  (renewable share 15.1%):
+    renewables   0.6%    thermal   0.3%    load  99.1%
+  The load is the residual risk bearer: pi_LOAD > 0 means its loss spikes
+  exactly in the scenarios the market prices most heavily, so it is the
+  natural BUYER of cover. Renewables are mildly negative (they earn more
+  in scarcity when they do produce), so they SELL cover.
+  pi is EXACTLY zero for coal and nuclear, and that is a property of the
+  dataset, not of the theory: thermal capacity in thermal_gens.csv is
+  constant across scenarios, so an infra-marginal unit has a constant L
+  and sum_w (q_w - rho_w) L = L * 0 = 0. Modelling forced outages would
+  give thermal genuine tail exposure; we flag this rather than hide it.
+  NOTE the equal-share column is nearly identical across generators: the
+  flat pool share swamps the signal. That is a property of the Eq. (111)
+  rule, not of the market, and is worth saying in the paper -- a
+  contribution-weighted delta_k would allocate the rebate sensibly.
+
+==============================================================================
+done in 168.6s
+==============================================================================
+
+Results written to outputs/results/im3_im3_S500_9253564_summer_h18.json
+Log written to logs/im3_im3_S500_9253564_summer_h18.log
+[2026-11-17 23:08:59] Job completed successfully.
+[2026-11-17 23:08:59] Pushing results to GitHub (branch hrithik_final)

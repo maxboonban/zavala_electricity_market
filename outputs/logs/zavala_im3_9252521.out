@@ -1,0 +1,206 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 9252521
+##  Job Name : zavala_im3
+##  Nodelist : node1840
+##      CPUs : 
+##  Mem/Node : 65536 MB
+## Directory : /oscar/home/hnambia1/Desktop/zavala_electricity_market
+##   Job Started : Tue Nov 17 07:48:49 PM EST 2026
+###############################################################################
+[2026-11-17 19:48:49] Job started — ID: 9252521, Node: node1840
+[2026-11-17 19:48:49] Loading modules...
+[2026-11-17 19:48:53] Conda env 'zavala-market' not found — creating from requirements.txt...
+Retrieving notices: ...working... done
+Channels:
+ - conda-forge
+Platform: linux-64
+Collecting package metadata (repodata.json): ...working... done
+Solving environment: ...working... done
+
+## Package Plan ##
+
+  environment location: /users/hnambia1/.conda/envs/zavala-market
+
+  added / updated specs:
+    - python=3.11
+
+
+The following packages will be downloaded:
+
+    package                    |            build
+    ---------------------------|-----------------
+    ca-certificates-2026.10.23 |       hbd8a1cb_0         127 KB  conda-forge
+    ld_impl_linux-64-2.46.1    |default_hbd61a6d_103         725 KB  conda-forge
+    libexpat-2.9.0             |       hd2095e1_0          77 KB  conda-forge
+    libffi-3.7.0               |       h81df57d_1          66 KB  conda-forge
+    libgcc-16.2.0              |       ha9f2e26_7         1.0 MB  conda-forge
+    libgomp-16.2.0             |       he0feb66_7         626 KB  conda-forge
+    libnsl-2.0.1               |       hb9d3cd8_1          33 KB  conda-forge
+    libpython-3.11.18          |ha57cdbe_0_cpython         7.5 MB  conda-forge
+    libsqlite-3.54.1           |     h0737f62_101         958 KB  conda-forge
+    libuuid-2.42.4             |       hcfc3c73_1          35 KB  conda-forge
+    pip-26.2.2                 |     pyh8b19718_2         1.0 MB  conda-forge
+    python-3.11.18             |h5f976f7_0_cpython        22.3 MB  conda-forge
+    setuptools-84.2.1          |     pyhe730653_0         554 KB  conda-forge
+    tzdata-2026e               |       h5d301ff_0         116 KB  conda-forge
+    ------------------------------------------------------------
+                                           Total:        35.0 MB
+
+The following NEW packages will be INSTALLED:
+
+  _openmp_mutex      conda-forge/linux-64::_openmp_mutex-4.5-20_gnu 
+  bzip2              conda-forge/linux-64::bzip2-1.0.8-hda65f42_10 
+  ca-certificates    conda-forge/noarch::ca-certificates-2026.10.23-hbd8a1cb_0 
+  ld_impl_linux-64   conda-forge/linux-64::ld_impl_linux-64-2.46.1-default_hbd61a6d_103 
+  libexpat           conda-forge/linux-64::libexpat-2.9.0-hd2095e1_0 
+  libffi             conda-forge/linux-64::libffi-3.7.0-h81df57d_1 
+  libgcc             conda-forge/linux-64::libgcc-16.2.0-ha9f2e26_7 
+  libgomp            conda-forge/linux-64::libgomp-16.2.0-he0feb66_7 
+  liblzma            conda-forge/linux-64::liblzma-5.8.3-hb03c661_1 
+  libnsl             conda-forge/linux-64::libnsl-2.0.1-hb9d3cd8_1 
+  libpython          conda-forge/linux-64::libpython-3.11.18-ha57cdbe_0_cpython 
+  libsqlite          conda-forge/linux-64::libsqlite-3.54.1-h0737f62_101 
+  libuuid            conda-forge/linux-64::libuuid-2.42.4-hcfc3c73_1 
+  libxcrypt          conda-forge/linux-64::libxcrypt-4.4.38-h280c20c_0 
+  libzlib            conda-forge/linux-64::libzlib-1.3.2-h25fd6f3_3 
+  ncurses            conda-forge/linux-64::ncurses-6.6-hdb14827_1 
+  openssl            conda-forge/linux-64::openssl-3.6.5-h781a0a9_0 
+  packaging          conda-forge/noarch::packaging-26.3-pyhc364b38_0 
+  pip                conda-forge/noarch::pip-26.2.2-pyh8b19718_2 
+  python             conda-forge/linux-64::python-3.11.18-h5f976f7_0_cpython 
+  readline           conda-forge/linux-64::readline-8.3-hd6e31c0_1 
+  setuptools         conda-forge/noarch::setuptools-84.2.1-pyhe730653_0 
+  tk                 conda-forge/linux-64::tk-8.6.13-noxft_h1df4ec4_4 
+  tzdata             conda-forge/noarch::tzdata-2026e-h5d301ff_0 
+  wheel              conda-forge/noarch::wheel-0.48.0-pyhd8ed1ab_0 
+  zstd               conda-forge/linux-64::zstd-1.5.7-hb78ec9c_7 
+
+
+
+Downloading and Extracting Packages: ...working... done
+Preparing transaction: ...working... done
+Verifying transaction: ...working... done
+Executing transaction: ...working... done
+#
+# To activate this environment, use
+#
+#     $ conda activate zavala-market
+#
+# To deactivate an active environment, use
+#
+#     $ conda deactivate
+
+Collecting numpy (from -r requirements.txt (line 1))
+  Downloading numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+Collecting pandas (from -r requirements.txt (line 2))
+  Downloading pandas-3.1.1-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (16 kB)
+Collecting scipy (from -r requirements.txt (line 3))
+  Downloading scipy-1.17.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+Collecting matplotlib (from -r requirements.txt (line 4))
+  Downloading matplotlib-3.11.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (80 kB)
+Collecting cvxpy (from -r requirements.txt (line 5))
+  Downloading cvxpy-1.9.3-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (9.7 kB)
+Collecting gurobipy (from -r requirements.txt (line 6))
+  Downloading gurobipy-14.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (16 kB)
+Collecting jax (from -r requirements.txt (line 7))
+  Downloading jax-0.10.2-py3-none-any.whl.metadata (13 kB)
+Collecting jaxlib (from -r requirements.txt (line 8))
+  Downloading jaxlib-0.10.2-cp311-cp311-manylinux_2_27_x86_64.whl.metadata (1.3 kB)
+Collecting python-dateutil>=2.9.0 (from pandas->-r requirements.txt (line 2))
+  Downloading python_dateutil-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+Collecting contourpy>=1.0.1 (from matplotlib->-r requirements.txt (line 4))
+  Downloading contourpy-1.3.3-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (5.5 kB)
+Collecting cycler>=0.10 (from matplotlib->-r requirements.txt (line 4))
+  Using cached cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)
+Collecting fonttools>=4.28.2 (from matplotlib->-r requirements.txt (line 4))
+  Downloading fonttools-4.68.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (139 kB)
+Collecting kiwisolver>=1.3.1 (from matplotlib->-r requirements.txt (line 4))
+  Downloading kiwisolver-1.5.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.2 kB)
+Requirement already satisfied: packaging>=20.0 in /users/hnambia1/.conda/envs/zavala-market/lib/python3.11/site-packages (from matplotlib->-r requirements.txt (line 4)) (26.3)
+Collecting pillow>=9 (from matplotlib->-r requirements.txt (line 4))
+  Downloading pillow-13.0.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (9.1 kB)
+Collecting pyparsing>=3 (from matplotlib->-r requirements.txt (line 4))
+  Downloading pyparsing-3.3.3-py3-none-any.whl.metadata (5.9 kB)
+Collecting osqp>=1.0.0 (from cvxpy->-r requirements.txt (line 5))
+  Downloading osqp-1.1.3-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (2.2 kB)
+Collecting clarabel>=0.5.0 (from cvxpy->-r requirements.txt (line 5))
+  Downloading clarabel-0.11.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.8 kB)
+Collecting scs>=3.2.4.post1 (from cvxpy->-r requirements.txt (line 5))
+  Downloading scs-3.3.2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (10 kB)
+Collecting highspy>=1.14.0 (from cvxpy->-r requirements.txt (line 5))
+  Downloading highspy-1.16.0-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (12 kB)
+Collecting qdldl>=0.1.7.post0 (from cvxpy->-r requirements.txt (line 5))
+  Downloading qdldl-0.1.9.post1-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (1.9 kB)
+Collecting sparsediffpy<0.7.0,>=0.6.0 (from cvxpy->-r requirements.txt (line 5))
+  Downloading sparsediffpy-0.6.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (581 bytes)
+Collecting ml_dtypes>=0.5.0 (from jax->-r requirements.txt (line 7))
+  Downloading ml_dtypes-0.7.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (11 kB)
+Collecting opt_einsum (from jax->-r requirements.txt (line 7))
+  Using cached opt_einsum-3.4.0-py3-none-any.whl.metadata (6.3 kB)
+Collecting cffi (from clarabel>=0.5.0->cvxpy->-r requirements.txt (line 5))
+  Downloading cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.5 kB)
+Collecting jinja2 (from osqp>=1.0.0->cvxpy->-r requirements.txt (line 5))
+  Using cached jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Requirement already satisfied: setuptools in /users/hnambia1/.conda/envs/zavala-market/lib/python3.11/site-packages (from osqp>=1.0.0->cvxpy->-r requirements.txt (line 5)) (84.2.1)
+Collecting joblib (from osqp>=1.0.0->cvxpy->-r requirements.txt (line 5))
+  Downloading joblib-1.6.0-py3-none-any.whl.metadata (6.5 kB)
+Collecting tzdata (from python-dateutil>=2.9.0->pandas->-r requirements.txt (line 2))
+  Downloading tzdata-2026.6-py2.py3-none-any.whl.metadata (1.4 kB)
+Collecting pycparser (from cffi->clarabel>=0.5.0->cvxpy->-r requirements.txt (line 5))
+  Downloading pycparser-3.12-py3-none-any.whl.metadata (9.7 kB)
+Collecting MarkupSafe>=2.0 (from jinja2->osqp>=1.0.0->cvxpy->-r requirements.txt (line 5))
+  Downloading markupsafe-3.0.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+Collecting cloudpickle>=3.0 (from joblib->osqp>=1.0.0->cvxpy->-r requirements.txt (line 5))
+  Downloading cloudpickle-3.1.2-py3-none-any.whl.metadata (7.1 kB)
+Downloading numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.9/16.9 MB 49.3 MB/s  0:00:00
+Downloading pandas-3.1.1-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.4/12.4 MB 44.9 MB/s  0:00:00
+Downloading scipy-1.17.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (35.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.3/35.3 MB 56.2 MB/s  0:00:00
+Downloading matplotlib-3.11.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (9.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.9/9.9 MB 48.5 MB/s  0:00:00
+Downloading cvxpy-1.9.3-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (4.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 33.0 MB/s  0:00:00
+Downloading sparsediffpy-0.6.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (12.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.1/12.1 MB 47.8 MB/s  0:00:00
+Downloading gurobipy-14.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (14.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.4/14.4 MB 34.0 MB/s  0:00:00
+Downloading jax-0.10.2-py3-none-any.whl (3.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.2/3.2 MB 40.1 MB/s  0:00:00
+Downloading jaxlib-0.10.2-cp311-cp311-manylinux_2_27_x86_64.whl (85.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 85.4/85.4 MB 52.5 MB/s  0:00:01
+Downloading clarabel-0.11.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 15.5 MB/s  0:00:00
+Downloading contourpy-1.3.3-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (355 kB)
+Using cached cycler-0.12.1-py3-none-any.whl (8.3 kB)
+Downloading fonttools-4.68.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.5/5.5 MB 46.2 MB/s  0:00:00
+Downloading highspy-1.16.0-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (3.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.2/3.2 MB 35.0 MB/s  0:00:00
+Downloading kiwisolver-1.5.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 26.6 MB/s  0:00:00
+Downloading ml_dtypes-0.7.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (467 kB)
+Downloading osqp-1.1.3-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (351 kB)
+Downloading pillow-13.0.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.1/7.1 MB 53.1 MB/s  0:00:00
+Downloading pyparsing-3.3.3-py3-none-any.whl (126 kB)
+Downloading python_dateutil-4.0.0-py3-none-any.whl (92 kB)
+Downloading qdldl-0.1.9.post1-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (1.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 25.1 MB/s  0:00:00
+Downloading scs-3.3.2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (43.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 43.3/43.3 MB 55.0 MB/s  0:00:00
+Downloading cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (217 kB)
+Using cached jinja2-3.1.6-py3-none-any.whl (134 kB)
+Downloading markupsafe-3.0.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+Downloading joblib-1.6.0-py3-none-any.whl (306 kB)
+Downloading cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+Using cached opt_einsum-3.4.0-py3-none-any.whl (71 kB)
+Downloading pycparser-3.12-py3-none-any.whl (62 kB)
+Downloading tzdata-2026.6-py2.py3-none-any.whl (348 kB)
+Installing collected packages: tzdata, pyparsing, pycparser, pillow, opt_einsum, numpy, MarkupSafe, kiwisolver, gurobipy, fonttools, cycler, cloudpickle, sparsediffpy, scipy, python-dateutil, ml_dtypes, joblib, jinja2, highspy, contourpy, cffi, scs, qdldl, pandas, osqp, matplotlib, jaxlib, clarabel, jax, cvxpy
+
+Successfully installed MarkupSafe-3.0.4 cffi-2.1.1 clarabel-0.11.1 cloudpickle-3.1.2 contourpy-1.3.3 cvxpy-1.9.3 cycler-0.12.1 fonttools-4.68.0 gurobipy-14.0.0 highspy-1.16.0 jax-0.10.2 jaxlib-0.10.2 jinja2-3.1.6 joblib-1.6.0 kiwisolver-1.5.1 matplotlib-3.11.2 ml_dtypes-0.7.0 numpy-2.4.6 opt_einsum-3.4.0 osqp-1.1.3 pandas-3.1.1 pillow-13.0.0 pycparser-3.12 pyparsing-3.3.3 python-dateutil-4.0.0 qdldl-0.1.9.post1 scipy-1.17.1 scs-3.3.2 sparsediffpy-0.6.1 tzdata-2026.6
+[2026-11-17 19:52:59] Conda env created.
+[2026-11-17 19:53:00] Conda environment activated
+[2026-11-17 19:53:00] Preflight: Gurobi licence check

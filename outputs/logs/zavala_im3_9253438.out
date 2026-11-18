@@ -1,0 +1,354 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 9253438
+##  Job Name : zavala_im3
+##  Nodelist : node1834
+##      CPUs : 
+##  Mem/Node : 65536 MB
+## Directory : /oscar/home/hnambia1/Desktop/zavala_electricity_market
+##   Job Started : Tue Nov 17 08:24:55 PM EST 2026
+###############################################################################
+[2026-11-17 20:24:55] Job started — ID: 9253438, Node: node1834
+[2026-11-17 20:24:55] Loading modules...
+[2026-11-17 20:24:58] Conda env 'zavala-market' already exists, skipping creation.
+[2026-11-17 20:24:59] Conda environment activated
+[2026-11-17 20:24:59] Preflight: Gurobi licence check
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+[preflight] Gurobi OK (v(14, 0, 0)), trivial LP obj = 1.0
+[2026-11-17 20:25:00] Theory verification (docs/THEORY_ERRATA.md)
+[2026-11-17 20:25:00]   verify_theory eps=0.1
+==============================================================================
+THEORY VERIFICATION  --  adjudicating suspected errors in the manuscript
+==============================================================================
+  solver=GUROBI  S=200  eps=0.1  beta=0.95
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:894: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:910: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+==============================================================================
+T1/T2  sum_w rho_tilde_w = 1  (paper p.19 claims 1 + eps)
+==============================================================================
+  eps = 0.1,  sum_w rho_tilde_w = 1.000000000000
+  printed claim 1 + eps = 1.100000000000    corrected claim 1 = 1.0
+  [PASS] sum rho_tilde == 1 (corrected)   |sum - 1| = 0.000e+00
+  [PASS] sum rho_tilde != 1 + eps (printed is wrong)   |sum - (1+eps)| = 1.000e-01
+  => T2 follows: the (1+eps) normaliser in p_0 = lambda/(1+eps) (p.26)
+     has no source; Eq. (107) and the Thm 6 proof both give p_0 = lambda.
+
+==============================================================================
+T3  sign of Eq. (111)-(112)  [equal-share transfer]
+==============================================================================
+  Eq. (97) defines the insured loss as  L - r,  but Eq. (113) flattens
+  L + r. Only one sign can be right. Both satisfy clearing Eq. (95),
+  which is why the paper's own check does not catch it.
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  r = -L + l/N + d
+      clearing Eq.(95) max|sum_k r_k| = 1.164e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 1.205e+00
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  corrected   r = +L - l/N - d
+      clearing Eq.(95) max|sum_k r_k| = 1.164e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 6.086e-13
+  [PASS] corrected sign supports (UM)   max rel gap = 6.086e-13  (solver tolerance)
+  [PASS] printed sign does NOT support (UM)   max rel gap = 1.205e+00
+  [PASS] the two signs separate by >= 3 orders of magnitude   ratio = 1.980e+12
+  => Eq. (111)-(112) should read  r_k = +L_k - l/(n+m) - delta_k,
+     and Eq. (113) should read    L_k - r_k = l/(n+m) + delta_k.
+     Eq. (122) in Theorem 9 already uses this corrected sign.
+
+==============================================================================
+T5  Theorem 9: is  t* := sum_k t_k  circular?  [INVESTIGATED -- NOT AN ERROR]
+==============================================================================
+  Eq. (122) sets  r_k = L_k - t_k - w_k (l(w) - t*)  with t* := sum_k t_k,
+  while t_k also names each agent's own VaR variable. That looks circular:
+  one might expect self-consistency to force t* = VaR_bmin(l*), the
+  PLANNER's VaR. We tested both readings. They give the SAME objective,
+  because a constant shift of r_k is exactly objective-neutral:
+      d/dc [ (1-eps) E[u+r+c] - q.(r+c) - eps CVaR(L-r-c) ]
+          = (1-eps) - sum_w q_w + eps = 1 - sum_w q_w = 0,
+  which holds PRECISELY BECAUSE sum_w rho_tilde_w = 1 (test T1). So the
+  {t_k} in (122) are free constants, t* := sum_k t_k is a harmless
+  normalisation, and Theorem 9's construction is sound as printed.
+  (Had the paper's sum = 1 + eps been right, this invariance would fail.)
+  beta_min = 0.9,  |S_>| = 10 of 11 agents
+  sum_k t_k (as printed) = -147545.1679
+  VaR_bmin(l*)  (planner) = -201892.6044
+  these differ by 54347.4364 -- the two readings of t*
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  (t* = sum_k t_k):   clearing = 6.185e-11   (UM) max rel gap = 1.997e-12
+  corrected   (sum_k t_k = t*_P): clearing = 6.912e-11   (UM) max rel gap = 1.998e-12
+  [PASS] Theorem 9 construction supports (UM)  [t* = sum_k t_k, as printed]   max rel gap = 1.997e-12
+  [PASS] both readings of t* agree (construction is shift-invariant)   |difference| = 1.170e-15
+  VERDICT: not an error. Theorem 9's construction is verified under the
+  (UM) test, which D4 in the first experiment round never actually ran --
+  D4 checked only Eq. (95) and Eq. (121), which hold for ANY {t_k}.
+  Constant-shift coefficient 1 - sum_w q_w = 0.000e+00
+
+==============================================================================
+T8  Remark 11: heterogeneous eps reduces to a planner at (eps_min, beta_P)
+==============================================================================
+  Claim: with phi_k = eps_k beta_k/(1-beta_k), the binding bounds on q are
+    q_w >= (1-eps_min) rho_w   and   q_w <= (1+phi_min) rho_w,
+  which are exactly a planner's bounds at eps_P = eps_min and
+  beta_P = phi_min/(eps_min + phi_min).  The paper defers this; we check it.
+  eps_k in [0.2, 0.5], beta_k in [0.9, 0.99]
+  eps_min = 0.2000   phi_min = 4.5000   => beta_P = 0.957447
+  [PASS] beta_P falls strictly outside the agents' own {beta_k} (sharp test)   beta_P = 0.957447, pool = [0.9, 0.99]
+  [PASS] planner's phi_P equals phi_min (algebra of Remark 11)   |phi_P - phi_min| = 7.105e-15
+  max lower-bound violation  max_k,w [(1-eps_k)rho_w - q_w] = 0.000e+00
+  max upper-bound violation  max_k,w [q_w - (1+phi_k)rho_w] = 0.000e+00
+  [PASS] q from the (eps_min, beta_P) planner is feasible for EVERY agent   tol = 1.127e-09
+  [PASS] sum_w q_w == 1   |sum q - 1| = 2.220e-16
+
+==============================================================================
+ALL THEORY CHECKS PASSED
+==============================================================================
+[2026-11-17 20:25:55]   verify_theory eps=0.3
+==============================================================================
+THEORY VERIFICATION  --  adjudicating suspected errors in the manuscript
+==============================================================================
+  solver=GUROBI  S=200  eps=0.3  beta=0.95
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:894: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:910: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+==============================================================================
+T1/T2  sum_w rho_tilde_w = 1  (paper p.19 claims 1 + eps)
+==============================================================================
+  eps = 0.3,  sum_w rho_tilde_w = 1.000000000000
+  printed claim 1 + eps = 1.300000000000    corrected claim 1 = 1.0
+  [PASS] sum rho_tilde == 1 (corrected)   |sum - 1| = 0.000e+00
+  [PASS] sum rho_tilde != 1 + eps (printed is wrong)   |sum - (1+eps)| = 3.000e-01
+  => T2 follows: the (1+eps) normaliser in p_0 = lambda/(1+eps) (p.26)
+     has no source; Eq. (107) and the Thm 6 proof both give p_0 = lambda.
+
+==============================================================================
+T3  sign of Eq. (111)-(112)  [equal-share transfer]
+==============================================================================
+  Eq. (97) defines the insured loss as  L - r,  but Eq. (113) flattens
+  L + r. Only one sign can be right. Both satisfy clearing Eq. (95),
+  which is why the paper's own check does not catch it.
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  r = -L + l/N + d
+      clearing Eq.(95) max|sum_k r_k| = 1.310e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 1.817e+00
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  corrected   r = +L - l/N - d
+      clearing Eq.(95) max|sum_k r_k| = 1.310e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 3.967e-13
+  [PASS] corrected sign supports (UM)   max rel gap = 3.967e-13  (solver tolerance)
+  [PASS] printed sign does NOT support (UM)   max rel gap = 1.817e+00
+  [PASS] the two signs separate by >= 3 orders of magnitude   ratio = 4.580e+12
+  => Eq. (111)-(112) should read  r_k = +L_k - l/(n+m) - delta_k,
+     and Eq. (113) should read    L_k - r_k = l/(n+m) + delta_k.
+     Eq. (122) in Theorem 9 already uses this corrected sign.
+
+==============================================================================
+T5  Theorem 9: is  t* := sum_k t_k  circular?  [INVESTIGATED -- NOT AN ERROR]
+==============================================================================
+  Eq. (122) sets  r_k = L_k - t_k - w_k (l(w) - t*)  with t* := sum_k t_k,
+  while t_k also names each agent's own VaR variable. That looks circular:
+  one might expect self-consistency to force t* = VaR_bmin(l*), the
+  PLANNER's VaR. We tested both readings. They give the SAME objective,
+  because a constant shift of r_k is exactly objective-neutral:
+      d/dc [ (1-eps) E[u+r+c] - q.(r+c) - eps CVaR(L-r-c) ]
+          = (1-eps) - sum_w q_w + eps = 1 - sum_w q_w = 0,
+  which holds PRECISELY BECAUSE sum_w rho_tilde_w = 1 (test T1). So the
+  {t_k} in (122) are free constants, t* := sum_k t_k is a harmless
+  normalisation, and Theorem 9's construction is sound as printed.
+  (Had the paper's sum = 1 + eps been right, this invariance would fail.)
+  beta_min = 0.9,  |S_>| = 10 of 11 agents
+  sum_k t_k (as printed) = -150487.4480
+  VaR_bmin(l*)  (planner) = -202444.1504
+  these differ by 51956.7024 -- the two readings of t*
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  (t* = sum_k t_k):   clearing = 8.731e-11   (UM) max rel gap = 8.228e-13
+  corrected   (sum_k t_k = t*_P): clearing = 6.548e-11   (UM) max rel gap = 8.224e-13
+  [PASS] Theorem 9 construction supports (UM)  [t* = sum_k t_k, as printed]   max rel gap = 8.228e-13
+  [PASS] both readings of t* agree (construction is shift-invariant)   |difference| = 3.717e-16
+  VERDICT: not an error. Theorem 9's construction is verified under the
+  (UM) test, which D4 in the first experiment round never actually ran --
+  D4 checked only Eq. (95) and Eq. (121), which hold for ANY {t_k}.
+  Constant-shift coefficient 1 - sum_w q_w = 0.000e+00
+
+==============================================================================
+T8  Remark 11: heterogeneous eps reduces to a planner at (eps_min, beta_P)
+==============================================================================
+  Claim: with phi_k = eps_k beta_k/(1-beta_k), the binding bounds on q are
+    q_w >= (1-eps_min) rho_w   and   q_w <= (1+phi_min) rho_w,
+  which are exactly a planner's bounds at eps_P = eps_min and
+  beta_P = phi_min/(eps_min + phi_min).  The paper defers this; we check it.
+  eps_k in [0.2, 0.5], beta_k in [0.9, 0.99]
+  eps_min = 0.2000   phi_min = 4.5000   => beta_P = 0.957447
+  [PASS] beta_P falls strictly outside the agents' own {beta_k} (sharp test)   beta_P = 0.957447, pool = [0.9, 0.99]
+  [PASS] planner's phi_P equals phi_min (algebra of Remark 11)   |phi_P - phi_min| = 7.105e-15
+  max lower-bound violation  max_k,w [(1-eps_k)rho_w - q_w] = 0.000e+00
+  max upper-bound violation  max_k,w [q_w - (1+phi_k)rho_w] = 0.000e+00
+  [PASS] q from the (eps_min, beta_P) planner is feasible for EVERY agent   tol = 1.127e-09
+  [PASS] sum_w q_w == 1   |sum q - 1| = 2.220e-16
+
+==============================================================================
+ALL THEORY CHECKS PASSED
+==============================================================================
+[2026-11-17 20:26:44]   verify_theory eps=0.5
+==============================================================================
+THEORY VERIFICATION  --  adjudicating suspected errors in the manuscript
+==============================================================================
+  solver=GUROBI  S=200  eps=0.5  beta=0.95
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:894: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:910: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+
+==============================================================================
+T1/T2  sum_w rho_tilde_w = 1  (paper p.19 claims 1 + eps)
+==============================================================================
+  eps = 0.5,  sum_w rho_tilde_w = 1.000000000000
+  printed claim 1 + eps = 1.500000000000    corrected claim 1 = 1.0
+  [PASS] sum rho_tilde == 1 (corrected)   |sum - 1| = 0.000e+00
+  [PASS] sum rho_tilde != 1 + eps (printed is wrong)   |sum - (1+eps)| = 5.000e-01
+  => T2 follows: the (1+eps) normaliser in p_0 = lambda/(1+eps) (p.26)
+     has no source; Eq. (107) and the Thm 6 proof both give p_0 = lambda.
+
+==============================================================================
+T3  sign of Eq. (111)-(112)  [equal-share transfer]
+==============================================================================
+  Eq. (97) defines the insured loss as  L - r,  but Eq. (113) flattens
+  L + r. Only one sign can be right. Both satisfy clearing Eq. (95),
+  which is why the paper's own check does not catch it.
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  r = -L + l/N + d
+      clearing Eq.(95) max|sum_k r_k| = 1.019e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 5.379e-01
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  corrected   r = +L - l/N - d
+      clearing Eq.(95) max|sum_k r_k| = 1.019e-10   (both signs clear -- this is the trap)
+      (UM) max relative gap           = 2.300e-13
+  [PASS] corrected sign supports (UM)   max rel gap = 2.300e-13  (solver tolerance)
+  [PASS] printed sign does NOT support (UM)   max rel gap = 5.379e-01
+  [PASS] the two signs separate by >= 3 orders of magnitude   ratio = 2.339e+12
+  => Eq. (111)-(112) should read  r_k = +L_k - l/(n+m) - delta_k,
+     and Eq. (113) should read    L_k - r_k = l/(n+m) + delta_k.
+     Eq. (122) in Theorem 9 already uses this corrected sign.
+
+==============================================================================
+T5  Theorem 9: is  t* := sum_k t_k  circular?  [INVESTIGATED -- NOT AN ERROR]
+==============================================================================
+  Eq. (122) sets  r_k = L_k - t_k - w_k (l(w) - t*)  with t* := sum_k t_k,
+  while t_k also names each agent's own VaR variable. That looks circular:
+  one might expect self-consistency to force t* = VaR_bmin(l*), the
+  PLANNER's VaR. We tested both readings. They give the SAME objective,
+  because a constant shift of r_k is exactly objective-neutral:
+      d/dc [ (1-eps) E[u+r+c] - q.(r+c) - eps CVaR(L-r-c) ]
+          = (1-eps) - sum_w q_w + eps = 1 - sum_w q_w = 0,
+  which holds PRECISELY BECAUSE sum_w rho_tilde_w = 1 (test T1). So the
+  {t_k} in (122) are free constants, t* := sum_k t_k is a harmless
+  normalisation, and Theorem 9's construction is sound as printed.
+  (Had the paper's sum = 1 + eps been right, this invariance would fail.)
+  beta_min = 0.9,  |S_>| = 10 of 11 agents
+  sum_k t_k (as printed) = -160424.2546
+  VaR_bmin(l*)  (planner) = -202772.9926
+  these differ by 42348.7381 -- the two readings of t*
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  [WARN] insurance box active for 11 agent(s) -- gap values are not trustworthy
+  as printed  (t* = sum_k t_k):   clearing = 8.367e-11   (UM) max rel gap = 3.548e-13
+  corrected   (sum_k t_k = t*_P): clearing = 9.095e-11   (UM) max rel gap = 3.556e-13
+  [PASS] Theorem 9 construction supports (UM)  [t* = sum_k t_k, as printed]   max rel gap = 3.548e-13
+  [PASS] both readings of t* agree (construction is shift-invariant)   |difference| = 7.539e-16
+  VERDICT: not an error. Theorem 9's construction is verified under the
+  (UM) test, which D4 in the first experiment round never actually ran --
+  D4 checked only Eq. (95) and Eq. (121), which hold for ANY {t_k}.
+  Constant-shift coefficient 1 - sum_w q_w = 0.000e+00
+
+==============================================================================
+T8  Remark 11: heterogeneous eps reduces to a planner at (eps_min, beta_P)
+==============================================================================
+  Claim: with phi_k = eps_k beta_k/(1-beta_k), the binding bounds on q are
+    q_w >= (1-eps_min) rho_w   and   q_w <= (1+phi_min) rho_w,
+  which are exactly a planner's bounds at eps_P = eps_min and
+  beta_P = phi_min/(eps_min + phi_min).  The paper defers this; we check it.
+  eps_k in [0.2, 0.5], beta_k in [0.9, 0.99]
+  eps_min = 0.2000   phi_min = 4.5000   => beta_P = 0.957447
+  [PASS] beta_P falls strictly outside the agents' own {beta_k} (sharp test)   beta_P = 0.957447, pool = [0.9, 0.99]
+  [PASS] planner's phi_P equals phi_min (algebra of Remark 11)   |phi_P - phi_min| = 7.105e-15
+  max lower-bound violation  max_k,w [(1-eps_k)rho_w - q_w] = 0.000e+00
+  max upper-bound violation  max_k,w [q_w - (1+phi_k)rho_w] = 0.000e+00
+  [PASS] q from the (eps_min, beta_P) planner is feasible for EVERY agent   tol = 1.127e-09
+  [PASS] sum_w q_w == 1   |sum q - 1| = 2.220e-16
+
+==============================================================================
+ALL THEORY CHECKS PASSED
+==============================================================================
+[2026-11-17 20:27:32] CVaR pricing invariants
+Solver: GUROBI
+
+--- eps=0.1, beta=0.95, S=100, G=10, D=1 ---
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:894: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:910: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.1 eps=0.1 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=2.541e-02 ub_max=3.262e-02
+  [PASS] rho_tilde > 0 (RT prices well defined)  min=3.649e-03
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=217.654147  E[Pi]=119.242116
+  info: old (buggy) denominator would change E[Pi] by -8.141813 ($/MWh), max per-scenario relative change 10.000%
+
+--- eps=0.3, beta=0.95, S=100, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.3 eps=0.3 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=7.622e-02 ub_max=9.786e-02
+  [PASS] rho_tilde > 0 (RT prices well defined)  min=2.838e-03
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=413.913744  E[Pi]=119.237239
+  info: old (buggy) denominator would change E[Pi] by -21.031337 ($/MWh), max per-scenario relative change 30.000%
+
+--- eps=0.5, beta=0.95, S=100, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.5 eps=0.5 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=1.270e-01 ub_max=1.631e-01
+  [PASS] rho_tilde > 0 (RT prices well defined)  min=2.027e-03
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=602.670611  E[Pi]=115.246295
+  info: old (buggy) denominator would change E[Pi] by -31.760173 ($/MWh), max per-scenario relative change 50.000%
+
+--- eps=1.0, beta=0.95, S=100, G=10, D=1 ---
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:948: RuntimeWarning: invalid value encountered in divide
+  Pi = jnp.array(nu / rho_tilde)                       # p_w = nu_w / rho_tilde_w, Eq. (107)
+  [PASS] Eq.(69)  sum gamma = eps  sum=1 eps=1 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=2.541e-01 ub_max=3.262e-01
+  [FAIL] rho_tilde > 0 (RT prices well defined)  min=0.000e+00
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=1000.000000  E[Pi]=nan
+  info: old (buggy) denominator would change E[Pi] by +nan ($/MWh), max per-scenario relative change nan%
+
+--- Remark 10: eps = 0 reduces to risk-neutral `zavala` ---
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:54: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:69: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+  [PASS] pi(eps=0) == pi_risk_neutral  |diff|=0.000e+00
+  [PASS] Pi(eps=0) == Pi_risk_neutral  max|diff|=3.553e-15
+  [PASS] gamma(eps=0) == 0  max|gamma|=0.000e+00
+
+SOME CHECKS FAILED

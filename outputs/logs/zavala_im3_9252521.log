@@ -1,0 +1,6 @@
+[2026-11-17 19:48:49] Job started — ID: 9252521, Node: node1840
+[2026-11-17 19:48:49] Loading modules...
+[2026-11-17 19:48:53] Conda env 'zavala-market' not found — creating from requirements.txt...
+[2026-11-17 19:52:59] Conda env created.
+[2026-11-17 19:53:00] Conda environment activated
+[2026-11-17 19:53:00] Preflight: Gurobi licence check

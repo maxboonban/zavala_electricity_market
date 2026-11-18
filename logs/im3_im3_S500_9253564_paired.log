@@ -1,0 +1,39 @@
+==============================================================================
+IM3 GO-WEST economic experiments
+==============================================================================
+  solver=GUROBI  S=300  eps=0.3  beta=0.95
+  delivery hour=18  season=summer  sampling=conditional  seed=2025
+
+  fleet: 6 solar + 6 wind + 6 thermal buses, 1 load (VOLL $1000/MWh)
+  thermal capacity 36,733 MW,  mean renewable 6,496 MW  (share 15.0%)
+  mean load 26,767 MW  (real WECC shape, level scaled by 0.2363 to a 15% reserve margin)
+  marginal costs $/MWh: solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, BIT (Bituminous Coal)=23.27, NG (Natural Gas)=22.46, NUC (Nuclear)=13.70, NG (Natural Gas)=21.22, NG (Natural Gas)=22.10, NUC (Nuclear)=15.39
+  NOTE 270 of 280 thermal heat rates were floored to physical minima (the dataset's gas heat rates are not physical)
+
+==============================================================================
+E5  Paired statistics (repairs the reporting in Tables 1 and 3)
+==============================================================================
+  Table 1 reports e.g. 2.5836 +/- 0.0064 against 2.5874 +/- 0.0064: the
+  difference is smaller than either error bar, so as printed the result
+  is not statistically supported. But the comparison is PAIRED -- same
+  instance, same scenarios, same draw -- so the paired interval is the
+  correct summary. We report both to show what changes.
+
+  tail loss CVaR_0.95[l] over 30 replications (lower is better)
+  method                          mean    unpaired +/-   paired diff    paired +/-    wins
+  ----------------------------------------------------------------------------------------
+  risk-neutral          -19,731,241.24      113,778.08            --            --      --
+  CVaR eps=0.1          -19,762,884.73      113,482.69    -31,643.48      4,764.87   30/30
+  CVaR eps=0.3          -19,957,863.16      114,123.41   -226,621.92      6,403.70   30/30
+  CVaR eps=0.5          -20,313,667.01       98,670.00   -582,425.77     20,532.33   30/30
+  CVaR eps=1.0          -20,369,988.86       98,598.10   -638,747.62     16,436.47   30/30
+
+  The 'unpaired' column is what Tables 1 and 3 report; the 'paired'
+  column is what the experimental design actually licenses.
+
+==============================================================================
+done in 4590.1s
+==============================================================================
+
+Results written to outputs/results/im3_im3_S500_9253564_paired.json
+Log written to logs/im3_im3_S500_9253564_paired.log

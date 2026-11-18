@@ -1,0 +1,35 @@
+==============================================================================
+IM3 GO-WEST economic experiments
+==============================================================================
+  solver=GUROBI  S=500  eps=0.3  beta=0.95
+  delivery hour=18  season=summer  sampling=conditional  seed=2025
+
+  fleet: 6 solar + 6 wind + 6 thermal buses, 1 load (VOLL $1000/MWh)
+  thermal capacity 36,733 MW,  mean renewable 6,510 MW  (share 15.1%)
+  mean load 26,818 MW  (real WECC shape, level scaled by 0.2363 to a 15% reserve margin)
+  marginal costs $/MWh: solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.50, solar=0.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, wind=1.51, BIT (Bituminous Coal)=23.27, NG (Natural Gas)=22.46, NUC (Nuclear)=13.70, NG (Natural Gas)=21.22, NG (Natural Gas)=22.10, NUC (Nuclear)=15.39
+  NOTE 270 of 280 thermal heat rates were floored to physical minima (the dataset's gas heat rates are not physical)
+
+==============================================================================
+E4  Out-of-sample validation
+==============================================================================
+  Clear on one scenario set, then evaluate the resulting day-ahead
+  commitment on a DISJOINT set drawn from the same conditional pool.
+  This separates 'CVaR genuinely reduces tail loss' from 'CVaR fits the
+  in-sample tail'. Differences are paired by replication.
+
+  held-out loss, risk-aware MINUS risk-neutral (30 replications, train S=400, test S=400):
+  negative = risk-aware is better out of sample
+    E[l]            (expected)             52,567.34 +/-   5,342.37   improved in 0/30 replications
+    CVaR_0.95[l]      (tail)             -219,601.62 +/-   2,743.52   improved in 30/30 replications
+    rho_RA[l]       (planner obj)         -29,083.35 +/-   3,817.43   improved in 29/30 replications
+
+  The tail column is the claim that matters: if CVaR clearing only fit
+  the in-sample tail, this would not be reliably negative.
+
+==============================================================================
+done in 2538.7s
+==============================================================================
+
+Results written to outputs/results/im3_im3_S500_9253564_oos.json
+Log written to logs/im3_im3_S500_9253564_oos.log

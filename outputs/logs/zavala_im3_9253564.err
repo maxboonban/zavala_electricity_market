@@ -1,0 +1,284 @@
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)

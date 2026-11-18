@@ -1,0 +1,63 @@
+Solver: GUROBI
+
+--- eps=0.1, beta=0.95, S=100, G=10, D=1 ---
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.1 eps=0.1 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=2.541e-02 ub_max=3.262e-02
+  [PASS] Eq.(67)  rho_tilde >= (1-eps)*rho  (gamma >= 0)  min slack = +0.000e+00
+  [PASS] rho_tilde carries mass everywhere (prices defined)  min=3.649e-03, support=100/100
+  [PASS] Eq.(107) p_w finite on every scenario  0 non-finite
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=217.654147  E_rhotilde[Pi]=217.317904
+  info: E_rho[Pi] = 119.242116
+  info: old (buggy) denominator would change E[Pi] by -8.141813 ($/MWh), max per-scenario relative change 10.000%
+
+--- eps=0.3, beta=0.95, S=100, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.3 eps=0.3 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=7.622e-02 ub_max=9.786e-02
+  [PASS] Eq.(67)  rho_tilde >= (1-eps)*rho  (gamma >= 0)  min slack = +0.000e+00
+  [PASS] rho_tilde carries mass everywhere (prices defined)  min=2.838e-03, support=100/100
+  [PASS] Eq.(107) p_w finite on every scenario  0 non-finite
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=413.913744  E_rhotilde[Pi]=413.466067
+  info: E_rho[Pi] = 119.237239
+  info: old (buggy) denominator would change E[Pi] by -21.031337 ($/MWh), max per-scenario relative change 30.000%
+
+--- eps=0.5, beta=0.95, S=100, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=0.5 eps=0.5 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=1.270e-01 ub_max=1.631e-01
+  [PASS] Eq.(67)  rho_tilde >= (1-eps)*rho  (gamma >= 0)  min slack = +0.000e+00
+  [PASS] rho_tilde carries mass everywhere (prices defined)  min=2.027e-03, support=100/100
+  [PASS] Eq.(107) p_w finite on every scenario  0 non-finite
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=602.670611  E_rhotilde[Pi]=602.672292
+  info: E_rho[Pi] = 115.246295
+  info: old (buggy) denominator would change E[Pi] by -31.760173 ($/MWh), max per-scenario relative change 50.000%
+
+--- eps=1.0, beta=0.95, S=100, G=10, D=1 ---
+  [PASS] Eq.(69)  sum gamma = eps  sum=1 eps=1 diff=+0.000e+00
+  [PASS] Eq.(67)  sum rho_tilde = 1  sum=1 diff=+0.000e+00
+  [PASS] Eq.(70)  0 <= gamma <= eps*rho/(1-beta)  min=-0.000e+00 max=2.541e-01 ub_max=3.262e-01
+  [PASS] Eq.(67)  rho_tilde >= (1-eps)*rho  (gamma >= 0)  min slack = +0.000e+00
+  [PASS] eps=1: tilted measure concentrates on the tail  support = 5/100 (expected ~(1-beta)S = 5)
+  [PASS] eps=1: p_w finite on the support  0 non-finite on support
+  note: p_w is undefined off the support by construction (0/0); 95 scenarios carry no price. Eq. (107) presumes eps < 1. See T11.
+  info: 5/100 scenarios carry tail mass (gamma_w > 0); pi=1000.000000  E_rhotilde[Pi]=999.826539
+
+--- Remark 10: eps = 0 reduces to risk-neutral `zavala` ---
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:59: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:74: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+  [PASS] pi(eps=0) == pi_risk_neutral  |diff|=0.000e+00
+  [PASS] Pi(eps=0) == Pi_risk_neutral  max|diff|=3.553e-15
+  [PASS] gamma(eps=0) == 0  max|gamma|=0.000e+00
+
+ALL CHECKS PASSED
