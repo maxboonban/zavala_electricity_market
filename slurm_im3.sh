@@ -112,8 +112,11 @@ done
 
 log "Job completed successfully."
 
-# --- 5. Push all results back to GitHub so the local machine can pull them ---
-log "Pushing results to GitHub (branch hrithik_final)"
+# --- 5. Commit the results ---------------------------------------------------
+# Compute nodes have no outbound network, so `git push` CANNOT work from here.
+# `git commit` is purely local and does work, so commit here and leave the one
+# networked step to ./push_results.sh on a login node.
+log "Committing results (push must happen on a login node)"
 git config user.email "hrithik_nambiar@brown.edu"
 git config user.name "Hrithik Nambiar"
 git add outputs/results/ outputs/logs/ logs/
@@ -124,6 +127,11 @@ Includes: theory verification (T1-T8), CVaR pricing invariants,
 D1-D5 decentralisation suite (S=500), E1-E6 IM3 GO-WEST experiments,
 and seasonal/hour robustness sweeps." \
   || log "[WARN] git commit produced no new changes (results may already be committed)"
-git push origin hrithik_final \
-  && log "Results pushed to hrithik_final." \
-  || log "[WARN] git push failed — pull the results manually from OSCAR scratch."
+
+log ""
+log "  ############################################################"
+log "  #  RESULTS ARE COMMITTED BUT NOT PUSHED.                   #"
+log "  #  From a LOGIN node, run:                                 #"
+log "  #      cd ${WORKDIR}"
+log "  #      ./push_results.sh                                   #"
+log "  ############################################################"

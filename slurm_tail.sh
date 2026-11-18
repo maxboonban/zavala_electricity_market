@@ -128,19 +128,25 @@ python -u plot_tail_figures.py \
   --outdir figures/tail_rampext
 
 # ---------------------------------------------------------------------------
-# 5. Push results back
+# 5. Commit results. Compute nodes have no outbound network, so `git push`
+#    CANNOT work here; ./push_results.sh does that from a login node.
 # ---------------------------------------------------------------------------
-log "Pushing results to GitHub (hrithik_final)"
+log "Committing results (push must happen on a login node)"
 git config user.email "hrithik_nambiar@brown.edu"
 git config user.name "Hrithik Nambiar"
 git add outputs/results/ outputs/logs/ logs/ figures/
 git commit -m "OSCAR tail-welfare results: job ${SLURM_JOB_ID} on ${SLURMD_NODENAME}
 
-W0-W6 at S=${S}, ${SEEDS} paired seeds, eps=${EPS}, beta=${BETA}; plus the
+W0-W7 at S=${S}, ${SEEDS} paired seeds, eps=${EPS}, beta=${BETA}; plus the
 start-up-constraint extension and a beta=0.99 robustness run. Figures included." \
   || log "[WARN] nothing new to commit"
-git push origin hrithik_final \
-  && log "Pushed." \
-  || log "[WARN] push failed; pull results manually from ${WORKDIR}"
+
+log ""
+log "  ############################################################"
+log "  #  RESULTS ARE COMMITTED BUT NOT PUSHED.                   #"
+log "  #  From a LOGIN node, run:                                 #"
+log "  #      cd ${WORKDIR}"
+log "  #      ./push_results.sh                                   #"
+log "  ############################################################"
 
 log "Done."

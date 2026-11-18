@@ -134,11 +134,14 @@ if git log origin/hrithik_final --oneline -20 2>/dev/null | grep -q "job ${JOBID
 elif [[ "$LOCAL" != "$REMOTE" ]]; then
     warn "local HEAD != origin/hrithik_final; results may be committed but unpushed"
     warn "  -> git push origin hrithik_final"
+elif git log --oneline -20 2>/dev/null | grep -q "job ${JOBID}"; then
+    warn "job ${JOBID} is committed locally but NOT on the remote."
+    warn "  Compute nodes have no outbound network, so the job could not push."
+    warn "  From a LOGIN node:   cd $PWD && ./push_results.sh"
 else
-    fail "no commit for job ${JOBID} on the remote"
-    warn "  compute nodes may have no outbound network. From a LOGIN node:"
-    warn "    cd $PWD && git add outputs/ logs/ figures/ && \\"
-    warn "    git commit -m 'OSCAR results: job ${JOBID}' && git push origin hrithik_final"
+    fail "no commit for job ${JOBID}, locally or on the remote"
+    warn "  From a LOGIN node:   cd $PWD && ./push_results.sh"
+    warn "  (it sweeps up uncommitted results before pushing)"
 fi
 
 echo
