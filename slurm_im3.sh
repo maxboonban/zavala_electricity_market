@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-WORKDIR=/users/$USER/scratch/zavala_electricity_market
+WORKDIR="$SLURM_SUBMIT_DIR"
 LOG=outputs/logs/${SLURM_JOB_NAME}_${SLURM_JOB_ID}.log
 
 cd "$WORKDIR"
