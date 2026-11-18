@@ -8,6 +8,11 @@ import gurobipy as gp
 # Enable 64-bit precision for better numerical stability
 jax.config.update("jax_enable_x64", True)
 
+# A scenario counts as priced (Eq. 107) when the CVaR-tilted measure gives it at
+# least this fraction of total mass. rho_tilde sums to 1, so this is absolute in
+# practice. See the support computation in `zavala_cvar` for why it is relative.
+PRICE_SUPPORT_REL_TOL = 1e-9
+
 def beta_scaled(rng, shape, a, b, lo, hi):
     """Generate beta-distributed random numbers scaled to [lo, hi] range."""
     z = random.beta(rng, a, b, shape=shape)
@@ -945,7 +950,19 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, beta=0.95, lambda_cvar=
         float(np.asarray(real_time_balance[p].dual_value).ravel()[0])
         for p in range(len(probs))
     ], dtype=float)
-    Pi = jnp.array(nu / rho_tilde)                       # p_w = nu_w / rho_tilde_w, Eq. (107)
+    # Eq. (107) is well posed only where the tilted measure actually charges the
+    # scenario. At eps = 1 it collapses onto the tail (rho_tilde_w = gamma_w,
+    # which vanishes off the tail); nu_w vanishes with it, so p_w is a genuine
+    # 0/0 there -- no weight, hence no price. See theory note T11.
+    #
+    # The threshold is RELATIVE because the vanishing is only exact in theory:
+    # barrier returns rho_tilde_w as 0 or as ~1e-14 depending on BarConvTol and
+    # the instance, and dividing dual noise by 1e-14 turns it into a six-figure
+    # "price". rho_tilde sums to 1, so this is a fixed fraction of total mass.
+    support = rho_tilde > PRICE_SUPPORT_REL_TOL * rho_tilde.sum()
+    Pi_np = np.full_like(rho_tilde, np.nan)
+    Pi_np[support] = nu[support] / rho_tilde[support]
+    Pi = jnp.array(Pi_np)                                # p_w = nu_w / rho_tilde_w, Eq. (107)
 
     if check_invariants and np.all(np.isfinite(gamma)):
         # Eq. (69): sum_w gamma_w = eps
@@ -963,8 +980,14 @@ def zavala_cvar(probs, mc_g_i, mv_d_j, g_i_bar, d_j_bar, beta=0.95, lambda_cvar=
         n_hi = int((gamma > gamma_ub + tol).sum())
         if n_lo or n_hi:
             print(f"[CVaR-INVARIANT][FAIL] gamma_w outside [0, eps*rho_w/(1-beta)]: {n_lo} below, {n_hi} above (paper Eq. 70)")
-        if np.any(rho_tilde <= 0):
-            print(f"[CVaR-INVARIANT][FAIL] rho_tilde_w has {int((rho_tilde <= 0).sum())} non-positive entries; RT prices undefined there")
+        # For eps < 1 every scenario keeps weight (1 - eps) * rho_w > 0, so a
+        # non-positive rho_tilde_w is a real failure. At eps = 1 the measure is
+        # supported on the tail by construction and zeros off it are expected.
+        if eps < 1.0 - tol:
+            if np.any(rho_tilde <= 0):
+                print(f"[CVaR-INVARIANT][FAIL] rho_tilde_w has {int((rho_tilde <= 0).sum())} non-positive entries; RT prices undefined there")
+        elif not np.any(rho_tilde > 0):
+            print("[CVaR-INVARIANT][FAIL] at eps = 1 the tilted measure has empty support")
 
     cvar_link_dual = jnp.array(gamma)
 

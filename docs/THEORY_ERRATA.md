@@ -22,6 +22,7 @@ Status at 2026-11-05: **ALL THEORY CHECKS PASSED** (CLARABEL, S=50, ε=0.3).
 | T8 | Remark 11 | *deferred in paper* | **verified correct** |
 | T9 | Eq. (96)–(103) | **Gap** | agent's program is ill-posed as written |
 | T10 | Eq. (63)–(65) | **Gap** | agent's optimum need not exist |
+| T11 | Eq. (107) | **Gap** | needs an `ε < 1` hypothesis |
 
 ---
 
@@ -185,6 +186,50 @@ impose an explicit upper bound on day-ahead quantities.
 
 *(The repo's planner also leaves day-ahead variables free where Eq. (12)/(18)/(65)
 impose `x, y ≥ 0`. Solutions have satisfied it so far; `build_planner` warns.)*
+
+---
+
+## T11 — Eq. (107) presumes `ε < 1`: at `ε = 1` real-time prices do not exist off the tail
+
+**Printed:** Eq. (107) identifies the real-time price as `p_ω = ν_ω / ρ̃_ω` with no
+restriction on `ε`.
+
+**The gap:** by Eq. (67), `ρ̃_ω = (1 − ε)ρ_ω + γ_ω`. For `ε < 1` the first term is
+strictly positive and every scenario is priced. At `ε = 1` the expected-value term
+vanishes identically, leaving `ρ̃_ω = γ_ω`, which is **zero for every scenario
+outside the tail** — and `ν_ω` vanishes with it, since the objective charges those
+scenarios nothing. So `p_ω` is a genuine `0/0` on `(1 − β)`-complement of the
+support, i.e. on ~95% of scenarios at `β = 0.95`.
+
+This is not a defect in the pricing formula. It is the correct behaviour of a
+*pure* CVaR objective, which is a coherent risk measure supported on the tail
+alone: a scenario the planner assigns no weight has no shadow price. But it does
+mean Eq. (107) carries an unstated hypothesis.
+
+**Measured** (`s_real10_mix`, S = 100, β = 0.95, Gurobi):
+
+| ε | min `ρ̃_ω` | scenarios priced | `p₀` |
+|---|---|---|---|
+| 0.1 | 3.65e−03 | 100/100 | 217.65 |
+| 0.3 | 2.84e−03 | 100/100 | 413.91 |
+| 0.5 | 2.03e−03 | 100/100 | 602.67 |
+| 1.0 | **0.00** | **5/100** | 1000.00 |
+
+At `ε = 1` exactly the 5 tail scenarios (= `(1 − β)S`) retain positive weight.
+Note `p₀ → 1000 = ` VOLL: with no expected-value term the planner prices the
+day-ahead purely off the scarcity tail.
+
+**Fix.** State `ε ∈ (0, 1)` as a standing hypothesis for Eq. (107). The lower
+bound is T7's `ε > 0` caveat (at `ε = 0` the CVaR block is absent); the upper
+bound is this one. `ε ∈ (0,1)` is exactly the range in which `ρ̃` is equivalent
+to `ρ` as a measure — mutually absolutely continuous — which is what pricing
+every scenario requires.
+
+**In code.** `zavala_cvar` now returns `NaN` for unpriced scenarios rather than
+dividing by zero, and reports expectations under `ρ̃` restricted to its support.
+The support test is *relative* (`PRICE_SUPPORT_REL_TOL`): barrier returns `ρ̃_ω`
+as either `0` or `~1e-14` depending on tolerances, and dividing dual noise by
+`1e-14` would manufacture a six-figure price.
 
 ---
 

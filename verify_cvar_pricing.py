@@ -17,7 +17,9 @@ import argparse
 import numpy as np
 import cvxpy as cp
 
-from zavala_funcs import zavala, zavala_cvar, generate_instance
+from zavala_funcs import (
+    zavala, zavala_cvar, generate_instance, PRICE_SUPPORT_REL_TOL,
+)
 from jax import random
 
 
@@ -48,30 +50,68 @@ def run_case(probs, mc, mv, gbar, dbar, eps, beta, solver):
     results.append(check("Eq.(70)  0 <= gamma <= eps*rho/(1-beta)",
                          bool((gamma >= -tol).all() and (gamma <= ub + tol).all()),
                          f"min={gamma.min():+.3e} max={gamma.max():.3e} ub_max={ub.max():.3e}"))
-    results.append(check("rho_tilde > 0 (RT prices well defined)",
-                         bool((rho_tilde > 0).all()),
-                         f"min={rho_tilde.min():.3e}"))
+
+    # Eq. (67) with gamma_w >= 0 gives the exact lower bound rho_tilde_w >=
+    # (1 - eps) rho_w. This is the theory statement and it is solver-independent,
+    # unlike testing rho_tilde_w > 0 numerically.
+    results.append(check("Eq.(67)  rho_tilde >= (1-eps)*rho  (gamma >= 0)",
+                         bool((rho_tilde >= (1.0 - eps) * probs - tol).all()),
+                         f"min slack = {float((rho_tilde - (1.0 - eps) * probs).min()):+.3e}"))
+
+    # Eq. (107) prices scenario w only where the tilted measure charges it.
+    # For eps < 1 that is every scenario, since (1 - eps) rho_w > 0. At eps = 1
+    # the expected-value term vanishes, rho_tilde_w = gamma_w, and the measure is
+    # supported on the tail alone: off the tail nu_w and rho_tilde_w both vanish
+    # and p_w is 0/0. That is a property of pure CVaR, not a defect, but it means
+    # Eq. (107) carries an implicit eps < 1 hypothesis (T11).
+    #
+    # Support is relative: barrier may return 0 or ~1e-14 off the tail.
+    support = rho_tilde > PRICE_SUPPORT_REL_TOL * rho_tilde.sum()
+    Pi_np = np.asarray(Pi, dtype=float)
+    if eps < 1.0 - tol:
+        results.append(check("rho_tilde carries mass everywhere (prices defined)",
+                             bool(support.all()),
+                             f"min={rho_tilde.min():.3e}, support={int(support.sum())}/{len(probs)}"))
+        results.append(check("Eq.(107) p_w finite on every scenario",
+                             bool(np.isfinite(Pi_np).all()),
+                             f"{int((~np.isfinite(Pi_np)).sum())} non-finite"))
+    else:
+        exp_support = int(round((1.0 - beta) * len(probs)))
+        results.append(check("eps=1: tilted measure concentrates on the tail",
+                             bool(support.any() and support.sum() <= max(2 * exp_support, exp_support + 2)),
+                             f"support = {int(support.sum())}/{len(probs)} "
+                             f"(expected ~(1-beta)S = {exp_support})"))
+        results.append(check("eps=1: p_w finite on the support",
+                             bool(np.isfinite(Pi_np[support]).all()),
+                             f"{int((~np.isfinite(Pi_np[support])).sum())} non-finite on support"))
+        print(f"  note: p_w is undefined off the support by construction (0/0); "
+              f"{int((~support).sum())} scenarios carry no price. "
+              f"Eq. (107) presumes eps < 1. See T11.")
 
     n_tail = int((gamma > tol).sum())
+    # Price expectations are taken under the tilted measure, restricted to its
+    # support, so that the eps = 1 case reports a number rather than NaN.
+    E_Pi_tilde = float(rho_tilde[support] @ Pi_np[support])
     print(f"  info: {n_tail}/{len(probs)} scenarios carry tail mass (gamma_w > 0); "
-          f"pi={float(pi):.6f}  E[Pi]={float(probs @ np.asarray(Pi)):.6f}")
+          f"pi={float(pi):.6f}  E_rhotilde[Pi]={E_Pi_tilde:.6f}")
+    if support.all():
+        print(f"  info: E_rho[Pi] = {float(probs @ Pi_np):.6f}")
 
     # Size of the correction that was wrong before: old denominator was rho + gamma
-    old_Pi = np.asarray([None])
-    with np.errstate(divide="ignore", invalid="ignore"):
+    if support.all():
         old_den = probs + gamma
-        old_Pi = np.where(old_den > 0, np.asarray(Pi) * rho_tilde / np.where(old_den > 0, old_den, 1.0), np.nan)
-    rel = np.abs(np.asarray(Pi) - old_Pi) / np.maximum(np.abs(np.asarray(Pi)), 1e-12)
-    print(f"  info: old (buggy) denominator would change E[Pi] by "
-          f"{float(probs @ old_Pi) - float(probs @ np.asarray(Pi)):+.6f} "
-          f"($/MWh), max per-scenario relative change {100*float(rel.max()):.3f}%")
+        old_Pi = np.where(old_den > 0, Pi_np * rho_tilde / np.where(old_den > 0, old_den, 1.0), np.nan)
+        rel = np.abs(Pi_np - old_Pi) / np.maximum(np.abs(Pi_np), 1e-12)
+        print(f"  info: old (buggy) denominator would change E[Pi] by "
+              f"{float(probs @ old_Pi) - float(probs @ Pi_np):+.6f} "
+              f"($/MWh), max per-scenario relative change {100*float(rel.max()):.3f}%")
     return all(results), gamma, Pi, pi
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--solver", default="CLARABEL",
-                    help="cvxpy solver name (use GUROBI on the cluster)")
+    ap.add_argument("--solver", default="GUROBI",
+                    help="cvxpy solver name; GUROBI is what every reported result uses")
     ap.add_argument("--scenarios", type=int, default=40)
     args = ap.parse_args()
     solver = getattr(cp, args.solver)

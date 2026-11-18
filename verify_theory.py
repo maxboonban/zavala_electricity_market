@@ -328,7 +328,7 @@ def test_T8(P, args, rep):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--solver", default="CLARABEL")
+    ap.add_argument("--solver", default="GUROBI")
     ap.add_argument("--scenarios", type=int, default=60)
     ap.add_argument("--num-g", type=int, default=10)
     ap.add_argument("--num-d", type=int, default=1)
