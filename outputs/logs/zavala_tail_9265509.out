@@ -1,0 +1,31 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 9265509
+##  Job Name : zavala_tail
+##  Nodelist : node2344
+##      CPUs : 
+##  Mem/Node : 49152 MB
+## Directory : /oscar/home/hnambia1/Desktop/zavala_electricity_market
+##   Job Started : Wed Nov 18 12:39:59 AM EST 2026
+###############################################################################
+[2026-11-18 00:39:59] Job 9265509 on node2344, workdir /oscar/home/hnambia1/Desktop/zavala_electricity_market
+[2026-11-18 00:40:06] Preflight: Gurobi licence
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+[preflight] Gurobi OK (v(14, 0, 0)), obj = 1.0
+[2026-11-18 00:40:07] W0-W7 headline (S=500, 30 seeds, eps=0.3, beta=0.95)
+==============================================================================
+Tail-welfare experiments for risk-aware market clearing
+==============================================================================
+commit aab316a44d57530fda9b5cb0f395dc07d2825813 (hrithik_final, DIRTY)  on node2344.oscar.ccv.brown.edu
+solver=GUROBI  S=500  seeds=30  eps=0.3  beta=0.95
+base: {'ramp_premium': 1.0, 'backdown_discount': 0.4, 'adequacy': 1.12, 'voll': 1000.0, 'renewable_penetration': 0.45, 'p_stress': 0.12, 'ramp_limit_frac': None}
+
+Preflight: vectorised model vs zavala_cvar
+Set parameter WLSAccessID
+Set parameter WLSSecret
+Set parameter LicenseID to value 2885856
+Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
+  [FAIL] model disagrees with the reference: AssertionError: vectorised model disagrees with reference on the OBJECTIVE: d_rho_RA = 1.522e-06 > 1e-06. This is a real disagreement, not degeneracy. Full: {'d_rho_RA': 1.5219196515030618e-06, 'd_sum_gamma': np.float64(0.0), 'd_expected_loss': 2.3365993164173732e-06, 'd_cvar': 1.0525130576691815e-05, 'd_p0': 3.0570551067714397e-05}
+[2026-11-18 00:40:24] Committing results (exit status 1; push happens on a login node)

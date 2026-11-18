@@ -1,0 +1,4 @@
+[2026-11-18 00:39:59] Job 9265509 on node2344, workdir /oscar/home/hnambia1/Desktop/zavala_electricity_market
+[2026-11-18 00:40:06] Preflight: Gurobi licence
+[2026-11-18 00:40:07] W0-W7 headline (S=500, 30 seeds, eps=0.3, beta=0.95)
+[2026-11-18 00:40:24] Committing results (exit status 1; push happens on a login node)

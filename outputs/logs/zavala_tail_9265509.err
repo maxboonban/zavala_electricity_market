@@ -1,0 +1,18 @@
+/users/hnambia1/.conda/envs/zavala-market/lib/python3.11/site-packages/cvxpy/utilities/bounds.py:789: RuntimeWarning: invalid value encountered in matmul
+  new_lb = a_pos @ lb2 + a_neg @ ub2
+/users/hnambia1/.conda/envs/zavala-market/lib/python3.11/site-packages/cvxpy/utilities/bounds.py:790: RuntimeWarning: invalid value encountered in matmul
+  new_ub = a_pos @ ub2 + a_neg @ lb2
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:899: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob = cp.Problem(objective, constraints)
+/oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
+  prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+Traceback (most recent call last):
+  File "/oscar/home/hnambia1/Desktop/zavala_electricity_market/run_tail_experiments.py", line 245, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/oscar/home/hnambia1/Desktop/zavala_electricity_market/run_tail_experiments.py", line 174, in main
+    d = assert_matches_reference(inst, eps=args.eps, beta=args.beta,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/home/hnambia1/Desktop/zavala_electricity_market/tail_model.py", line 391, in assert_matches_reference
+    raise AssertionError(
+AssertionError: vectorised model disagrees with reference on the OBJECTIVE: d_rho_RA = 1.522e-06 > 1e-06. This is a real disagreement, not degeneracy. Full: {'d_rho_RA': 1.5219196515030618e-06, 'd_sum_gamma': np.float64(0.0), 'd_expected_loss': 2.3365993164173732e-06, 'd_cvar': 1.0525130576691815e-05, 'd_p0': 3.0570551067714397e-05}
