@@ -1,0 +1,441 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Risk-Aware Clearing: First Gurobi Run</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column of running prose, with full-bleed figure plates
+   and data tables breaking out to a wider measure. Academic memo, not a deck. */
+:root {
+  --bg:        #fbfbfc;
+  --surface:   #ffffff;
+  --fg:        #16181d;
+  --fg-soft:   #4a5260;
+  --fg-mute:   #717b8c;
+  --rule:      #dfe3ea;
+  --accent:    #0063a0;
+  --accent-bg: #e8f1f8;
+  --flag:      #a84700;
+  --flag-bg:   #fbeee5;
+  --good:      #056b51;
+
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans:  "Inter", system-ui, -apple-system, sans-serif;
+  --mono:  "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #101217;
+    --surface:   #181b22;
+    --fg:        #e8eaef;
+    --fg-soft:   #b3bac7;
+    --fg-mute:   #8a93a3;
+    --rule:      #2b303a;
+    --accent:    #6ab5e8;
+    --accent-bg: #14242f;
+    --flag:      #f0945a;
+    --flag-bg:   #2a1c13;
+    --good:      #4fc3a1;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:        #101217;
+  --surface:   #181b22;
+  --fg:        #e8eaef;
+  --fg-soft:   #b3bac7;
+  --fg-mute:   #8a93a3;
+  --rule:      #2b303a;
+  --accent:    #6ab5e8;
+  --accent-bg: #14242f;
+  --flag:      #f0945a;
+  --flag-bg:   #2a1c13;
+  --good:      #4fc3a1;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.62;
+  margin: 0;
+}
+.wrap {
+  max-width: 54rem;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 2.5rem 4rem;
+}
+
+h1, h2, h3 { font-family: var(--serif); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.05rem; line-height: 1.16; font-weight: 700; letter-spacing: -0.012em; }
+h2 { font-size: 1.42rem; line-height: 1.25; font-weight: 600; margin-top: 3.2rem; }
+h3 { font-size: 1.08rem; line-height: 1.3; font-weight: 600; margin-top: 2rem; }
+p { margin: 0.85rem 0; color: var(--fg-soft); }
+p strong, li strong { color: var(--fg); font-weight: 600; }
+a { color: var(--accent); }
+
+.eyebrow {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 0.35rem;
+}
+.lede { font-size: 1.07rem; color: var(--fg-soft); }
+
+header.masthead { border-bottom: 2px solid var(--fg); padding-bottom: 1.4rem; }
+.meta {
+  display: flex; flex-wrap: wrap; gap: 0.35rem 1.4rem;
+  font-family: var(--mono); font-size: 0.76rem; color: var(--fg-mute);
+  margin-top: 1rem;
+}
+.meta span { white-space: nowrap; }
+
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+code { background: var(--accent-bg); padding: 0.1em 0.34em; border-radius: 3px; color: var(--fg); }
+pre {
+  font-family: var(--mono); font-size: 0.78rem; line-height: 1.65;
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;
+  padding: 0.9rem 1rem; overflow-x: auto; color: var(--fg-soft); margin: 1rem 0;
+}
+pre code { background: none; padding: 0; }
+
+/* Verdict band */
+.verdict {
+  background: var(--accent-bg); border-left: 3px solid var(--accent);
+  padding: 1rem 1.15rem; margin: 1.6rem 0; border-radius: 0 5px 5px 0;
+}
+.verdict p { margin: 0.3rem 0; color: var(--fg); }
+.verdict p:first-child { margin-top: 0; }
+.verdict p:last-child { margin-bottom: 0; }
+
+.flag {
+  background: var(--flag-bg); border-left: 3px solid var(--flag);
+  padding: 1rem 1.15rem; margin: 1.6rem 0; border-radius: 0 5px 5px 0;
+}
+.flag p { margin: 0.3rem 0; }
+.flag p:first-child { margin-top: 0; }
+.flag p:last-child { margin-bottom: 0; }
+.flag .eyebrow { color: var(--flag); }
+
+/* Tables */
+.tscroll { overflow-x: auto; margin: 1.2rem 0; }
+table { border-collapse: collapse; width: 100%; font-size: 0.83rem; min-width: 30rem; }
+th, td { text-align: left; padding: 0.5rem 0.75rem 0.5rem 0; border-bottom: 1px solid var(--rule); }
+th {
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--fg-mute);
+  border-bottom: 1px solid var(--fg-mute);
+}
+td { color: var(--fg-soft); }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; padding-right: 1rem; }
+td.k { color: var(--fg); font-weight: 500; }
+.ok  { color: var(--good); font-weight: 600; }
+.bad { color: var(--flag); font-weight: 600; }
+
+/* Figure plate: the PNGs have white grounds, so they sit on an explicit white
+   plate in both themes rather than glowing against a dark page. */
+figure { margin: 1.8rem 0; }
+.plate {
+  background: #ffffff; border: 1px solid var(--rule); border-radius: 6px;
+  padding: 0.9rem; overflow-x: auto;
+}
+.plate img { display: block; width: 100%; max-width: 100%; height: auto; }
+figcaption {
+  font-family: var(--serif); font-size: 0.85rem; line-height: 1.5;
+  color: var(--fg-mute); margin-top: 0.6rem;
+}
+figcaption b { color: var(--fg-soft); font-weight: 600; }
+
+ul, ol { color: var(--fg-soft); padding-left: 1.2rem; margin: 0.85rem 0; }
+li { margin: 0.4rem 0; }
+
+.cols { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); margin: 1.3rem 0; }
+.stat { border-top: 2px solid var(--accent); padding-top: 0.6rem; min-width: 0; }
+.stat .v {
+  font-family: var(--mono); font-size: 1.32rem; font-weight: 600;
+  color: var(--fg); font-variant-numeric: tabular-nums; line-height: 1.2;
+}
+.stat .l { font-size: 0.78rem; color: var(--fg-mute); margin-top: 0.15rem; }
+
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2.6rem 0; }
+footer { margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--rule);
+         font-size: 0.8rem; color: var(--fg-mute); }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">Experimental status &middot; 18 November 2026</div>
+  <h1>First full-scale Gurobi run of the risk-aware clearing experiments</h1>
+  <p class="lede">All verification suites pass, the decentralisation construction is confirmed
+  numerically for the first time, and the tail result survives out of sample in 30 of 30
+  replications. Two reporting problems in the current draft now have measured fixes.</p>
+  <div class="meta">
+    <span>OSCAR job 9253564</span>
+    <span>node2411 &middot; 2 h 09 m</span>
+    <span>commit 35593dd</span>
+    <span>Gurobi 12 &middot; IM3 GO WEST</span>
+  </div>
+</header>
+
+<div class="verdict">
+  <div class="eyebrow">Three things worth saying out loud</div>
+  <p><strong>1.</strong> Sections 6&ndash;8 of the paper &mdash; every theorem &mdash; currently have
+  <em>no</em> experimental support. They now do: all nine equilibrium identities hold at solver
+  tolerance.</p>
+  <p><strong>2.</strong> Tables 1 and 3 report error bars that are larger than the effects they
+  surround. The comparison is paired; reported as paired, every effect is significant and wins
+  30/30.</p>
+  <p><strong>3.</strong> The claim that value grows with renewable share did <em>not</em>
+  reproduce. What it actually grows with is supply tail-heaviness &mdash; a different and better
+  claim, and one we can support.</p>
+</div>
+
+<h2>Where everything is</h2>
+
+<p>All results are on <code>hrithik_final</code>. Nothing needs to be regenerated to be read.</p>
+
+<pre><code>outputs/results/   decentralized_dec_S500_9253564.json     D1-D5
+                   im3_im3_S500_9253564_main.json          E1, E2, E3, E6
+                   im3_im3_S500_9253564_oos.json           E4
+                   im3_im3_S500_9253564_paired.json        E5
+                   im3_im3_S500_9253564_{winter,summer}_h{8,18}.json
+logs/              per-experiment human-readable narration
+figures/im3/       six figures, PDF + PNG, IEEE two-column
+docs/EXPERIMENT_LOG.md    full write-up, newest entry first</code></pre>
+
+<p>To confirm the run completed rather than merely stopped:
+<code>./check_oscar_run.sh 9253564</code>. It checks the SLURM exit code, the end-of-recipe
+marker, the per-stage artefact inventory, and parses every output JSON &mdash; a killed job
+leaves truncated files that <code>ls</code> reports as present. It returns 12/12.</p>
+
+<h2>What each experiment supports in the paper</h2>
+
+<div class="tscroll">
+<table>
+  <thead><tr>
+    <th>Experiment</th><th>Scale</th><th>Supports</th><th>Status in draft</th>
+  </tr></thead>
+  <tbody>
+    <tr><td class="k">Theory suite T1&ndash;T8</td><td class="num">S=200, 3&times;&epsilon;</td><td>&sect;8.1.1&ndash;8.1.2, sign conventions</td><td class="bad">unsupported</td></tr>
+    <tr><td class="k">CVaR pricing</td><td class="num">S=100</td><td>Eq. (67), (69), (70), (107)</td><td class="bad">unsupported</td></tr>
+    <tr><td class="k">D1&ndash;D5</td><td class="num">S=500</td><td>Thm 6&ndash;9; Eq. (95), (110)&ndash;(113), (121)</td><td class="bad">unsupported</td></tr>
+    <tr><td class="k">E1 &middot; insurance value</td><td class="num">S=500</td><td>&sect;9.2 headline</td><td>replaces Table 1</td></tr>
+    <tr><td class="k">E2 &middot; risk incidence</td><td class="num">S=500</td><td>Remarks 8, 9</td><td class="bad">unsupported</td></tr>
+    <tr><td class="k">E3 &middot; decarbonisation</td><td class="num">S=500, 5 levels</td><td>App. C substitution story</td><td>Table 4 has n=10, no bars</td></tr>
+    <tr><td class="k">E4 &middot; out of sample</td><td class="num">400/400, 30 reps</td><td>&sect;9.2 validity</td><td class="bad">never tested</td></tr>
+    <tr><td class="k">E5 &middot; paired stats</td><td class="num">S=300, 30 reps</td><td>App. B Table 3</td><td>bars &gt; effects</td></tr>
+    <tr><td class="k">E6 &middot; bid-price slope</td><td class="num">S=500, 5 levels</td><td>Eq. (3) &alpha;<sup>&plusmn;</sup></td><td class="bad">never reported</td></tr>
+    <tr><td class="k">Seasonal</td><td class="num">S=500, 4 configs</td><td>robustness</td><td class="bad">never tested</td></tr>
+  </tbody>
+</table>
+</div>
+
+<hr>
+
+<h2>1. The reporting fix for Tables 1 and 3</h2>
+<div class="eyebrow">Appendix B, Table 3 &middot; same &epsilon; grid, same &beta;</div>
+
+<p>Table 3 reports tail welfare as <span class="mono">2.58362 &plusmn; 0.00643</span> against
+<span class="mono">2.58487 &plusmn; 0.00611</span>. The difference is a fifth of either bar, so as
+printed the table supports no claim of separation. But the methods are run on the
+<em>same</em> instance, the same scenarios and the same draw &mdash; the comparison is paired,
+and the paired interval is the correct summary.</p>
+
+<figure>
+  <div class="plate"><img src="fig1_paired_vs_unpaired.png"
+    alt="Horizontal interval plot. For each of four epsilon levels, a wide pale band shows the unpaired error bar and a narrow blue interval shows the paired difference. At epsilon = 0.1 the unpaired band crosses zero; the paired interval does not."></div>
+  <figcaption><b>Figure 1.</b> At &epsilon;&nbsp;=&nbsp;0.1 the unpaired band straddles zero while
+  the paired interval sits clear of it. Same data, opposite conclusion. The unpaired bar is about
+  18&times; the effect; the paired bar is about 0.15&times; it.</figcaption>
+</figure>
+
+<div class="cols">
+  <div class="stat"><div class="v">30/30</div><div class="l">replications won, at every &epsilon;</div></div>
+  <div class="stat"><div class="v">&minus;226,622</div><div class="l">paired &Delta;CVaR at &epsilon;=0.3 ($/h)</div></div>
+  <div class="stat"><div class="v">&plusmn;6,404</div><div class="l">paired 95% CI</div></div>
+</div>
+
+<p><strong>What to change:</strong> re-report Tables 1 and 3 as paired differences, state the
+replication count, state |&Omega;|, and state what the &plusmn; means. The draft currently defines
+none of these &mdash; there is no mention of standard error, confidence interval, seeds or common
+random numbers anywhere in the document.</p>
+
+<h2>2. The tail result is real, not an in-sample artefact</h2>
+<div class="eyebrow">New &middot; &sect;9.2 needs this to make its central claim</div>
+
+<p>The obvious referee objection to any CVaR result is that CVaR fits the tail it was shown. So
+clear on one scenario set and evaluate the resulting day-ahead commitment on a disjoint set drawn
+from the same conditional pool.</p>
+
+<figure>
+  <div class="plate"><img src="fig2_out_of_sample.png"
+    alt="Horizontal bar chart of held-out loss differences. Tail CVaR improves by 219,602 dollars per hour winning 30 of 30; planner objective improves by 29,083 winning 29 of 30; expected loss worsens by 52,567 winning 0 of 30."></div>
+  <figcaption><b>Figure 2.</b> Held-out performance over 30 replications, train S=400, test S=400.
+  The tail improves in every replication. Expected loss worsens in every replication &mdash; that
+  is the trade the theory predicts, not a failure.</figcaption>
+</figure>
+
+<p>This is the single most useful new number for the paper: <strong>30/30 on held-out
+scenarios</strong> is what distinguishes "CVaR genuinely reduces tail loss" from "CVaR fits the
+in-sample tail", and the draft has never tested it.</p>
+
+<h2>3. A parameter-free way to quote the headline</h2>
+<div class="eyebrow">Eq. (3) &middot; the &alpha;<sup>+</sup>/&alpha;<sup>&minus;</sup> deviation bid prices</div>
+
+<p>The planner charges &alpha;<sup>&plusmn;</sup> for deviating from the day-ahead schedule. In the
+code these were hard-coded as <span class="mono">mc/10</span> and <span class="mono">VOLL/10</span>
+with the comment "just a heuristic". They are not harmless: the value of risk-aware clearing is
+almost exactly linear in them, so any single headline $/MWh figure is a restatement of that
+constant.</p>
+
+<figure>
+  <div class="plate"><img src="fig3_delta_linearity.png"
+    alt="Scatter plot of insurance market value in dollars per MWh against deviation bid price scale, with five points lying exactly on a straight line through the origin of slope 12.225."></div>
+  <figcaption><b>Figure 3.</b> Five points across a 20&times; sweep, all on one line through the
+  origin. The slope is constant to within 1.7&times;10<sup>&minus;11</sup>%.</figcaption>
+</figure>
+
+<p><strong>Quote the slope, not the level:</strong> <span class="mono">12.225 $/MWh per unit
+&delta;</span>, equivalently <strong>1.2225% of the load's deviation bid price</strong>. That is a
+property of the uncertainty rather than of a tuned parameter, and it pre-empts the referee who
+assumes the result was bought with a large VOLL.</p>
+
+<h2>4. The theorems now have numerical support</h2>
+<div class="eyebrow">&sect;&sect;6&ndash;8 &middot; currently cited by nothing in &sect;9</div>
+
+<p>Every theorem in the paper is proved and none is checked. D1&ndash;D5 at S=500 checks the
+equilibrium construction directly. A table like this would be a clean addition to &sect;9 rather
+than a replacement for anything.</p>
+
+<div class="tscroll">
+<table>
+  <thead><tr><th>Identity</th><th>Paper</th><th class="num">Residual</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Price terms cancel in aggregate loss</td><td class="mono">Eq. (110)</td><td class="num">1.7e&minus;10</td><td class="ok">holds</td></tr>
+    <tr><td class="k">Insurance clears state by state</td><td class="mono">Eq. (95)</td><td class="num">2.0e&minus;10</td><td class="ok">holds</td></tr>
+    <tr><td class="k">(UM) agent-optimality of the allocation</td><td class="mono">Def. 3</td><td class="num">2.2e&minus;15</td><td class="ok">holds</td></tr>
+    <tr><td class="k">Agents' CVaR multipliers equal planner's</td><td class="mono">Eq. (94)</td><td class="num">1.7e&minus;18</td><td class="ok">holds</td></tr>
+    <tr><td class="k">Insured loss affine with slope 1</td><td class="mono">Eq. (113)</td><td class="num">1.1e&minus;16</td><td class="ok">holds</td></tr>
+    <tr><td class="k">Constant insured loss over the tail, S<sup>&gt;</sup></td><td class="mono">Eq. (121)</td><td class="num">3.6e&minus;12</td><td class="ok">holds</td></tr>
+    <tr><td class="k">&Sigma;<sub>&omega;</sub> &rho;&#771;<sub>&omega;</sub> = 1</td><td class="mono">Eq. (67)</td><td class="num">0.0e+00</td><td class="ok">holds</td></tr>
+    <tr><td class="k">&Sigma;<sub>&omega;</sub> &gamma;<sub>&omega;</sub> = &epsilon;</td><td class="mono">Eq. (69)</td><td class="num">0.0e+00</td><td class="ok">holds</td></tr>
+    <tr><td class="k">Theorem 9 construction supports (UM)</td><td class="mono">&sect;8.7.1</td><td class="num">2.0e&minus;12</td><td class="ok">holds</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>Two of these are sharper than they look. The <strong>sign convention</strong> in &sect;8.1.1
+separates by twelve orders of magnitude &mdash; the corrected sign gives a relative (UM) gap of
+<span class="mono">6.1e&minus;13</span>, which is solver tolerance, and the printed sign gives
+<span class="mono">1.2e+00</span>. That is not a judgement call. And <strong>D2</strong> measures
+the obstruction of &sect;8.2.2 rather than asserting it: without insurance, per-agent tail-scenario
+counts spread 21&ndash;29 against the planner's 25, Eq. (94) fails by
+<span class="mono">1.5e&minus;02</span>, and the allocation error is 218.7 MW.</p>
+
+<h3>One theory gap found</h3>
+<p>Eq. (107) presumes &epsilon;&nbsp;&lt;&nbsp;1. At &epsilon;&nbsp;=&nbsp;1 the tilted measure
+concentrates entirely on the tail, so &rho;&#771;<sub>&omega;</sub>&nbsp;=&nbsp;0 off it and
+<span class="mono">p<sub>&omega;</sub> = &nu;<sub>&omega;</sub>/&rho;&#771;<sub>&omega;</sub></span>
+is a genuine 0/0 &mdash; real-time prices do not exist off the tail. The valid range is
+&epsilon;&nbsp;&isin;&nbsp;(0,&nbsp;1), exactly where &rho;&#771; and &rho; are mutually absolutely
+continuous. This is a companion to the existing &epsilon;&nbsp;&gt;&nbsp;0 hypothesis and needs one
+sentence in &sect;8.5.1. Logged as T11.</p>
+
+<hr>
+
+<h2>The claim that did not reproduce</h2>
+
+<div class="flag">
+  <div class="eyebrow">Needs a decision before submission</div>
+  <p>&sect;9.2 states: <em>"the value of risk-aware clearing becomes more pronounced as exposure to
+  renewable uncertainty grows."</em> Holding total installed capacity and load fixed and varying
+  only the mix from 15% to 75% renewable, the value per MWh moves
+  <strong>1.2227 &rarr; 1.1698 $/MWh &mdash; a factor of 0.96, slightly down.</strong></p>
+</div>
+
+<figure>
+  <div class="plate"><img src="fig4_decarbonisation.png"
+    alt="Three panels against renewable share. Firm capacity falls linearly from 37 to 11 GW; insurance value stays near 1.2 dollars per MWh throughout; the CVaR and expected-loss deltas stay flat."></div>
+  <figcaption><b>Figure 4.</b> Firm capacity falls by a factor of 3.4 across the sweep and the
+  value of risk-aware clearing barely moves. Adding renewables <em>on top of</em> an unchanged
+  thermal fleet, which is what the draft's experiment does, leaves the tail untouched entirely,
+  because firm capacity still covers peak load.</figcaption>
+</figure>
+
+<p>In the draft this claim rests on gaps of +0.0038 to +0.0102 against error bars of
+&plusmn;0.0064 to &plusmn;0.0246 &mdash; entirely inside the noise. So it was never supported, and
+now we have evidence pointing the other way.</p>
+
+<p><strong>The fix is to change the claim, and it becomes a stronger one.</strong> Renewable share
+is not the mechanism. Tail-heaviness of supply is. Separate experiments sweeping four independent
+physical drivers of a heavy supply tail &mdash; stress probability, stress depth, spatial
+correlation, and common-mode outage &mdash; show the advantage growing by 2.1&times; to 4.0&times;,
+with rank correlation 1.000 on all four. Those are the W-suite experiments; see below.</p>
+
+<h2>Who bears the tail risk</h2>
+
+<figure>
+  <div class="plate"><img src="fig5_risk_incidence.png"
+    alt="Left panel: per-megawatt tail-risk premium by technology, with wind at -1.87, solar at -1.43, natural gas at -0.34, and coal and nuclear at exactly zero. Right panel: load carries 99.1 percent of the total premium."></div>
+  <figcaption><b>Figure 5.</b> Load is the natural buyer of cover and generators the sellers.
+  The exact zeros for coal and nuclear are a property of the dataset, annotated on the figure.</figcaption>
+</figure>
+
+<p>This supports Remarks 8 and 9 with measured numbers, which the draft does not currently have.
+Two honest caveats belong in the text:</p>
+
+<ul>
+  <li><strong>&pi;<sub>k</sub> is exactly zero for coal and nuclear.</strong> Thermal capacity in
+  <code>thermal_gens.csv</code> is constant across scenarios, so an infra-marginal unit has
+  constant loss <em>L</em> and &Sigma;<sub>&omega;</sub>(q&minus;&rho;)L = L&middot;0 = 0.
+  Modelling forced outages would give thermal genuine tail exposure.</li>
+  <li><strong>The Eq. (111) equal-share rule hides the signal.</strong> The flat pool share is
+  &minus;$104,273/h and swamps the per-agent term, so the net column is nearly identical across
+  generators. A contribution-weighted &delta;<sub>k</sub> would allocate it sensibly &mdash; that
+  is a property of the rule, and worth a remark.</li>
+</ul>
+
+<h2>Robustness</h2>
+
+<figure>
+  <div class="plate"><img src="fig6_seasonal_robustness.png"
+    alt="Bar chart of insurance market value for four configurations: winter 08:00 at 0.493, winter 18:00 at 0.390, summer 08:00 at 1.121, summer 18:00 at 1.223 dollars per MWh."></div>
+  <figcaption><b>Figure 6.</b> Positive in every season and delivery hour, roughly 2.5&ndash;3&times;
+  larger in summer.</figcaption>
+</figure>
+
+<p>The headline configuration (summer, 18:00) is the <em>most favourable</em> of the four. Quote
+the range $0.39&ndash;$1.22/MWh rather than the single best number; a referee will find this
+otherwise.</p>
+
+<hr>
+
+<h2>Still in flight</h2>
+
+<p>The tail-welfare suite (W0&ndash;W7) &mdash; the experiments carrying the paper's central
+claim about tail welfare &mdash; is running now as a separate 14-hour job. Until it lands, every
+tail-welfare number in the log comes from a local pilot at reduced scale, not from Gurobi at
+publishable scale. Those figures should not go in the paper yet.</p>
+
+<p>One known limitation is worth stating because it bounds the scope of the claim rather than
+weakening it. Under the paper's formulation, generation capacity is exogenous and VOLL exceeds
+every marginal cost, so the planner always serves the physical maximum. Unserved energy is
+therefore <em>identical</em> under all three policies, measured to a relative
+4.7&times;10<sup>&minus;8</sup>. Risk-aware clearing reallocates adjustment cost; it cannot improve
+adequacy. Reporting that immediately after the tail results pre-empts the question rather than
+inviting it.</p>
+
+<footer>
+  Generated from OSCAR job 9253564 (commit 35593dd), branch <span class="mono">hrithik_final</span>.
+  Full detail in <span class="mono">docs/EXPERIMENT_LOG.md</span>; theory notes in
+  <span class="mono">docs/THEORY_ERRATA.md</span>. All numbers measured, none estimated.
+</footer>
+
+</div>
