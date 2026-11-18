@@ -5,6 +5,171 @@ cite directly in the paper. Newest entries first.
 
 ---
 
+## 2026-11-18 (latest) — Auditing job 9253564 for the advisor brief: four findings, one of them a retraction
+
+Writing the detailed instance specification for the advisor brief meant reading
+the scenario builders line by line and re-deriving the headline numbers from the
+result JSONs. That turned up four things that were not visible from the result
+tables alone. The first is a retraction.
+
+### 1. E4 is **not** a true out-of-sample test — retract the claim
+
+`exp_E4` clears on a train instance (`seed = 1000 + r`) and evaluates on a test
+instance (`seed = 500_000 + r`). Different seeds, so different *draws* — but both
+draw from the **same conditional pool**, which for summer/18:00 is only 92
+distinct days (June 30 + July 31 + August 31). At `S = 400`, each draw covers
+essentially the whole pool.
+
+Measured over the 30 replications actually used (`run_im3_experiments.py`
+reproduces the draws exactly, since `_scenario_hours` consumes the rng first):
+
+```
+fraction of TEST days that also appear in TRAIN
+    mean 0.9894    min 0.9670    max 1.0000
+```
+
+**98.9% of the test days were already seen during clearing.** So E4 establishes
+that the risk-aware commitment is robust to *re-weighting* the same 92 days —
+genuinely useful, because it rules out the result being an artefact of one
+particular empirical probability vector — but it does **not** establish
+generalisation to unseen weather.
+
+Revision 1 of the advisor brief described E4 as the number that "distinguishes
+'CVaR genuinely reduces tail loss' from 'CVaR fits the in-sample tail'". It does
+not. That sentence is retracted and must not reach the paper.
+
+**Fix, to run before submission:** partition the 92-day pool into two disjoint
+day sets (46/46) and resample within each; or widen the conditioning window
+(shoulder months, or delivery hour ±1) so the pool is large enough to partition
+without gutting either side. Until then E4 is a *resampling* check.
+
+The 30/30 tail wins and the 4.18× tail-gain-to-expected-loss ratio are unchanged
+and still worth reporting — only the interpretation narrows.
+
+### 2. `|Ω| = 500` overstates the information content by ~5×
+
+Same root cause, and it affects every IM3 result, not just E4. Verified draws:
+
+| configuration | pool | S | distinct | max mult. | mean mult. |
+|---|---|---|---|---|---|
+| summer 18:00 | 92 | 500 | 92 | 10 | 5.4 |
+| winter 18:00 | 90 | 500 | 90 | 12 | 5.6 |
+| E4 train | 92 | 400 | 92 | 10 | 4.3 |
+| E4 test | 92 | 400 | 91 | 12 | 4.4 |
+| E5 | 92 | 300 | 88 | 9 | 3.4 |
+
+Consequences for the paper:
+
+- The **effective sample size is 92, not 500**. A standard error computed as if
+  there were 500 independent scenarios is too small by roughly √5.4 ≈ 2.3.
+  (This does *not* affect E4/E5, whose intervals are across *replications*, each
+  with its own independent draw — those are correctly computed.)
+- The **β = 0.95 tail is about five distinct days**: 26 tail scenarios at mean
+  multiplicity 5.4. The CVaR is an average over roughly five summer evenings.
+- The paper must state `|Ω|` **and** the distinct-day count. It currently states
+  neither anywhere.
+
+### 3. The E2 technology rows are **bus** labels, not fuel labels
+
+`build_instance` aggregates thermal units by bus and takes the fuel of the
+*largest* unit at that bus as the label, while capacity is the bus total and
+marginal cost is the capacity-weighted average. The six selected buses are mixed:
+
+| bus | label in E2 | total MW | actual composition |
+|---|---|---|---|
+| 500991 | BIT (Coal) | 6,922.3 | 3,927 coal (6 units) + 2,995 gas (5) |
+| 605141 | NG | 6,837.6 | 4,475 gas (10) + 2,363 coal (6) |
+| 408441 | NUC | 6,742.1 | 4,210 nuclear (1) + 2,532 gas (2) |
+| 261001 | NG | 6,521.7 | 6,522 gas (7) — pure |
+| 403691 | NG | 4,908.6 | 3,689 gas (4) + 1,219 coal (2) |
+| 261331 | NUC | 4,800.5 | 2,323 nuclear (1) + 2,478 gas (5) |
+| **total** | | **36,732.8** | **22,691 gas · 7,509 coal · 6,533 nuclear** |
+
+So the E2 row "NUC, n=2, 11,542.58 MW" is two *buses whose largest unit is
+nuclear*, not 11.5 GW of nuclear. The aggregate conclusions survive — all thermal
+capacity is scenario-invariant, so every thermal row has π_k ≈ 0 whatever the
+fuel — but a fuel-labelled table invites the referee to read it as a fuel result.
+**Relabel the rows "thermal bus 1–6", or disaggregate.**
+
+Related, from the same read: all 224 gas units are floored to the 6.40 MMBtu/MWh
+minimum (dataset max is 5.28), so the **entire gas fleet shares one marginal cost
+of exactly $21.20/MWh**. The merit order inside the gas block is flat; the
+`+1e-3·i` tie-break is the only thing separating those units. Floored counts:
+224/224 gas, 43/53 coal, 3/3 nuclear = 270/280, which is the number the log
+prints.
+
+### 4. E3: the §9.2 claim fails in welfare but **holds in prices**, 16.4×
+
+The decarbonisation sweep was recorded as a null result — value per MWh moves
+1.2227 → 1.1698 $/MWh across a 15%→75% renewable sweep, a factor of 0.96. That
+stands. But the price columns, which were in the JSON and not previously read,
+tell a different and better story:
+
+| target share | firm MW | $/MWh | ΔE[ℓ] | ΔCVaR | p₀ (RN) | p₀ (RA) | **risk premium** |
+|---|---|---|---|---|---|---|---|
+| 0.15 | 36,757 | 1.2227 | +48,997 | −223,625 | 21.82 | 20.66 | **−1.16** |
+| 0.30 | 30,270 | 1.2426 | +49,323 | −226,164 | 20.46 | 18.73 | **−1.73** |
+| 0.45 | 23,784 | 1.2375 | +48,711 | −224,280 | 16.97 | 12.78 | **−4.19** |
+| 0.60 | 17,297 | 1.2156 | +47,540 | −219,593 | 22.87 | 16.59 | **−6.28** |
+| 0.75 | 10,811 | 1.1698 | +41,586 | −201,608 | 50.97 | 31.91 | **−19.05** |
+
+The day-ahead risk premium `p₀^RA − p₀^RN` grows **monotonically, 16.4×**, with no
+reversals, while the welfare gap is flat. The risk-neutral price itself jumps
+2.3× at the top of the sweep as firm capacity (10.8 GW) falls below mean load
+(26.8 GW) and the system enters genuine scarcity.
+
+Why welfare stays flat: the value gap is dominated by *deviation* cost, which
+scales with δ (E6 shows this is exact to 1.7e−11%), not with scarcity depth.
+Scarcity changes who is marginal, and therefore the price; it does not change the
+adjustment bill by much.
+
+**Recommendation:** restate the §9.2 claim in prices — "as the firm fleet
+retires, the risk-aware day-ahead price departs ever further from the
+risk-neutral one" — which is true here, monotone, and is the signal a regulator
+would actually observe. The welfare null should be reported alongside it, not
+hidden; it is the more surprising half.
+
+### Smaller items from the same audit
+
+- **Do not quote E1's "0.1357% of risk-adjusted welfare".** The denominator is
+  ρ_RA itself, dominated by gross consumer value at VOLL (26,817.92 MWh/h ×
+  $1000 = $26,817,921/h). The defensible normaliser is system cost =
+  `E[ℓ] + VOLL·E[Σd̄]` = $594,532.91/h, against which the insurance value of
+  $32,785.79/h is **5.515%**, the expected welfare given up is 8.241%, and the
+  tail saving is 2.993% of tail system cost. The substitution is valid because
+  unserved energy is identical under both policies (relative 4.7e−8), so
+  `E[Σd̄]` cancels. "Completing the insurance market is worth 5.5% of system
+  cost" is the same number stated honestly.
+
+- **`exp_E1`'s narration overstates on IM3.** The log prints "the agents do not
+  agree on where the tail is", but on the IM3 instance every agent's tail count
+  is 25 against the planner's 26 — they nearly coincide. What establishes the
+  Eq. (94) failure *there* is `max_k |γ_k − γ| = 0.012`. The counts genuinely
+  spread on the synthetic instance (D2: 21–29 vs planner 25). That hard-coded
+  sentence should be softened in `im3_experiments.py` and must not be repeated
+  in the paper for the IM3 case.
+
+- **D3: the equal-share rule is not Pareto-improving in CVaR.** Every agent's
+  insured CVaR comes out at the identical −16,347.99 $/h — that is what pooling
+  means. For the six unreliable generators it is a large gain (gen_0:
+  35,944.95 → −16,347.99, a reduction of 52,292.94). But the load, the *least*
+  tail-exposed agent at −159,279.70, is pushed up to the pool average: its own
+  CVaR **worsens by 142,931.71 $/h**. Together with E2's finding that the flat
+  pool share (−104,273.09 $/h) swamps the per-agent term, this is a second,
+  independent, measured argument for discussing δ_k as a design choice rather
+  than a normalisation.
+
+- **E1, E2, E3, E6 and the seasonal table are single-seed** — no error bars at
+  all. Only E4 and E5 are replicated (30 each). This must be stated wherever
+  those numbers are quoted.
+
+All of the above is derived from files already in the repo; no new solves were
+run, and nothing in `outputs/results/` changed. The advisor brief
+(`docs/advisor_brief_2026-11-18.html`, revision 2) carries the same content in
+presentable form.
+
+---
+
 ## 2026-11-18 (later) — The W-suite model is **not** `zavala_cvar`, and the difference is the T10 cap
 
 Three tail jobs (9264173, 9264959, and the rerun) died in the `--check-reference`
