@@ -37,7 +37,7 @@ conda activate zavala-market
 log "Conda environment activated"
 
 export PYTHONUNBUFFERED=TRUE
-export GRB_LICENSE_FILE=/users/$USER/gurobi.lic
+export GRB_LICENSE_FILE=$HOME/gurobi.lic
 
 log "Preflight: Gurobi licence check"
 python - <<'PYEOF'
