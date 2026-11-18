@@ -559,7 +559,7 @@ difference between the two allocations is therefore the value of completing the 
 <div class="cols">
   <div class="stat"><div class="v">32,786</div><div class="l">value of the insurance market, $/h</div></div>
   <div class="stat"><div class="v">1.2225</div><div class="l">$/MWh served (26,818 MWh/h)</div></div>
-  <div class="stat"><div class="v">$287.2 M</div><div class="l">annualised at &times;8760</div></div>
+  <div class="stat"><div class="v">$287.2 M</div><div class="l">annualised &mdash; <em>risk-adjusted</em>, not cash</div></div>
   <div class="stat"><div class="v">5.52%</div><div class="l">of system cost &mdash; see below</div></div>
 </div>
 
@@ -580,6 +580,81 @@ tail saving                 =  223,609.79 $/h   =  2.993% of tail system cost</c
   because unserved energy is identical under both policies (verified to relative
   4.7&times;10<sup>&minus;8</sup>), so <span class="mono">E[&Sigma;d&#772;]</span> cancels.</p>
 </div>
+
+<h4>The recourse penalties, and what the $223,610/h tail figure is <em>not</em></h4>
+
+<p>Eq. (3)'s deviation bid prices are set as a fixed fraction &delta; of each agent's own valuation,
+with <span class="mono">&delta; = 0.1</span> throughout the headline runs:</p>
+
+<div class="tscroll">
+<table style="min-width:26rem">
+  <thead><tr><th>Agent</th><th class="num">mc or VOLL $/MWh</th><th class="num">&alpha;<sup>+</sup> = &alpha;<sup>&minus;</sup> $/MWh</th></tr></thead>
+  <tbody>
+    <tr><td class="k">solar &times;6</td><td class="num">0.500&ndash;0.505</td><td class="num">0.050</td></tr>
+    <tr><td class="k">wind &times;6</td><td class="num">1.506&ndash;1.511</td><td class="num">0.151</td></tr>
+    <tr><td class="k">bus 408441 &ldquo;NUC&rdquo;</td><td class="num">13.70</td><td class="num">1.370</td></tr>
+    <tr><td class="k">bus 261331 &ldquo;NUC&rdquo;</td><td class="num">15.39</td><td class="num">1.539</td></tr>
+    <tr><td class="k">bus 261001 &ldquo;NG&rdquo;</td><td class="num">21.22</td><td class="num">2.122</td></tr>
+    <tr><td class="k">bus 403691 &ldquo;NG&rdquo;</td><td class="num">22.10</td><td class="num">2.210</td></tr>
+    <tr><td class="k">bus 605141 &ldquo;NG&rdquo;</td><td class="num">22.46</td><td class="num">2.246</td></tr>
+    <tr><td class="k">bus 500991 &ldquo;BIT&rdquo;</td><td class="num">23.27</td><td class="num">2.327</td></tr>
+    <tr><td class="k"><strong>LOAD</strong></td><td class="num"><strong>1000.00</strong></td><td class="num"><strong>100.0</strong></td></tr>
+  </tbody>
+  <caption>The load's deviation penalty is <strong>43&times;</strong> the most expensive generator's.
+  Deviation cost in this instance is therefore almost entirely <em>load</em> deviation cost, and the
+  day-ahead decision that matters is where in the distribution of d&#772;<sub>&omega;</sub> to place
+  the committed quantity d.</caption>
+</table>
+</div>
+
+<div class="flag">
+  <div class="eyebrow">Four corrections to &ldquo;we make $223,610/h in the tail&rdquo;</div>
+  <p><strong>1. It is avoided cost, not revenue.</strong> &ell; is a welfare loss &mdash; production
+  cost plus deviation cost minus consumer value. Nobody's income rises by $223,610/h. Averaged over
+  the worst 5% of scenarios, the <em>system</em> spends $223,610/h less. The distributional question
+  &mdash; who pays and who is paid &mdash; is E2 and D3, and there the load is the net buyer of cover
+  and the generators the sellers.</p>
+
+  <p><strong>2. It is not free; it is a trade at a fixed exchange rate.</strong> The same commitment
+  raises expected cost by $48,995.92/h. The ratio is
+  <span class="mono">&minus;4.5638</span> and is <em>constant</em> &mdash; it does not improve with
+  &delta;, with &epsilon;, or with scale. The planner's objective nets the two:
+  <span class="mono">0.7 &times; 48,995.92 + 0.3 &times; (&minus;223,609.79) = &minus;32,785.79</span>,
+  which is exactly the reported gap. Whether a 4.56:1 trade is worth taking is &epsilon; &mdash; a
+  stated preference, not a measurement.</p>
+
+  <p><strong>3. It is not adequacy.</strong> Unserved energy is identical under both policies to
+  relative 4.7&times;10<sup>&minus;8</sup>. No load is kept on that would otherwise be shed. The
+  entire saving is a reallocation of <em>adjustment</em> cost.</p>
+
+  <p><strong>4. The magnitude is exactly proportional to a hard-coded constant.</strong> Across the
+  20&times; &delta; sweep:</p>
+  <pre style="margin:0.7rem 0"><code>delta     dCVaR $/h        dE[l] $/h      dCVaR / delta
+ 0.02      -44,721.96        9,799.18     -2,236,097.8646
+ 0.05     -111,804.89       24,497.96     -2,236,097.8646
+ 0.10     -223,609.79       48,995.92     -2,236,097.8646
+ 0.20     -447,219.57       97,991.84     -2,236,097.8646
+ 0.40     -894,439.15      195,983.68     -2,236,097.8646</code></pre>
+  <p>Identical to ten significant figures. So &ldquo;$223,610/h&rdquo; is not a finding about the
+  power system; it is <span class="mono">2,236,097.86 &times; 0.1</span>. Pick &delta; = 0.4 and the
+  same experiment yields $894,439/h. <strong>Quote the parameter-free form instead:</strong></p>
+  <pre style="margin:0.7rem 0"><code>tail saving = 83.3807 x delta   $/MWh served
+            =  8.3381% x delta  of the load's deviation bid price</code></pre>
+</div>
+
+<p>One more caution on annualisation. The <span class="mono">&times;8760</span> figure of
+$287.2M/yr is the <em>risk-adjusted</em> gap annualised; it is not cash and should never be
+presented as a saving. The cash-flow decomposition, if every hour of the year resembled this one,
+would be:</p>
+
+<pre><code>expected cost RISES by     +$429.2 M/yr
+tail-state cost FALLS by    -$97.9 M/yr   (the tail is 5% of hours)
+risk-adjusted net          -$287.2 M/yr   (a risk measure, not money)</code></pre>
+
+<p>And not every hour does resemble this one: the seasonal table (&sect;II.7) spans
+$0.39&ndash;$1.22/MWh, so annualising the headline configuration overstates by up to
+<strong>3&times;</strong>. If an annual figure is quoted at all, build it from the seasonal range,
+and label it risk-adjusted.</p>
 
 <h4>Eq. (94) without insurance, on this fleet</h4>
 <p>Each agent is re-solved facing the same prices but with no insurance market:</p>

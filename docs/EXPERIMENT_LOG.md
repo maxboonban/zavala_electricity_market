@@ -163,9 +163,56 @@ hidden; it is the more surprising half.
   all. Only E4 and E5 are replicated (30 each). This must be stated wherever
   those numbers are quoted.
 
+### 5. The tail saving is *exactly* proportional to δ, and the 223,610 figure is not a finding
+
+E6 established that the **ρ_RA gap** is linear in the deviation bid price. Checking
+the same sweep's tail column shows the **ΔCVaR is linear too**, to ten significant
+figures:
+
+| δ | ΔCVaR $/h | ΔE[ℓ] $/h | ΔCVaR / δ |
+|---|---|---|---|
+| 0.02 | −44,721.96 | +9,799.18 | −2,236,097.8646 |
+| 0.05 | −111,804.89 | +24,497.96 | −2,236,097.8646 |
+| 0.10 | −223,609.79 | +48,995.92 | −2,236,097.8646 |
+| 0.20 | −447,219.57 | +97,991.84 | −2,236,097.8646 |
+| 0.40 | −894,439.15 | +195,983.68 | −2,236,097.8646 |
+
+So "risk-aware clearing cuts the 95% tail cost by $223,610/h" is a restatement of
+`δ = 0.1`. Parameter-free forms to quote instead:
+
+```
+tail saving  = 2,236,097.86 x delta   $/h
+             =        83.3807 x delta $/MWh served
+             =         8.3381% x delta of the load's deviation bid price
+dCVaR / dE[l] = -4.5638            (constant in delta, eps and scale)
+```
+
+The exchange rate is the real invariant: **every $1 of expected welfare given up
+buys $4.56 off the tail**, independent of δ.
+
+Recourse penalties actually used (δ = 0.1, so α⁺ = α⁻ = 0.1 × own valuation):
+solar $0.050/MWh, wind $0.151, "NUC" buses $1.370 and $1.539, "NG" buses
+$2.122–$2.246, "BIT" bus $2.327, and **load $100.00**. The load's penalty is
+**43× the most expensive generator's**, so deviation cost in this instance is
+almost entirely load-deviation cost.
+
+Three framings to avoid, all of which the brief now corrects explicitly:
+
+- **"We make $223,610 in the tail."** ℓ is a welfare loss; this is avoided system
+  cost, not anyone's revenue. The distributional side is E2 and D3.
+- **"$287.2 M/yr."** That is the ρ_RA gap × 8760. ρ_RA is a risk measure, not
+  cash. The cash decomposition, if every hour resembled summer 18:00, is
+  expected cost **+$429.2M/yr**, tail-state cost **−$97.9M/yr** (the tail is 5%
+  of hours), risk-adjusted net −$287.2M/yr. Further, the seasonal table spans
+  $0.39–$1.22/MWh, so annualising the headline configuration overstates by up to
+  3×.
+- **"Risk-aware clearing improves reliability."** Unserved energy is identical
+  under both policies to relative 4.7e−8. It reallocates adjustment cost; it
+  cannot improve adequacy.
+
 All of the above is derived from files already in the repo; no new solves were
 run, and nothing in `outputs/results/` changed. The advisor brief
-(`docs/advisor_brief_2026-11-18.html`, revision 2) carries the same content in
+(`docs/advisor_brief_2026-11-18.html`, revision 3) carries the same content in
 presentable form.
 
 ---
