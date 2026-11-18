@@ -1,0 +1,3 @@
+[2026-11-18 00:09:02] Job 9264173 on node1840, workdir /oscar/home/hnambia1/Desktop/zavala_electricity_market
+[2026-11-18 00:09:05] Preflight: Gurobi licence
+[2026-11-18 00:09:06] W0-W7 headline (S=500, 30 seeds, eps=0.3, beta=0.95)

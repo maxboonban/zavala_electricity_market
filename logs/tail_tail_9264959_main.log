@@ -1,0 +1,9 @@
+==============================================================================
+Tail-welfare experiments for risk-aware market clearing
+==============================================================================
+commit 910d334f6a73ffbc4aafe22fcdbfe9ee520fad5d (hrithik_final, DIRTY)  on node2352.oscar.ccv.brown.edu
+solver=GUROBI  S=500  seeds=30  eps=0.3  beta=0.95
+base: {'ramp_premium': 1.0, 'backdown_discount': 0.4, 'adequacy': 1.12, 'voll': 1000.0, 'renewable_penetration': 0.45, 'p_stress': 0.12, 'ramp_limit_frac': None}
+
+Preflight: vectorised model vs zavala_cvar
+  [FAIL] model disagrees with the reference: AssertionError: vectorised model disagrees with reference: {'d_p0': 3.0570551067714397e-05, 'd_cvar': 1.0525130576691815e-05}
