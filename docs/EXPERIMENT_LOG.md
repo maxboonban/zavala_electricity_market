@@ -5,6 +5,58 @@ cite directly in the paper. Newest entries first.
 
 ---
 
+## 2026-11-18 (later) — The W-suite model is **not** `zavala_cvar`, and the difference is the T10 cap
+
+Three tail jobs (9264173, 9264959, and the rerun) died in the `--check-reference`
+preflight. The failure was real and the diagnosis took two wrong turns worth
+recording, because each was a different kind of mistake.
+
+**Wrong turn 1 — blaming the environment.** 21-second failures looked like the
+jax import inside `zavala_funcs`. It was not; jax loaded fine. But the episode
+exposed a genuine flaw: an `ImportError` in an optional cross-check would have
+killed a 14-hour run under `set -e`. Infrastructure failure and model
+disagreement are now distinguished — the first is a `[SKIP]` with a warning
+that the check did not happen, the second still aborts.
+
+**Wrong turn 2 — blaming the tolerance.** The first failure reported
+`d_p0 = 3.06e-05` and `d_cvar = 1.05e-05` against `tol = 1e-5`, while
+`d_expected_loss` and `d_sum_gamma` passed. I reasoned that `E[l]`, `CVaR` and
+`p0` are individually non-unique under LP degeneracy — true, and worth keeping —
+and rebuilt the test around `ρ_RA = (1−ε)E[l] + ε·CVaR_β[l]`, which *is* unique.
+That reasoning was sound but it was not the cause.
+
+**The actual cause.** With the objective test in place the failure became
+`d_rho_RA = 1.52e-06`, `d_sum_gamma = 0.00e+00` exactly. Comparing the two
+constraint sets directly:
+
+| constraint | `zavala_cvar` | `solve_planner` |
+|---|---|---|
+| day-ahead balance | yes | yes |
+| real-time balance | yes | yes |
+| `G ∈ [0, ḡ_ω]`, `D ∈ [0, d̄_ω]` | yes | yes |
+| CVaR link | yes | yes |
+| **`g ≤ max_ω ḡ_ω`, `d ≤ max_ω d̄_ω`** | **no** | **yes** |
+
+The last row is the T10 boundedness cap. It makes `solve_planner`'s feasible set
+a **strict subset** of the reference's, so `ρ_mine ≥ ρ_ref` necessarily — which
+is the sign observed. The models are not the same model, the check was right to
+fail, and no tolerance should have been moved.
+
+**Why this matters beyond the check.** That cap is also absent from the paper's
+Eq. (63)-(65), which bound only the realised quantity `x_i + x⁺_iω − x⁻_iω`.
+So even a passing equivalence test against `zavala_cvar` would not have licensed
+the experiments, because the experiments run **with** the cap. `solve_planner`
+now takes `da_cap` (default `True`); the comparison sets it `False` so like is
+compared with like, and the check additionally solves both ways and reports the
+signed cost of the cap. That deviation from the paper is now a measured number
+printed in every run, not an assumption.
+
+**Status: the cap's magnitude is not yet measured at scale.** The
+`d_rho_da_cap` figure arrives with the next run. Until then, no absolute
+welfare number from the W-suite should be quoted without it.
+
+---
+
 ## 2026-11-18 — First full Gurobi run at publishable scale (OSCAR job 9253564)
 
 Everything below is measured, not piloted: `S=500`, Gurobi, node2411, 2h09m
