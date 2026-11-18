@@ -24,19 +24,40 @@ fi
 git config user.email "hrithik_nambiar@brown.edu"
 git config user.name  "Hrithik Nambiar"
 
-# A job that was cancelled or timed out leaves results uncommitted. Sweep them
-# up so they are not silently left behind on the cluster.
+# Sweep up results a job did not commit itself. Two cases produce these:
+# a cancelled/timed-out job that never reached its commit, and -- always --
+# the running job's own .out/.log, which keep growing after `git add` runs.
+# -A so deletions are picked up too.
 if [[ -n "$(git status --porcelain outputs/ logs/ figures/ 2>/dev/null)" ]]; then
     echo
     echo "Uncommitted results found:"
     git status --short outputs/ logs/ figures/
-    git add outputs/ logs/ figures/
+    git add -A outputs/ logs/ figures/
     git commit -F - <<MSGEOF
 OSCAR results swept up by push_results.sh
 
 Committed from a login node on $(date '+%Y-%m-%d %H:%M:%S'). These are
-outputs a SLURM job produced but did not commit itself.
+outputs a SLURM job produced but did not commit itself -- either because it
+was cancelled before its commit step, or because it kept writing to its own
+log files after that step ran.
 MSGEOF
+fi
+
+# Anything still dirty is NOT a result, so it is not ours to commit. A rebase
+# would fail on it with a message that does not say which file is at fault.
+DIRTY=$(git status --porcelain --untracked-files=no 2>/dev/null)
+if [[ -n "$DIRTY" ]]; then
+    echo
+    echo "[FAIL] tracked files outside outputs/, logs/ and figures/ are modified:"
+    echo "$DIRTY" | sed 's/^/       /'
+    echo
+    echo "       These are source edits, not results, so this script will not"
+    echo "       commit them for you. Either keep them:"
+    echo "           git add -u && git commit"
+    echo "       or discard them:"
+    echo "           git checkout -- <file>"
+    echo "       then re-run ./push_results.sh"
+    exit 1
 fi
 
 echo
