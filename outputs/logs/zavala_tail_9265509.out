@@ -29,3 +29,16 @@ Set parameter LicenseID to value 2885856
 Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
   [FAIL] model disagrees with the reference: AssertionError: vectorised model disagrees with reference on the OBJECTIVE: d_rho_RA = 1.522e-06 > 1e-06. This is a real disagreement, not degeneracy. Full: {'d_rho_RA': 1.5219196515030618e-06, 'd_sum_gamma': np.float64(0.0), 'd_expected_loss': 2.3365993164173732e-06, 'd_cvar': 1.0525130576691815e-05, 'd_p0': 3.0570551067714397e-05}
 [2026-11-18 00:40:24] Committing results (exit status 1; push happens on a login node)
+[hrithik_final 27170f2] OSCAR tail-welfare results: job 9265509 on node2344 (exit 1)
+ 4 files changed, 62 insertions(+)
+ create mode 100644 logs/tail_tail_9265509_main.log
+ create mode 100644 outputs/logs/zavala_tail_9265509.err
+ create mode 100644 outputs/logs/zavala_tail_9265509.log
+ create mode 100644 outputs/logs/zavala_tail_9265509.out
+[2026-11-18 00:40:24] 
+[2026-11-18 00:40:24]   ############################################################
+[2026-11-18 00:40:24]   #  RESULTS ARE COMMITTED BUT NOT PUSHED.                   #
+[2026-11-18 00:40:24]   #  From a LOGIN node, run:                                 #
+[2026-11-18 00:40:24]   #      cd /oscar/home/hnambia1/Desktop/zavala_electricity_market
+[2026-11-18 00:40:24]   #      ./push_results.sh                                   #
+[2026-11-18 00:40:24]   ############################################################

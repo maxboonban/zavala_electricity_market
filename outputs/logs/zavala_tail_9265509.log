@@ -2,3 +2,10 @@
 [2026-11-18 00:40:06] Preflight: Gurobi licence
 [2026-11-18 00:40:07] W0-W7 headline (S=500, 30 seeds, eps=0.3, beta=0.95)
 [2026-11-18 00:40:24] Committing results (exit status 1; push happens on a login node)
+[2026-11-18 00:40:24] 
+[2026-11-18 00:40:24]   ############################################################
+[2026-11-18 00:40:24]   #  RESULTS ARE COMMITTED BUT NOT PUSHED.                   #
+[2026-11-18 00:40:24]   #  From a LOGIN node, run:                                 #
+[2026-11-18 00:40:24]   #      cd /oscar/home/hnambia1/Desktop/zavala_electricity_market
+[2026-11-18 00:40:24]   #      ./push_results.sh                                   #
+[2026-11-18 00:40:24]   ############################################################
