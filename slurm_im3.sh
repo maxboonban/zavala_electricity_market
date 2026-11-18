@@ -111,3 +111,19 @@ for SEASON in winter summer; do
 done
 
 log "Job completed successfully."
+
+# --- 5. Push all results back to GitHub so the local machine can pull them ---
+log "Pushing results to GitHub (branch hrithik_final)"
+git config user.email "hrithik_nambiar@brown.edu"
+git config user.name "Hrithik Nambiar"
+git add outputs/results/ outputs/logs/ logs/
+git commit -m "OSCAR results: job ${SLURM_JOB_ID} on ${SLURMD_NODENAME}
+
+Auto-committed by slurm_im3.sh after a successful run.
+Includes: theory verification (T1-T8), CVaR pricing invariants,
+D1-D5 decentralisation suite (S=500), E1-E6 IM3 GO-WEST experiments,
+and seasonal/hour robustness sweeps." \
+  || log "[WARN] git commit produced no new changes (results may already be committed)"
+git push origin hrithik_final \
+  && log "Results pushed to hrithik_final." \
+  || log "[WARN] git push failed — pull the results manually from OSCAR scratch."
