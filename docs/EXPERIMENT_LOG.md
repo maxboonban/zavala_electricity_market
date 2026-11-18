@@ -210,10 +210,115 @@ Three framings to avoid, all of which the brief now corrects explicitly:
   under both policies to relative 4.7e−8. It reallocates adjustment cost; it
   cannot improve adequacy.
 
-All of the above is derived from files already in the repo; no new solves were
-run, and nothing in `outputs/results/` changed. The advisor brief
-(`docs/advisor_brief_2026-11-18.html`, revision 3) carries the same content in
-presentable form.
+### 6. **The headline instance is never scarce, and the β-tail is the LOW-demand tail**
+
+Asked what actually changes between the risk-neutral and risk-aware commitment,
+given that δ is symmetric and identical in both. The answer is computable without
+a solver, and it turned up something that outranks everything else in this entry.
+
+New diagnostic, committed as `check_tail_composition.py` (numpy only, no solver,
+runs in seconds — it reconstructs the headline scenario set exactly and solves
+the reduced problem in closed form).
+
+**The mechanism.** With VOLL ≫ mc and firm capacity above peak load, demand is
+served in full in every scenario, so the day-ahead quantities enter the loss
+*only* through the symmetric deviation terms α|x(ω) − x|. Minimising
+E[α|d̄(ω) − d|] puts d at the **median** of d̄; the CVaR tilt reweights toward the
+worst scenarios and moves it to a different quantile:
+
+| day-ahead load commitment d | MW | percentile of d̄ |
+|---|---|---|
+| risk-neutral | 27,484.1 | 50.4 — the median |
+| risk-aware, ε = 0.3 | 25,309.0 | 27.6 |
+| **shift** | **−2,175.1** | **−22.8 pts** |
+
+The reduced 1-D model reproduces the Gurobi run closely, which confirms that this
+is the whole mechanism:
+
+| | 1-D model | actual (E1) | error |
+|---|---|---|---|
+| ΔE[ℓ] | +47,386.91 | +48,995.92 | 3.3% |
+| ΔCVaR | −217,509.20 | −223,609.79 | 2.7% |
+| ratio | −4.590 | −4.564 | 0.6% |
+
+The ~3% residual is the generator-side deviation cost the reduced model omits.
+This also *explains* the exact δ-linearity of item 5: α multiplies the only term
+that depends on d, so the optimal d is independent of δ and every cost difference
+scales by it exactly.
+
+**The problem.** The loss is `ℓ = cost − VOLL·demand` and demand is always served,
+so ℓ is very nearly a decreasing linear function of demand:
+
+```
+corr( l , demand )    =  -0.9999
+
+std( VOLL * demand )  =  2,809,288 $/h   <- 102.8% of std(l)
+std( merit cost )     =     83,031 $/h   <-   3.0% of std(l)
+mean VOLL * demand    = 26,817,921 $/h   <- 74x the cost it is netted against
+```
+
+So the β = 0.95 "tail" is **the 30 quietest summer evenings**: mean demand
+20,423 MW against 27,226 MW elsewhere, at the **2.2nd percentile** of demand.
+Renewable output in those scenarios is *above* average (88.7th percentile), not
+below.
+
+And the instance is **never scarce**:
+
+```
+firm thermal alone        36,732.8 MW
+peak demand               31,941.6 MW
+firm / peak                  1.150     (15.0% margin, by construction)
+scenarios with capacity < demand:  0 of 500
+minimum reserve over all scenarios:  4,791.3 MW
+```
+
+This follows directly from the sizing rule in §I.5 of the brief:
+`load_scale = firm/(1+0.15)/peak` makes a shortfall *impossible by
+construction*. "Unserved energy is identical under all policies to relative
+4.7e−8" (logged earlier as the W0 structural ceiling) is, for IM3, the stronger
+statement that it is identically zero.
+
+So "risk-aware clearing cuts tail loss by $223,610/h" means, mechanically: *it
+commits less load day-ahead so that unusually quiet evenings incur smaller
+deviation charges.* Arithmetically correct; not the economics §9.2 describes.
+
+**What the tail would be under a cost definition.** Same decomposition, loss
+redefined as merit-order cost rather than negative social surplus:
+
+| loss definition | CVaR_.95 | tail demand | tail renewables | corr w/ demand | corr w/ renewables |
+|---|---|---|---|---|---|
+| cost − VOLL·demand (as implemented) | −20,088,384 | 2.2nd pct | 88.7th pct | −0.9999 | +0.4516 |
+| merit-order cost only | +514,378 | **90.8th pct** | **6.7th pct** | +0.9285 | −0.7575 |
+
+Under a cost definition the tail is high demand with low wind and solar — the
+scarcity tail the narrative is about. Note this is **not** a re-normalisation:
+CVaR is not invariant to adding a scenario-dependent constant, so it is a
+genuinely different optimisation with a different optimal commitment.
+
+**Three ways forward — an author decision, not a patch:**
+
+- **(a) Make scarcity real.** Size against *mean* demand rather than peak, or
+  model thermal forced outages so ḡ varies. Keeps the welfare formulation the
+  theory is written in, makes the tail an adequacy event, and is the only option
+  under which E2's incidence story becomes interesting (thermal would finally
+  acquire scenario-dependent capacity). **Recommended.**
+- **(b) Report the tail of cost.** Cleanest if the claim is about scarcity cost,
+  but every E-result needs re-running.
+- **(c) Keep the welfare definition and state plainly** that with inelastic,
+  always-served demand the welfare tail is the low-demand tail. Honest, much
+  weaker paper.
+
+**Does this affect the W-suite?** Unknown, and it matters, because W0–W7 carry the
+central claim. `tail_scenarios.py` sizes thermal as `adequacy * mean_demand` with
+`adequacy = 1.12` (and W3 sweeps it down to 0.95), *not* as a margin against
+peak — so it may well be genuinely scarce where IM3 is not. This must be checked
+the moment job 9283898 lands, by running the same decomposition on a W-suite
+instance. Do not assume either way.
+
+All of the above is derived from files already in the repo plus the new
+diagnostic; no solver was run, and nothing in `outputs/results/` changed. The
+advisor brief (`docs/advisor_brief_2026-11-18.html`, revision 4) carries the same
+content in presentable form.
 
 ---
 

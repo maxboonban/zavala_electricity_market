@@ -239,6 +239,13 @@ footer { margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--ru
   out-of-sample experiment (E4) is not a true holdout. Train and test draw from the same
   92-day pool and overlap in 98.9% of days. It tests resampling robustness, not generalisation.
   Details in &sect;II.4.</p>
+  <p><strong>5.</strong> <span class="bad">Read &sect;II.1 before quoting any tail number.</span>
+  The headline instance is <em>never scarce</em> &mdash; 0 of 500 scenarios have capacity short of
+  demand &mdash; and because loss is <span class="mono">cost &minus; VOLL&middot;demand</span> with
+  demand always served, the &beta;-tail is the <strong>lowest-demand</strong> evenings
+  (corr = &minus;0.9999 with demand). The mechanism is a shift of the day-ahead commitment from the
+  median to the 28th percentile of demand. The arithmetic is right; the economics is not the
+  scarcity story &sect;9.2 tells. This needs a decision.</p>
 </div>
 
 <h2>Contents</h2>
@@ -655,6 +662,107 @@ risk-adjusted net          -$287.2 M/yr   (a risk measure, not money)</code></pr
 $0.39&ndash;$1.22/MWh, so annualising the headline configuration overstates by up to
 <strong>3&times;</strong>. If an annual figure is quoted at all, build it from the seasonal range,
 and label it risk-adjusted.</p>
+
+<h4>So what actually changes? The day-ahead commitment moves from the median to the 28th percentile</h4>
+
+<p>The penalty is symmetric and identical under both policies, so the improvement cannot come from
+the penalty. It comes from <em>where in the scenario distribution the day-ahead quantity sits</em>,
+and the structure makes that exactly computable without a solver.</p>
+
+<p>With VOLL &#8811; mc and firm capacity above peak load, demand is served in full in every
+scenario, so the day-ahead quantities enter the loss <strong>only</strong> through the symmetric
+deviation terms. Minimising <span class="mono">E[&alpha;|d&#772;(&omega;) &minus; d|]</span> places
+d at the <strong>median</strong> of d&#772;; the CVaR tilt reweights toward the worst scenarios and
+pulls it to a different quantile. That is the entire mechanism, and it is a one-dimensional quantile
+problem. Reconstructing the headline scenario set and solving it directly
+(<code>check_tail_composition.py</code>, numpy only):</p>
+
+<div class="tscroll">
+<table style="min-width:28rem">
+  <thead><tr><th>Day-ahead load commitment d</th><th class="num">MW</th><th class="num">Percentile of d&#772;</th></tr></thead>
+  <tbody>
+    <tr><td class="k">risk-neutral</td><td class="num">27,484.1</td><td class="num">50.4 &mdash; the median</td></tr>
+    <tr><td class="k">risk-aware, &epsilon; = 0.3</td><td class="num">25,309.0</td><td class="num">27.6</td></tr>
+    <tr class="total"><td>shift</td><td class="num">&minus;2,175.1</td><td class="num">&minus;22.8 pts</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="tscroll">
+<table style="min-width:28rem">
+  <thead><tr><th>Check against the Gurobi run</th><th class="num">1-D model</th><th class="num">Actual (E1)</th><th class="num">Error</th></tr></thead>
+  <tbody>
+    <tr><td class="k">&Delta;E[&ell;]</td><td class="num">+47,386.91</td><td class="num">+48,995.92</td><td class="num">3.3%</td></tr>
+    <tr><td class="k">&Delta;CVaR<sub>0.95</sub></td><td class="num">&minus;217,509.20</td><td class="num">&minus;223,609.79</td><td class="num">2.7%</td></tr>
+    <tr><td class="k">ratio</td><td class="num">&minus;4.590</td><td class="num">&minus;4.564</td><td class="num">0.6%</td></tr>
+  </tbody>
+  <caption>The residual ~3% is the generator-side deviation cost, which the 1-D model omits. So the
+  headline result <strong>is</strong> a quantile shift in the day-ahead load commitment, and nothing
+  else. It also explains the exact &delta;-linearity: &alpha; multiplies the only term that depends
+  on d, so the optimal d is independent of &delta; and every cost difference scales by it.</caption>
+</table>
+</div>
+
+<div class="flag">
+  <div class="eyebrow">And this is where it becomes a problem &mdash; the tail is the <em>low-demand</em> tail</div>
+  <p>The loss is <span class="mono">&ell; = cost &minus; VOLL &times; demand</span>, and demand is
+  always served in full. So &ell; is very nearly a <em>decreasing linear function of demand</em>:</p>
+  <pre style="margin:0.7rem 0"><code>corr( l , demand )  =  -0.9999
+
+std( VOLL * demand )  =  2,809,288 $/h   <- 102.8% of std(l)
+std( merit cost )     =     83,031 $/h   <-   3.0% of std(l)
+mean VOLL * demand    = 26,817,921 $/h   <- 74x the cost it is netted against</code></pre>
+  <p>Consequently the &beta;=0.95 &ldquo;tail&rdquo; is <strong>the 30 quietest summer
+  evenings</strong>: mean demand 20,423 MW against 27,226 MW elsewhere, sitting at the
+  <strong>2.2nd percentile</strong> of demand. Renewable output in those scenarios is
+  <em>above</em> average (88.7th percentile), not below.</p>
+  <p>And the instance is <strong>never scarce</strong>. Firm thermal is 36,732.8 MW against a peak
+  demand of 31,941.6 MW &mdash; a 15.0% margin by construction (&sect;I.5) &mdash; so
+  <strong>0 of 500 scenarios</strong> have capacity short of demand, and the minimum reserve across
+  the whole set is 4,791.3 MW. There is no scarcity event anywhere in the headline experiment.</p>
+  <p>So &ldquo;risk-aware clearing cuts tail loss by $223,610/h&rdquo; means, mechanically:
+  <em>it commits less load day-ahead so that unusually quiet evenings incur smaller deviation
+  charges.</em> That is arithmetically correct and it is not the economics &sect;9.2 describes.</p>
+</div>
+
+<h4>What the tail would be under a cost definition</h4>
+
+<p>Rerunning the same decomposition with the loss defined as system cost rather than negative
+social surplus flips the tail to exactly the economically meaningful one:</p>
+
+<div class="tscroll">
+<table>
+  <thead><tr><th>Loss definition</th><th class="num">CVaR<sub>0.95</sub></th><th class="num">Tail demand</th><th class="num">Tail renewables</th><th class="num">corr w/ demand</th><th class="num">corr w/ renewables</th></tr></thead>
+  <tbody>
+    <tr><td class="k">cost &minus; VOLL&middot;demand <span class="mono">(as implemented)</span></td><td class="num">&minus;20,088,384</td><td class="num">2.2nd pct</td><td class="num">88.7th pct</td><td class="num">&minus;0.9999</td><td class="num">+0.4516</td></tr>
+    <tr><td class="k">merit-order cost only</td><td class="num">+514,378</td><td class="num ok">90.8th pct</td><td class="num ok">6.7th pct</td><td class="num">+0.9285</td><td class="num">&minus;0.7575</td></tr>
+  </tbody>
+  <caption>Under a cost definition the tail is high demand with low wind and solar &mdash; the
+  scarcity tail the paper's narrative is about. Note this is <em>not</em> a re-normalisation: CVaR is
+  not invariant to adding a scenario-dependent constant, so it is a genuinely different problem with
+  a different optimal commitment.</caption>
+</table>
+</div>
+
+<div class="verdict">
+  <div class="eyebrow">Decision needed</div>
+  <p>Three ways forward, and this is your call, not a bug to be patched:</p>
+  <p><strong>(a) Make scarcity real.</strong> The load was rescaled to a 15% margin against
+  <em>peak</em>, which guarantees no scarcity can occur. Size against mean demand instead, or model
+  thermal forced outages so g&#772; varies. The W-suite already sizes as
+  <span class="mono">adequacy &times; mean demand</span> with <span class="mono">adequacy = 1.12</span>
+  and sweeps it down to 0.95, so it may not share this defect &mdash; unverified, and worth
+  checking the moment job 9283898 lands.</p>
+  <p><strong>(b) Report the tail of cost.</strong> Cleanest fix if the claim is about scarcity cost.
+  Changes the optimisation, so every E-result would need re-running.</p>
+  <p><strong>(c) Keep the welfare definition and say so plainly</strong> &mdash; that with inelastic,
+  always-served demand the welfare tail is the low-demand tail, and the result is about deviation-cost
+  positioning. Honest, but it is a much weaker paper.</p>
+  <p>My reading is <strong>(a)</strong>: it keeps the welfare formulation the theory is written in,
+  and it makes the tail an adequacy event, which is what the narrative promises. It is also the only
+  option under which the E2 incidence story becomes interesting, since thermal would finally acquire
+  scenario-dependent capacity.</p>
+</div>
 
 <h4>Eq. (94) without insurance, on this fleet</h4>
 <p>Each agent is re-solved facing the same prices but with no insurance market:</p>
@@ -1182,10 +1290,17 @@ binding (at &epsilon;=0.1, max &gamma; = 2.541e&minus;02 against an upper bound 
 
 <h2>Part IV &nbsp;&middot;&nbsp; Limitations to state, and one thing to fix</h2>
 
-<h3>Must be fixed before submission</h3>
-<p><strong>E4 needs a day-disjoint split</strong> (&sect;II.4). Everything else here can be stated as
-a limitation; this one is a claim that does not currently hold as described. It is a small change
-&mdash; partition the 92-day pool &mdash; and the suite reruns in minutes.</p>
+<h3>Must be resolved before submission</h3>
+<p><strong>1. The headline instance has no scarcity, and its tail is the low-demand tail</strong>
+(&sect;II.1). This is the big one, and it is a modelling decision rather than a bug: the load was
+rescaled to a 15% reserve margin against <em>peak</em>, which makes a capacity shortfall impossible
+by construction, and with demand always served the welfare loss is an almost perfectly decreasing
+function of demand. Options (a)/(b)/(c) are laid out in &sect;II.1; my reading is (a), size against
+mean demand or model forced outages. Until this is settled, the E-suite's tail numbers are correct
+arithmetic attached to the wrong narrative.</p>
+<p><strong>2. E4 needs a day-disjoint split</strong> (&sect;II.4). Small change &mdash; partition the
+92-day pool &mdash; and the suite reruns in minutes. Everything else below can be stated as a
+limitation; these two are claims that do not currently hold as described.</p>
 
 <h3>Should be stated plainly in the text</h3>
 <ul>
