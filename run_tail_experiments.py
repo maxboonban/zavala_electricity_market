@@ -75,8 +75,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--experiments", nargs="+",
-                    default=["W0", "W1", "W2", "W3", "W4", "W5", "W6"],
-                    choices=["W0", "W1", "W2", "W3", "W4", "W5", "W6"])
+                    default=["W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7"],
+                    choices=["W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7"])
     ap.add_argument("--scenarios", type=int, default=500)
     ap.add_argument("--seeds", type=int, default=30,
                     help="number of paired seeds")
@@ -107,6 +107,15 @@ def main():
                     default=[200.0, 500.0, 1000.0, 2000.0, 5000.0])
     ap.add_argument("--eps-levels", nargs="+", type=float,
                     default=[0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9])
+    # W7: four independent physical drivers of a heavy supply tail.
+    ap.add_argument("--stress-prob-levels", nargs="+", type=float,
+                    default=[0.02, 0.06, 0.12, 0.22, 0.35])
+    ap.add_argument("--stress-depth-levels", nargs="+", type=float,
+                    default=[-0.5, -1.2, -1.9, -2.8, -3.6])
+    ap.add_argument("--correlation-levels", nargs="+", type=float,
+                    default=[0.1, 0.4, 0.7, 0.9, 0.98])
+    ap.add_argument("--outage-levels", nargs="+", type=float,
+                    default=[0.0, 0.1, 0.3, 0.5, 0.7])
 
     ap.add_argument("--out", default="outputs/results")
     ap.add_argument("--tag", default="tail")
@@ -197,6 +206,15 @@ def main():
         results["W6"] = X.W6_frontier(
             sweep_seeds, args.scenarios, args.beta, solver, base_kw,
             args.eps_levels, rep)
+
+    if "W7" in args.experiments:
+        results["W7"] = X.W7_tail_heaviness(
+            sweep_seeds, args.scenarios, args.eps, args.beta, solver, base_kw,
+            dict(p_stress=args.stress_prob_levels,
+                 stress_shift=args.stress_depth_levels,
+                 rho_wind=args.correlation_levels,
+                 common_mode_prob=args.outage_levels),
+            rep)
 
     rep(f"\nelapsed {time.time() - t0:.1f}s")
 

@@ -92,14 +92,32 @@ def run_instance(seed, S, eps, beta, solver, use_ramp=False,
 
 
 def gaps(res, ref="risk_neutral", tgt="risk_aware"):
-    """Gap metrics for one instance, with every denominator we report."""
+    """Gap metrics for one instance, with every denominator we report.
+
+    Three denominators, because they answer different questions and move
+    differently as the tail gets heavier:
+
+      pct_of_reachable_cost -- against energy + adjustment, i.e. the cost the
+          day-ahead policy can actually move. This is the one that tracks the
+          thesis: it RISES with tail-heaviness.
+      pct_of_tail_cost -- against the whole conditional tail cost including
+          unserved x VOLL. Roughly FLAT in tail-heaviness, because heavier
+          tails inflate the invariant unserved term and the reachable gain at
+          similar rates, so the ratio cancels. Quoting only this understates
+          the result.
+      pct_of_total_welfare -- against CVaR welfare, which is dominated by the
+          near-constant gross consumer value. Most diluted of the three;
+          reported only so the figures can be reconciled.
+    """
     a, b = res[tgt], res[ref]
     d_cvar = a["cvar_welfare"] - b["cvar_welfare"]
     d_exp = a["expected_welfare"] - b["expected_welfare"]
+    reachable = max(b["tail_cost"] - b["tail"]["unserved_cost"], 1e-9)
     return dict(
         d_cvar_welfare=float(d_cvar),
         d_expected_welfare=float(d_exp),
-        # Honest denominator: the cost the policy can actually influence.
+        # The headline denominator: cost the policy can actually influence.
+        pct_of_reachable_cost=float(100.0 * d_cvar / reachable),
         pct_of_tail_cost=float(100.0 * d_cvar / max(b["tail_cost"], 1e-9)),
         # The conventional but diluted denominator, reported for reconciliation.
         pct_of_total_welfare=float(100.0 * d_cvar / max(abs(b["cvar_welfare"]), 1e-9)),
@@ -168,10 +186,12 @@ def _sweep(seeds, S, beta, solver, varying, base_kw, eps, use_ramp=False,
                 np.mean([m["p_physical_shortfall"] for m in meta_acc]))
         rows.append(row)
         rep(f"    {level_name:>12}  "
-            f"tailcost% {row['pct_of_tail_cost']['mean']:+7.3f} "
-            f"[{row['pct_of_tail_cost']['lo']:+.3f},{row['pct_of_tail_cost']['hi']:+.3f}]   "
+            f"gap$ {row['d_cvar_welfare']['mean']:>9.1f}   "
+            f"reach% {row['pct_of_reachable_cost']['mean']:+7.3f} "
+            f"[{row['pct_of_reachable_cost']['lo']:+.3f},"
+            f"{row['pct_of_reachable_cost']['hi']:+.3f}]   "
             f"$/MWh {row['dollars_per_mwh']['mean']:+7.4f}   "
-            f"d_unserved {row['d_cvar_unserved']['mean']:+8.3f}")
+            f"tailcost% {row['pct_of_tail_cost']['mean']:+6.3f}")
     return rows
 
 
@@ -394,6 +414,69 @@ def W5_decomposition(seeds, S, eps, beta, solver, base_kw, rep=print):
 # --------------------------------------------------------------------------
 # W6 : risk-return frontier
 # --------------------------------------------------------------------------
+
+def W7_tail_heaviness(seeds, S, eps, beta, solver, base_kw, drivers, rep=print):
+    """THE THESIS: does the advantage grow with the tail-heaviness of supply?
+
+    Sweeps four independent physical drivers of a heavy supply tail:
+
+      p_stress          how often the stressed weather regime occurs
+      stress_shift      how severe it is when it does
+      rho_wind          spatial correlation, which converts per-site variance
+                        into AGGREGATE tail risk
+      common_mode_prob  correlated thermal outages
+
+    Each is a different mechanism, so agreement between them is evidence the
+    result is about tail-heaviness itself rather than about one knob.
+
+    Read `pct_of_reachable_cost` and `dollars_per_mwh`, not `pct_of_tail_cost`.
+    Heavier tails raise unserved energy, which W0 shows is policy-invariant, so
+    it inflates the total-tail-cost denominator at roughly the same rate as the
+    numerator and the ratio cancels. That cancellation is an artefact of the
+    denominator, not an absence of scaling.
+    """
+    rep("\n" + "=" * 78)
+    rep("W7  Tail-heaviness of supply -- the central claim")
+    rep("=" * 78)
+    rep("Claim: tail-heavy supply produces tail-heavy welfare, and risk-aware")
+    rep("clearing is worth more there. Four independent drivers are swept; if")
+    rep("they agree, the result is about tail-heaviness and not about one knob.")
+    rep("")
+    rep("Report gap$ and reach% (share of energy + adjustment cost, the part a")
+    rep("day-ahead policy can move). tailcost% is flat BY CONSTRUCTION, because")
+    rep("heavier tails inflate the policy-invariant unserved term in step.")
+
+    out = {}
+    for name, levels in drivers.items():
+        rep(f"\n  --- driver: {name} ---")
+        rows = _sweep(seeds, S, beta, solver,
+                      [(f"{v:g}", {name: v}) for v in levels],
+                      base_kw, eps, rep=rep)
+        # Monotonicity is the evidence; report it rather than leaving it to the eye.
+        xs = [float(r["level"]) for r in rows]
+        g = [r["d_cvar_welfare"]["mean"] for r in rows]
+        rr = [r["pct_of_reachable_cost"]["mean"] for r in rows]
+        if len(xs) >= 3:
+            rho_g = float(stats.spearmanr(xs, g).statistic)
+            rho_r = float(stats.spearmanr(xs, rr).statistic)
+            growth = (max(g) / min(g)) if min(g) > 0 else np.nan
+            # stress_shift is the one driver where a MORE NEGATIVE level means
+            # a heavier tail, so its correlation against the raw level is
+            # negative for the same underlying monotonicity. Orient every
+            # driver so that "+" always means "heavier tail, larger gain".
+            orient = -1.0 if name == "stress_shift" else 1.0
+            rep(f"    Spearman(tail-heaviness, gap$) = {orient*rho_g:+.3f}   "
+                f"Spearman(tail-heaviness, reach%) = {orient*rho_r:+.3f}   "
+                f"gap grows {growth:.1f}x across the range")
+            out[name] = dict(rows=rows,
+                             spearman_gap=float(orient * rho_g),
+                             spearman_reach=float(orient * rho_r),
+                             growth_factor=float(growth),
+                             orientation=float(orient))
+        else:
+            out[name] = dict(rows=rows)
+    return out
+
 
 def W6_frontier(seeds, S, beta, solver, base_kw, eps_list, rep=print):
     rep("\n" + "=" * 78)

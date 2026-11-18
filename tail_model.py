@@ -278,6 +278,7 @@ def score(probs, ev, beta=0.95):
         cvar_welfare=float(-cvar(loss, probs, beta)),
         var_welfare=float(-var_level(loss, probs, beta)),
         worst_welfare=float(-loss.max()),
+        served_mwh=float(probs @ ev["D"].sum(axis=1)),
         expected_unserved=float(probs @ ev["unserved"]),
         cvar_unserved=float(cvar(ev["unserved"], probs, beta)),
         expected_dev_up=float(probs @ ev["dev_up"]),

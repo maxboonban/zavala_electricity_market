@@ -14,7 +14,7 @@
 #SBATCH --job-name=zavala_tail
 #SBATCH --output=outputs/logs/%x_%j.out
 #SBATCH --error=outputs/logs/%x_%j.err
-#SBATCH --time=10:00:00
+#SBATCH --time=14:00:00
 #SBATCH --partition=batch
 #SBATCH --mem=48G
 #SBATCH --cpus-per-task=8
@@ -71,9 +71,9 @@ EPS=0.3
 #    tail_model.py reproduces the verified zavala_cvar before anything is
 #    reported from it.
 # ---------------------------------------------------------------------------
-log "W0-W6 headline (S=${S}, ${SEEDS} seeds, eps=${EPS}, beta=${BETA})"
+log "W0-W7 headline (S=${S}, ${SEEDS} seeds, eps=${EPS}, beta=${BETA})"
 python -u run_tail_experiments.py \
-  --experiments W0 W1 W2 W3 W4 W5 W6 \
+  --experiments W0 W1 W2 W3 W4 W5 W6 W7 \
   --scenarios $S --seeds $SEEDS --sweep-seeds $SWEEP_SEEDS \
   --eps $EPS --beta $BETA --solver GUROBI \
   --ramp-premium 1.0 --backdown-discount 0.40 --adequacy 1.12 --voll 1000 \
@@ -81,6 +81,10 @@ python -u run_tail_experiments.py \
   --adequacy-levels 0.95 1.00 1.05 1.12 1.20 1.30 \
   --voll-levels 200 500 1000 2000 5000 \
   --eps-levels 0.0 0.1 0.2 0.3 0.5 0.7 0.9 \
+  --stress-prob-levels 0.02 0.06 0.12 0.22 0.35 \
+  --stress-depth-levels -0.5 -1.2 -1.9 -2.8 -3.6 \
+  --correlation-levels 0.1 0.4 0.7 0.9 0.98 \
+  --outage-levels 0.0 0.1 0.3 0.5 0.7 \
   --check-reference \
   --tag "${TAG}_main"
 

@@ -310,6 +310,73 @@ def fig_frontier(res, outdir):
     save(fig, outdir, "fig6_frontier")
 
 
+def fig_thesis(res, outdir):
+    """W7: the advantage grows with supply tail-heaviness. The headline figure.
+
+    Two rows over the same four drivers: absolute gain on top, share of
+    reachable cost below. Both rise. The total-tail-cost ratio is deliberately
+    NOT plotted here -- it is flat by construction (W0) and plotting it beside
+    these would invite exactly the wrong reading.
+    """
+    w7 = res.get("W7")
+    if not w7:
+        return
+    labels = {
+        "p_stress": "stress probability",
+        "stress_shift": "stress depth (latent shift)",
+        "rho_wind": r"spatial correlation $\rho$",
+        "common_mode_prob": "common-mode outage prob.",
+    }
+    names = [k for k in labels if k in w7 and w7[k].get("rows")]
+    if not names:
+        return
+
+    fig, axes = plt.subplots(2, len(names), figsize=(COL2, 3.6), sharey="row")
+    if len(names) == 1:
+        axes = axes.reshape(2, 1)
+
+    for j, key in enumerate(names):
+        block = w7[key]
+        rows = block["rows"]
+        x = _levels(rows)
+        # stress_shift runs negative-is-worse, so without inverting it this
+        # panel would slope down while the other three slope up, reading as a
+        # counterexample. Heavier tail is to the RIGHT in every panel.
+        invert = key == "stress_shift"
+
+        ax = axes[0, j]
+        m, lo, hi = zip(*[_ci(r["d_cvar_welfare"]) for r in rows])
+        m, lo, hi = np.array(m), np.array(lo), np.array(hi)
+        ax.fill_between(x, lo, hi, color=C["aware"], alpha=0.16, lw=0)
+        ax.plot(x, m, "o-", color=C["aware"])
+        if invert:
+            ax.invert_xaxis()
+        ax.set_title(labels[key], loc="left", fontsize=7.5)
+        if j == 0:
+            ax.set_ylabel("Tail-welfare gain (\\$)")
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v/1000:.0f}k"))
+        gf = block.get("growth_factor")
+        if gf and np.isfinite(gf):
+            ax.annotate(f"{gf:.1f}$\\times$", xy=(0.94, 0.08),
+                        xycoords="axes fraction", ha="right", fontsize=7.5,
+                        color=C["aware"], fontweight="bold")
+
+        ax = axes[1, j]
+        m, lo, hi = zip(*[_ci(r["pct_of_reachable_cost"]) for r in rows])
+        m, lo, hi = np.array(m), np.array(lo), np.array(hi)
+        ax.fill_between(x, lo, hi, color=C["neutral"], alpha=0.16, lw=0)
+        ax.plot(x, m, "s-", color=C["neutral"])
+        if invert:
+            ax.invert_xaxis()
+        ax.set_xlabel(labels[key], fontsize=7.5)
+        if j == 0:
+            ax.set_ylabel("Gain (\\% of reachable\ntail cost)")
+
+    fig.supxlabel("heavier supply tail " + r"$\longrightarrow$",
+                  fontsize=7.5, color=C["grey"])
+    save(fig, outdir, "fig7_thesis_tail_heaviness")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--result", required=True)
@@ -322,6 +389,7 @@ def main():
 
     style()
     print(f"figures from {args.result}:")
+    fig_thesis(res, args.outdir)
     fig_ceiling(res, args.outdir)
     fig_headline(res, args.outdir)
     fig_sweeps(res, args.outdir)

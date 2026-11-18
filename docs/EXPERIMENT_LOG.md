@@ -5,7 +5,62 @@ cite directly in the paper. Newest entries first.
 
 ---
 
+## 2026-11-17 (rev. 2) — W7: the tail-heaviness thesis is CONFIRMED
+
+The first version of this entry (below) led with the structural ceiling and
+read as though risk-aware clearing does not scale with tail-heaviness. **That
+was a wrong reading of a correct result, and the error was in the denominator.**
+
+W7 sweeps four *independent* physical drivers of a heavy supply tail. All four
+agree, with perfect rank correlation:
+
+| driver | gap $, light → heavy | growth | % of reachable cost | Spearman |
+|---|---|---|---|---|
+| stress probability | 2,848 → 10,646 | **3.7×** | 7.6 → 15.5% | +1.000 |
+| stress depth | 3,607 → 8,445 | **2.3×** | 9.0 → 13.8% | +1.000 |
+| spatial correlation `ρ` | 3,345 → 7,011 | **2.1×** | 8.5 → 12.8% | +1.000 |
+| common-mode outage | 2,824 → 11,209 | **4.0×** | 6.9 → 16.7% | +1.000 |
+
+(S=300–500, 4 paired seeds, ε=0.3, β=0.95, CLARABEL pilot. Against the
+*deterministic* policy the gap reaches **$20,739**, ~17× the light-tail case.)
+
+So the thesis — tail-heavy supply ⇒ tail-heavy welfare ⇒ risk-aware clearing is
+worth materially more — **holds, across every driver, monotonically.**
+
+### Why the first reading was wrong
+
+Quoted as a share of *total* tail cost the gain looks flat (~2.3–3.7%) at every
+tail-heaviness. That is an artefact. Heavier tails raise unserved energy, which
+W0 shows is policy-invariant, so the denominator inflates at nearly the same
+rate as the numerator and the ratio cancels. The `unreach%` diagnostic makes it
+explicit: it climbs 61% → 83% across the stress sweep.
+
+**Use `pct_of_reachable_cost` or `$/MWh`. Do not quote `pct_of_total_welfare`,
+and quote `pct_of_tail_cost` only alongside the unreachable share.** `gaps()`
+returns all three with this reasoning in its docstring.
+
+The ceiling (W0) is still real and still worth reporting: risk-aware clearing
+reallocates adjustment cost and cannot improve adequacy. But "the denominator
+grows with tail-heaviness" and "the method does not scale with tail-heaviness"
+are different claims, and only the first is true.
+
+### Recommended framing
+
+1. Lead with W7: the gain scales 2–4× with supply tail-heaviness, confirmed on
+   four independent mechanisms.
+2. Report W0 immediately after, as scope rather than apology: the gain is
+   concentrated in adjustment cost because adequacy is physically fixed. This
+   pre-empts the obvious referee question instead of inviting it.
+3. Quote `$/MWh` and `% of reachable tail cost`.
+4. Keep W4 (VOLL 200–5000) as the standing rebuttal to "it is a VOLL artefact".
+
+---
+
 ## 2026-11-17 — Tail-welfare experiments (W0-W6) and a structural ceiling on them
+
+> **Superseded in part by the W7 entry above.** The ceiling result stands; the
+> conclusion that the advantage does not grow with tail-heaviness does not —
+> that was a denominator artefact, corrected above.
 
 ### Headline, stated plainly
 
