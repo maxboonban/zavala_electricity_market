@@ -5,6 +5,136 @@ cite directly in the paper. Newest entries first.
 
 ---
 
+## 2026-11-17 — Tail-welfare experiments (W0-W6) and a structural ceiling on them
+
+### Headline, stated plainly
+
+**In the paper's formulation, risk-aware clearing cannot improve reliability.
+It reallocates adjustment cost.** Unserved energy is *identical* under the
+risk-aware, risk-neutral and deterministic policies — not approximately, but to
+solver precision (max relative difference `4.7e-08`). Since unserved energy is
+**73–82% of conditional tail cost**, this caps the achievable tail-welfare gain
+before any clearing happens.
+
+The proof is one line. Real-time capacity `ḡ(ω)` is exogenous, so
+
+    Σ_j D_j(ω) ≤ min( Σ_i ḡ_i(ω), Σ_j d̄_j(ω) )
+
+and because VOLL greatly exceeds every marginal cost the planner always serves
+the physical maximum. How much load is shed in scenario ω is fixed by the
+scenario, not by the day-ahead decision. **No scenario family changes this** —
+it is a property of the formulation, so searching for a distribution that makes
+the gap large is searching for something that does not exist.
+
+This is almost certainly why referees are unconvinced: they expect a reliability
+gain the model structurally cannot produce. Reporting the ceiling converts the
+objection into a contribution.
+
+### What the method *does* do, and it is statistically solid
+
+Pilot at S=100, 5 paired seeds, ε=0.3, β=0.95, CLARABEL:
+
+| metric | gain | 95% CI (paired) | p |
+|---|---|---|---|
+| % of tail cost | **+2.41%** | [+0.76, +4.07] | 0.016 |
+| % of total welfare | +0.74% | [−0.09, +1.58] | 0.068 |
+| $/MWh served | +5.71 | [−0.43, +11.86] | 0.061 |
+
+100% of seeds improved. The decomposition shows precisely what is bought:
+
+    upward adjustment   −3780      ← pre-positioning avoids expensive ramps
+    load adjustment     −1893
+    downward adjustment  +422      ← the premium paid to back down
+    energy                  −1
+    unserved                 0     ← untouchable, as above
+
+### The denominator is doing a lot of damage
+
+Expected social surplus is dominated by the gross consumer value `α^d · D ≈ 9e5`,
+which barely moves between policies. **A gain quoted as a percentage of total
+welfare is divided by that near-constant and reads ~3.3× smaller than a gain
+quoted against the cost the policy can actually move.** Both are reported in
+`gaps()`; the paper should lead with tail cost or $/MWh and state the
+relationship, not quote the diluted figure.
+
+This compounds the S5 finding below: the headline $/MWh figure is proportional
+to `delta_scale`, so a single number is a restatement of that constant. Quote
+the slope.
+
+### Mechanism is confirmed, monotone and causal
+
+The day-ahead position is priced *only* through the deviation terms, so the
+benefit must scale with `α⁺`. It does, cleanly (W2, 3 seeds, pilot):
+
+| `α⁺/c` | 0 | 1 | 3–4 |
+|---|---|---|---|
+| gain (% of tail cost) | +1.17 | +2.45 | +7.45 |
+
+`zavala_funcs.py` hard-codes `α⁺ = α⁻ = mc/10`, which is economically backwards:
+starting an uncommitted unit costs far more than backing a committed one down.
+Paper Eq. (3) already defines the two separately, so **asymmetry is within the
+existing theory** and is simply not being used. `tail_model.py` supports it;
+passing `dgp == dgn` recovers the current model exactly.
+
+### The one extension that breaks the ceiling
+
+Adding a start-up constraint `G_i(ω) − g_i ≤ R_i` makes the day-ahead schedule
+physically binding, and then unserved energy *does* respond to policy:
+
+| `R_i`/nameplate | Δ CVaR unserved | gain (% tail cost) |
+|---|---|---|
+| none (paper's model) | **−0.00 MW** | 2.21 |
+| 0.30, 0.15 | **−0.00 MW** | 0.6–1.3 |
+| 0.05 / 0.02 / 0.00 | −2.5 / −7.2 / −7.5 MW | 2.3 |
+
+This is an **extension beyond Eq. (63)–(65)** and is run and reported
+separately (`--ramp-limit-frac`, the `_rampext` output). It does not obviously
+dominate the asymmetry channel at these settings.
+
+Also note the invariance is a *consequence of VOLL dominating*: at VOLL=200 the
+peaker ramp premium becomes comparable to VOLL, shedding becomes a genuine
+choice, and `Δ unserved = −37.6 MW`. The ceiling is a high-VOLL phenomenon.
+
+### Scenario family
+
+`tail_scenarios.py` replaces assumed shocks with estimable dependence: a
+one-factor Gaussian copula over Beta capacity-factor marginals (spatial
+correlation), a two-component regime mixture for the latent weather factor
+(wide-area low-renewable events), demand loading on `−z` (the same weather that
+kills wind raises load), and correlated thermal forced outages with a
+common-mode block failure. Realised `corr(demand, renewables) = −0.71`,
+net-load p95/p50 = 1.66. No inflated VOLL is required, and W4 sweeps VOLL over
+200–5000 to demonstrate it.
+
+### Files
+
+- `tail_scenarios.py` — dependence-structured instance generator
+- `tail_model.py` — vectorised model with asymmetric `α±`; common recourse
+  evaluator; `assert_matches_reference` checks it against `zavala_cvar`
+- `tail_experiments.py` — W0–W6
+- `run_tail_experiments.py` — CLI, records git commit and solver provenance
+- `plot_tail_figures.py` — six conference-ready PDF/PNG figure pairs
+- `slurm_tail.sh` — OSCAR batch job; pushes results back
+
+### A correctness fix folded in
+
+`zavala_rt_energy_only` scored the deterministic baseline with the objective
+`(mc + δ)|G − g_da|`, which omits the energy cost and the load's value entirely
+— it minimises schedule *change*, not cost. Every policy is now scored through
+one `evaluate_da`, making the three-way comparison apples-to-apples.
+
+### Status / not yet done
+
+- Numbers above are a **local pilot** (CLARABEL, S=80–100, 3–6 seeds). The
+  cluster run at S=500 with 30 paired seeds under Gurobi is pending; CIs will
+  tighten materially.
+- `--check-reference` has not yet run (needs jax + Gurobi, cluster only).
+- Consider whether the paper's strongest claim is tail welfare at all: the
+  pricing and decentralisation results (T1–T11, D1–D5) all verify with
+  residuals at `1e-13`, which is a far stronger position than a 2% welfare gap.
+
+---
+
 ## 2026-11-04 — Decentralisation & insurance experiments (D1-D5), and a sign error in Eq. (111)-(112)
 
 ### Headline
