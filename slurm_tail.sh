@@ -28,6 +28,32 @@ mkdir -p outputs/logs outputs/results logs figures/tail
 LOG=outputs/logs/${SLURM_JOB_NAME}_${SLURM_JOB_ID}.log
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG"; }
 
+# This job runs for hours. If a late stage fails, or SLURM cancels us at the
+# walltime, everything computed up to that point must still be committed --
+# otherwise a failure in the figure step throws away a night of solving. The
+# commit therefore runs from an EXIT trap, not from the end of the script.
+commit_results() {
+    local rc=$?
+    log "Committing results (exit status ${rc}; push happens on a login node)"
+    git config user.email "hrithik_nambiar@brown.edu"
+    git config user.name "Hrithik Nambiar"
+    git add -A outputs/results/ outputs/logs/ logs/ figures/ 2>/dev/null || true
+    git commit -m "OSCAR tail-welfare results: job ${SLURM_JOB_ID} on ${SLURMD_NODENAME} (exit ${rc})
+
+W0-W7 at S=${S:-?}, ${SEEDS:-?} paired seeds, eps=${EPS:-?}, beta=${BETA:-?}.
+Committed by an EXIT trap, so this snapshot may be partial if rc != 0." \
+      || log "[WARN] nothing new to commit"
+    log ""
+    log "  ############################################################"
+    log "  #  RESULTS ARE COMMITTED BUT NOT PUSHED.                   #"
+    log "  #  From a LOGIN node, run:                                 #"
+    log "  #      cd ${WORKDIR}"
+    log "  #      ./push_results.sh                                   #"
+    log "  ############################################################"
+    exit $rc
+}
+trap commit_results EXIT
+
 log "Job ${SLURM_JOB_ID} on ${SLURMD_NODENAME}, workdir ${WORKDIR}"
 
 module load miniforge3/25.3.0-3
@@ -102,7 +128,8 @@ python -u run_tail_experiments.py \
   --ramp-premium 1.0 --backdown-discount 0.40 --adequacy 1.12 --voll 1000 \
   --ramp-limit-frac 0.03 \
   --asymmetry-levels 0.0 0.5 1.0 2.0 4.0 \
-  --tag "${TAG}_rampext"
+  --tag "${TAG}_rampext" \
+  || log "[WARN] ramp-extension arm failed; headline results above are unaffected"
 
 # ---------------------------------------------------------------------------
 # 3. Tail-level robustness: the whole story should not hinge on beta = 0.95.
@@ -114,39 +141,28 @@ python -u run_tail_experiments.py \
   --eps $EPS --beta 0.99 --solver GUROBI \
   --ramp-premium 1.0 --backdown-discount 0.40 --adequacy 1.12 --voll 1000 \
   --asymmetry-levels 0.0 0.5 1.0 2.0 4.0 \
-  --tag "${TAG}_beta99"
+  --tag "${TAG}_beta99" \
+  || log "[WARN] beta=0.99 arm failed; headline results above are unaffected"
 
 # ---------------------------------------------------------------------------
 # 4. Figures
 # ---------------------------------------------------------------------------
+# Figures are re-renderable from the JSON at any time, so a failure here must
+# never cost the solve. Both are non-fatal.
 log "Rendering figures"
 python -u plot_tail_figures.py \
   --result "outputs/results/tail_${TAG}_main.json" \
-  --outdir figures/tail
+  --outdir figures/tail \
+  || log "[WARN] main figures failed; re-render locally from the JSON"
 python -u plot_tail_figures.py \
   --result "outputs/results/tail_${TAG}_rampext.json" \
-  --outdir figures/tail_rampext
+  --outdir figures/tail_rampext \
+  || log "[WARN] rampext figures failed; re-render locally from the JSON"
 
 # ---------------------------------------------------------------------------
-# 5. Commit results. Compute nodes have no outbound network, so `git push`
-#    CANNOT work here; ./push_results.sh does that from a login node.
+# 5. Commit happens in the EXIT trap installed at the top, so that a failure
+#    in any stage above still preserves what was computed.
 # ---------------------------------------------------------------------------
-log "Committing results (push must happen on a login node)"
-git config user.email "hrithik_nambiar@brown.edu"
-git config user.name "Hrithik Nambiar"
-git add outputs/results/ outputs/logs/ logs/ figures/
-git commit -m "OSCAR tail-welfare results: job ${SLURM_JOB_ID} on ${SLURMD_NODENAME}
-
-W0-W7 at S=${S}, ${SEEDS} paired seeds, eps=${EPS}, beta=${BETA}; plus the
-start-up-constraint extension and a beta=0.99 robustness run. Figures included." \
-  || log "[WARN] nothing new to commit"
-
-log ""
-log "  ############################################################"
-log "  #  RESULTS ARE COMMITTED BUT NOT PUSHED.                   #"
-log "  #  From a LOGIN node, run:                                 #"
-log "  #      cd ${WORKDIR}"
-log "  #      ./push_results.sh                                   #"
-log "  ############################################################"
+log "All stages finished."
 
 log "Done."

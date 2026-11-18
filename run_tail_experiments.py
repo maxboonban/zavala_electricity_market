@@ -164,12 +164,24 @@ def main():
         from tail_model import assert_matches_reference
         inst = generate_tail_instance(args.seed0, S=min(args.scenarios, 60),
                                       **base_kw)
+        # Two kinds of failure, and they must not be conflated. If the REFERENCE
+        # cannot be loaded at all -- zavala_funcs imports jax, which is fragile
+        # across machines -- that says nothing about the model being reported,
+        # and must not abort a run that is otherwise fine. If the reference
+        # loads and DISAGREES, every number downstream is suspect and the run
+        # must stop.
         try:
             d = assert_matches_reference(inst, eps=args.eps, beta=args.beta,
                                          solver=solver)
             rep(f"  [PASS] max discrepancy {max(d.values()):.3e}   {d}")
+        except (ImportError, OSError, RuntimeError) as exc:
+            rep(f"  [SKIP] reference unavailable: {type(exc).__name__}: {exc}")
+            rep("  The vectorised model could NOT be cross-checked against")
+            rep("  zavala_cvar on this machine. Results below stand on their")
+            rep("  own; say so if they are reported without this check.")
         except Exception as exc:                                # noqa: BLE001
-            rep(f"  [FAIL] {type(exc).__name__}: {exc}")
+            rep(f"  [FAIL] model disagrees with the reference: "
+                f"{type(exc).__name__}: {exc}")
             raise
 
     t0 = time.time()
