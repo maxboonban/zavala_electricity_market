@@ -74,7 +74,7 @@ def _losses(Gr, Dr, g, d, mc, mv, dgp, dgn, ddp, ddn):
 
 
 def solve_planner(inst, eps=0.0, beta=0.95, solver=None, verbose=False,
-                  da_nonneg=True, use_ramp=False):
+                  da_nonneg=True, use_ramp=False, da_cap=True):
     """Risk-aware two-stage clearing, paper Eq. (58)-(65).
 
     eps = 0 gives the risk-neutral stochastic planner (`zavala`); eps > 0 adds
@@ -117,7 +117,14 @@ def solve_planner(inst, eps=0.0, beta=0.95, solver=None, verbose=False,
     # Day-ahead quantities cannot exceed nameplate. Theory note T10 shows the
     # program is bounded only because alpha^- > 0; this makes boundedness
     # structural rather than contingent on the deviation prices.
-    cons += [g <= gbar.max(axis=0), d <= dbar.max(axis=0)]
+    #
+    # This constraint is NOT in the paper's Eq. (63)-(65), which bound only the
+    # realised quantity x_i + x_i^+ - x_i^-, and it is not in `zavala_cvar`.
+    # It therefore makes this feasible set a strict subset of the reference's,
+    # so it must be switched OFF when the two models are compared, or the
+    # comparison measures the constraint rather than the implementation.
+    if da_cap:
+        cons += [g <= gbar.max(axis=0), d <= dbar.max(axis=0)]
 
     if use_ramp and inst.get("ramp_cap") is not None:
         cons.append(Gr - g[None, :] <= np.asarray(inst["ramp_cap"], float)[None, :])
@@ -346,8 +353,11 @@ def assert_matches_reference(inst, eps=0.3, beta=0.95, solver=None,
     sym["ddp"] = sym["ddn"] = np.asarray(inst["mv"], float) / 10.0
     sym["ramp_cap"] = None
 
+    # da_cap=False: the reference has no day-ahead nameplate cap, so comparing
+    # against the capped model measures that constraint, not the
+    # implementation. The cap's own effect is quantified separately below.
     mine = solve_planner(sym, eps=eps, beta=beta, solver=solver,
-                         da_nonneg=False, use_ramp=False)
+                         da_nonneg=False, use_ramp=False, da_cap=False)
 
     g_r, d_r, G_r, D_r, pi_r, Pi_r, gam_r = zavala_cvar(
         sym["probs"], sym["mc"], sym["mv"], sym["gbar"], sym["dbar"],
@@ -410,4 +420,23 @@ def assert_matches_reference(inst, eps=0.3, beta=0.95, solver=None,
         rep("         That is alternate optima: this LP is degenerate, so the")
         rep("         solution slides along the optimal face and the dual is")
         rep("         not unique. The equivalence still holds.")
+
+    # The experiments run WITH the day-ahead nameplate cap, which the reference
+    # and the paper's Eq. (63)-(65) do not have. Equivalence to the reference
+    # therefore does not by itself license the experiments. Measure what the
+    # cap costs so the deviation is a reported number, not an assumption.
+    capped = solve_planner(sym, eps=eps, beta=beta, solver=solver,
+                           da_nonneg=False, use_ramp=False, da_cap=True)
+    capped_loss = (capped["G"] @ sym["mc"]
+                   + np.abs(capped["G"] - capped["g"][None, :]) @ sym["dgp"]
+                   - capped["D"] @ sym["mv"]
+                   + np.abs(capped["D"] - capped["d"][None, :]) @ sym["ddp"])
+    rho_capped = _rho(capped_loss)
+    out["d_rho_da_cap"] = (rho_capped - rho_mine) / scale   # signed; >= 0
+    if rep is not None:
+        rep(f"  [note] the T10 day-ahead nameplate cap, which the paper's "
+            f"Eq. (63)-(65) do not impose,")
+        rep(f"         raises the planner objective by "
+            f"{out['d_rho_da_cap']:+.2e} relative. The experiments run WITH")
+        rep("         it; report that alongside any absolute welfare number.")
     return out
