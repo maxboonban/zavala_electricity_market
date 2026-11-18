@@ -172,8 +172,10 @@ def main():
         # must stop.
         try:
             d = assert_matches_reference(inst, eps=args.eps, beta=args.beta,
-                                         solver=solver)
-            rep(f"  [PASS] max discrepancy {max(d.values()):.3e}   {d}")
+                                         solver=solver, rep=rep)
+            rep(f"  [PASS] objective d_rho_RA = {d['d_rho_RA']:.3e}")
+            rep(f"         diagnostics: " + "  ".join(
+                f"{k}={v:.2e}" for k, v in d.items() if k != "d_rho_RA"))
         except (ImportError, OSError, RuntimeError) as exc:
             rep(f"  [SKIP] reference unavailable: {type(exc).__name__}: {exc}")
             rep("  The vectorised model could NOT be cross-checked against")

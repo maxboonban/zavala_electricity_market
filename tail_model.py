@@ -306,12 +306,38 @@ def tail_decomposition(probs, ev, beta=0.95):
 # equivalence check against the verified reference implementation
 # --------------------------------------------------------------------------
 
-def assert_matches_reference(inst, eps=0.3, beta=0.95, solver=None, tol=1e-5):
+def assert_matches_reference(inst, eps=0.3, beta=0.95, solver=None,
+                             tol_obj=1e-6, tol_diag=1e-3, rep=print):
     """Check the vectorised model reproduces `zavala_funcs.zavala_cvar`.
 
     Only valid when deviation prices are symmetric, since the reference cannot
     express asymmetry. Run on the cluster, where Gurobi and jax are available.
-    Returns a dict of discrepancies; raises if any exceeds `tol` relatively.
+
+    What is and is not pinned down
+    ------------------------------
+    Both models minimise the SAME objective,
+
+        rho_RA[l] = (1 - eps) * E[l] + eps * CVaR_beta[l],
+
+    and at an optimum that value is unique. It is therefore the equivalence
+    test, held to `tol_obj`.
+
+    `E[l]` and `CVaR_beta[l]` SEPARATELY are not unique. This LP is degenerate
+    -- many allocations achieve the same rho_RA -- so a solution may slide along
+    the optimal face, trading expected loss against tail loss at the exchange
+    rate eps/(1-eps) while rho_RA does not move. Two correct implementations can
+    land on different points of that face.
+
+    `p0` is a dual variable, and the dual is non-unique whenever the primal is
+    degenerate, which is the normal case here: with a flat merit order many
+    bases support the same allocation. Requiring two formulations to return the
+    same marginal price asserts something the LP does not guarantee.
+
+    So those three are reported as DIAGNOSTICS at the looser `tol_diag`. A
+    discrepancy in them with rho_RA agreeing tightly is positive evidence of
+    alternate optima, not of a modelling error -- and the function says so when
+    it sees that signature. A discrepancy in rho_RA is a real disagreement and
+    always raises.
     """
     from zavala_funcs import zavala_cvar
 
@@ -339,13 +365,49 @@ def assert_matches_reference(inst, eps=0.3, beta=0.95, solver=None, tol=1e-5):
                  + np.abs(mine["D"] - mine["d"][None, :]) @ sym["ddp"])
 
     scale = max(1.0, abs(float(probs @ ref_loss)))
-    out = dict(
-        d_expected_loss=abs(float(probs @ mine_loss) - float(probs @ ref_loss)) / scale,
+
+    # The unique quantity: the objective both models minimise. Recomputed from
+    # each solution's own loss vector, so it does not depend on either solver
+    # reporting its objective consistently.
+    def _rho(loss):
+        return (1.0 - eps) * float(probs @ loss) + eps * cvar(loss, probs, beta)
+
+    rho_mine, rho_ref = _rho(mine_loss), _rho(ref_loss)
+    d_rho = abs(rho_mine - rho_ref) / scale
+
+    diag = dict(
+        d_expected_loss=abs(float(probs @ mine_loss)
+                            - float(probs @ ref_loss)) / scale,
+        d_cvar=abs(cvar(mine_loss, probs, beta)
+                   - cvar(ref_loss, probs, beta)) / scale,
         d_p0=abs(mine["p0"] - float(pi_r)) / max(1.0, abs(float(pi_r))),
-        d_sum_gamma=abs(mine["gamma"].sum() - float(np.asarray(gam_r).sum())),
-        d_cvar=abs(cvar(mine_loss, probs, beta) - cvar(ref_loss, probs, beta)) / scale,
     )
-    bad = {k: v for k, v in out.items() if not np.isfinite(v) or v > tol}
-    if bad:
-        raise AssertionError(f"vectorised model disagrees with reference: {bad}")
+    # sum(gamma) = eps is an identity, not an allocation, so it is exact.
+    d_sum_gamma = abs(mine["gamma"].sum() - float(np.asarray(gam_r).sum()))
+
+    out = dict(d_rho_RA=d_rho, d_sum_gamma=d_sum_gamma, **diag)
+
+    if not np.isfinite(d_rho) or d_rho > tol_obj:
+        raise AssertionError(
+            f"vectorised model disagrees with reference on the OBJECTIVE: "
+            f"d_rho_RA = {d_rho:.3e} > {tol_obj:.0e}. This is a real "
+            f"disagreement, not degeneracy. Full: {out}")
+    if not np.isfinite(d_sum_gamma) or d_sum_gamma > 1e-7:
+        raise AssertionError(f"sum(gamma) differs: {d_sum_gamma:.3e}")
+
+    loose = {k: v for k, v in diag.items()
+             if not np.isfinite(v) or v > tol_diag}
+    if loose:
+        raise AssertionError(
+            f"objective agrees (d_rho_RA = {d_rho:.3e}) but the allocation "
+            f"differs by more than degeneracy explains: {loose}")
+
+    # Report the signature explicitly rather than leaving it to be inferred.
+    spread = max(diag.values())
+    if spread > tol_obj and rep is not None:
+        rep(f"  [note] objective matches to {d_rho:.2e} while E[l], CVaR and "
+            f"p0 differ by up to {spread:.2e}.")
+        rep("         That is alternate optima: this LP is degenerate, so the")
+        rep("         solution slides along the optimal face and the dual is")
+        rep("         not unique. The equivalence still holds.")
     return out
