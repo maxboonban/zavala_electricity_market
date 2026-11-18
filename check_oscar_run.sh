@@ -29,6 +29,14 @@ pass() { echo "  [PASS] $*"; ok=$((ok+1)); }
 fail() { echo "  [FAIL] $*"; bad=$((bad+1)); }
 warn() { echo "  [WARN] $*"; }
 
+# `cmd | grep -q` is a trap under `set -o pipefail`: grep exits on the first
+# match, SIGPIPEs the producer, and pipefail reports the pipeline as failed
+# even though the pattern WAS found. Buffer first, then match.
+has() {   # has <pattern> <<< text-on-stdin
+    local txt; txt=$(cat)
+    [[ -n "$txt" ]] && echo "$txt" | grep -q -- "$1"
+}
+
 echo "================================================================"
 echo "Verifying OSCAR job $JOBID"
 echo "================================================================"
@@ -36,10 +44,17 @@ echo "================================================================"
 # --- 1. SLURM exit status ---------------------------------------------------
 echo
 echo "1. SLURM accounting"
-LINE=$(sacct -j "$JOBID" -X -n --format=JobName%24,State%20,ExitCode,Elapsed,MaxRSS 2>/dev/null | head -1)
+JOBNAME=""
+if ! command -v sacct >/dev/null 2>&1; then
+    warn "no sacct here (not a SLURM host) — skipping. The artefact and JSON"
+    warn "  checks below still apply; run this on OSCAR for the exit code."
+    LINE=""
+else
+    LINE=$(sacct -j "$JOBID" -X -n --format=JobName%24,State%20,ExitCode,Elapsed,MaxRSS 2>/dev/null | head -1)
+fi
 if [[ -z "$LINE" ]]; then
-    fail "job $JOBID not in sacct (too old, or wrong id)"
-    JOBNAME=""
+    command -v sacct >/dev/null 2>&1 && \
+        fail "job $JOBID not in sacct (too old, or wrong id)"
 else
     echo "     $LINE"
     JOBNAME=$(echo "$LINE" | awk '{print $1}')
@@ -78,13 +93,24 @@ else
     else
         fail "no completion marker — the script stopped partway"
     fi
+    # Without sacct (e.g. checking from a laptop) the log filename is the only
+    # thing that says which recipe ran, and that decides the file inventory.
+    [[ -z "$JOBNAME" ]] && JOBNAME=$(basename "$LOGF" | sed "s/_${JOBID}\.log$//")
 fi
 
-# A stage can print FAIL and still exit 0 if it is behind a tee/pipe.
-for f in "$OUTF" logs/*.log; do
+# A stage can print FAIL and still exit 0 if it is behind a tee/pipe. Scan only
+# THIS job's records: .out captures every stage's stdout, including the tee'd
+# verification output. Scanning logs/*.log would pick up unrelated older runs.
+for f in "$OUTF" $(ls -1 logs/*"${JOBID}"*.log 2>/dev/null); do
     [[ -f "$f" ]] || continue
     n=$(grep -c "\[FAIL\]\|FATAL\|Traceback\|SOME CHECKS FAILED" "$f" 2>/dev/null)
     [[ "$n" -gt 0 ]] && fail "$n failure line(s) inside $f"
+done
+# These two are appended to across runs (tee -a), so a hit may be stale.
+for f in logs/verify_theory_gurobi.log logs/verify_cvar_pricing_gurobi.log; do
+    [[ -f "$f" ]] || continue
+    n=$(grep -c "\[FAIL\]\|SOME CHECKS FAILED" "$f" 2>/dev/null)
+    [[ "$n" -gt 0 ]] && warn "$n failure line(s) in $f (appended across runs — may predate this job)"
 done
 [[ -n "$ERRF" && -s "$ERRF" ]] && { warn "stderr is non-empty: $ERRF"; tail -5 "$ERRF" | sed 's/^/       /'; }
 
@@ -129,12 +155,12 @@ echo "4. Results pushed to GitHub"
 git fetch origin hrithik_final -q 2>/dev/null
 LOCAL=$(git rev-parse HEAD 2>/dev/null)
 REMOTE=$(git rev-parse origin/hrithik_final 2>/dev/null)
-if git log origin/hrithik_final --oneline -20 2>/dev/null | grep -q "job ${JOBID}"; then
+if git log origin/hrithik_final --oneline -40 2>/dev/null | has "job ${JOBID}"; then
     pass "a commit for job ${JOBID} is on origin/hrithik_final"
 elif [[ "$LOCAL" != "$REMOTE" ]]; then
     warn "local HEAD != origin/hrithik_final; results may be committed but unpushed"
     warn "  -> git push origin hrithik_final"
-elif git log --oneline -20 2>/dev/null | grep -q "job ${JOBID}"; then
+elif git log --oneline -40 2>/dev/null | has "job ${JOBID}"; then
     warn "job ${JOBID} is committed locally but NOT on the remote."
     warn "  Compute nodes have no outbound network, so the job could not push."
     warn "  From a LOGIN node:   cd $PWD && ./push_results.sh"

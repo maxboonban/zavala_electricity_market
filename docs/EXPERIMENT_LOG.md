@@ -5,6 +5,128 @@ cite directly in the paper. Newest entries first.
 
 ---
 
+## 2026-11-18 — First full Gurobi run at publishable scale (OSCAR job 9253564)
+
+Everything below is measured, not piloted: `S=500`, Gurobi, node2411, 2h09m
+wall. Commit `35593dd`. Verified complete by `./check_oscar_run.sh 9253564`
+(SLURM exit 0:0, end-of-recipe marker, 10/10 artefacts, all JSON parseable).
+**These numbers supersede every CLARABEL pilot figure quoted earlier in this
+log for the D- and E-suites.** The W-suite (tail welfare) has *not* yet run at
+this scale — `slurm_tail.sh` is still pending.
+
+### Verification suites
+
+`verify_theory.py` at ε ∈ {0.1, 0.3, 0.5}: **ALL THEORY CHECKS PASSED.** The
+two sign conventions separate by 12 orders of magnitude (corrected max rel gap
+`6.1e-13` ≈ solver tolerance, printed `1.2e+00`), so T1 is not a judgement
+call. Theorem 9's construction verified; both readings of `t*` agree to
+`1.2e-15`, confirming shift-invariance.
+
+`verify_cvar_pricing.py`: **ALL CHECKS PASSED**, including ε=1.0, which killed
+job 9252850. The T11 fix behaves correctly under Gurobi: at ε=1 the tilted
+measure concentrates on exactly 5/100 = (1−β)S scenarios, prices are finite on
+that support, and the other 95 are reported as unpriced rather than as a fake
+0/0 price. Also measured: the uncorrected denominator would shift `E[Π]` by
+−$21 to −$32/MWh, with per-scenario errors of exactly ε (30%, 50%) — the bug
+was not numerically negligible.
+
+### D1–D5, decentralisation (S=500, ε=0.1, β=0.95)
+
+All invariants hold at solver tolerance: Eq. (110) price cancellation
+`1.7e-10`, Eq. (95) state-by-state clearing `2.0e-10`, (UM) optimality
+`2.2e-15`, Eq. (94) multiplier agreement `1.7e-18`, Eq. (113) slope-1
+`1.1e-16`, Eq. (121) constant insured loss over the tail `3.6e-12`.
+
+**D2 is the economically interesting one.** Without insurance, agents' tail
+sets genuinely disagree — per-agent tail-scenario counts range 21–29 against
+the planner's 25 — and Eq. (94) fails by `1.5e-02` with an allocation error of
+218.7 MW. This is the obstruction of §8.2.2 measured rather than asserted.
+
+**D5 caveat for the paper:** the ε=1.0 row of the transfer table prints `nan`
+for the tail premium and `mean|r|`. That is T11 propagating correctly — the
+transfers depend on `p_w`, which does not exist off the tail at ε=1 — but it
+must be rendered as "—" with a footnote, not as `nan`. *Open item.*
+
+### E1–E6, IM3 GO-WEST (S=500, ε=0.3, β=0.95, summer, hour 18)
+
+Value of completing the insurance market: **$32,786/h = $1.2225/MWh served**
+(0.136% of risk-adjusted welfare, $287.2M/yr annualised). The decomposition is
+the mechanism in two numbers: risk-aware clearing *gives up* $48,996/h of
+expected welfare to buy back $223,610/h of tail loss.
+
+**E6 is the most defensible way to quote this.** The value is linear in the
+deviation bid price `δ` to within 0.000% across a 20× sweep, so a single
+headline $/MWh figure is a restatement of an arbitrary constant. Report the
+slope: **12.225 $/MWh per unit δ**, equivalently **1.2225% of the load's
+deviation bid price**. That is a property of the uncertainty, not of a tuned
+parameter — and it is the answer to the referee who assumes the result was
+bought with a large VOLL.
+
+**E4, out-of-sample (30 reps, train S=400, test on a disjoint S=400):**
+
+| metric | held-out diff (RA − RN) | improved in |
+|---|---|---|
+| `E[l]` | +52,567 ± 5,342 | 0/30 |
+| **`CVaR₀.₉₅[l]`** | **−219,602 ± 2,744** | **30/30** |
+| `ρ_RA[l]` | −29,083 ± 3,817 | 29/30 |
+
+The tail column is the claim: 30/30 on *held-out* scenarios rules out
+"CVaR merely fits the in-sample tail". The 0/30 on `E[l]` is not a failure —
+it is the trade being made, and its sign is predicted by the theory.
+
+**E5, paired statistics (30 reps).** This repairs the reporting in Tables 1
+and 3, where the difference is smaller than either unpaired error bar:
+
+| method | mean CVaR₀.₉₅[l] | unpaired ± | **paired diff** | paired ± | wins |
+|---|---|---|---|---|---|
+| risk-neutral | −19,731,241 | 113,778 | — | — | — |
+| CVaR ε=0.1 | −19,762,885 | 113,483 | −31,643 | 4,765 | 30/30 |
+| CVaR ε=0.3 | −19,957,863 | 114,123 | −226,622 | 6,404 | 30/30 |
+| CVaR ε=0.5 | −20,313,667 | 98,670 | −582,426 | 20,533 | 30/30 |
+| CVaR ε=1.0 | −20,369,989 | 98,598 | −638,748 | 16,436 | 30/30 |
+
+The unpaired bar is ~18× the ε=0.1 effect; the paired bar is ~0.15× it. Same
+data, opposite conclusion. **Tables 1 and 3 must be re-reported as paired.**
+
+**Seasonal / delivery-hour robustness** (E1, four configurations):
+
+| config | $/h | $/MWh |
+|---|---|---|
+| winter, h08 | 13,852 | 0.4928 |
+| winter, h18 | 11,473 | 0.3904 |
+| summer, h08 | 30,122 | 1.1212 |
+| summer, h18 | 32,786 | 1.2225 |
+
+Positive everywhere, ~2.5–3× larger in summer. The headline configuration is
+the most favourable of the four, so quote the range, not just summer h18.
+
+### Two dataset limitations to state in the paper, not hide
+
+1. **E2 risk incidence:** `π_k` is *exactly* zero for coal and nuclear. This is
+   the dataset, not the theory — thermal capacity in `thermal_gens.csv` is
+   constant across scenarios, so an infra-marginal unit has constant `L` and
+   `Σ_w (q_w − ρ_w)L = L·0 = 0`. Forced outages would give thermal genuine tail
+   exposure. The load carries 99.1% of the tail-risk premium and is the natural
+   buyer of cover; renewables are mildly negative and sell it.
+2. **Eq. (111) equal-share rule:** the flat pool share (−$104,273/h) swamps the
+   per-agent signal, making the net column nearly identical across generators.
+   A contribution-weighted `δ_k` would allocate it sensibly. Property of the
+   rule, worth a remark.
+
+3. **E3:** `270 of 280` thermal heat rates were floored to physical minima
+   because the dataset's gas heat rates are not physical. Flagged in-log.
+
+### Infrastructure fixed in this round
+
+- OSCAR compute nodes have **no outbound network**, so the in-job `git push`
+  could never work. Jobs now commit only; `push_results.sh` pushes from a login
+  node. The old failure mode looked like a lost run but never was.
+- `check_oscar_run.sh` added: SLURM exit code, end-of-recipe marker, per-stage
+  artefact inventory, `json.load` on every output (a killed job leaves
+  truncated JSON that `ls` reports as present), and push status.
+
+---
+
 ## 2026-11-17 (rev. 2) — W7: the tail-heaviness thesis is CONFIRMED
 
 The first version of this entry (below) led with the structural ceiling and
