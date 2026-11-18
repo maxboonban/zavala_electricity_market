@@ -282,3 +282,4 @@
   prob = cp.Problem(objective, constraints)
 /oscar/home/hnambia1/Desktop/zavala_electricity_market/zavala_funcs.py:915: UserWarning: Objective contains too many subexpressions. Consider vectorizing your CVXPY code to speed up compilation.
   prob.solve(solver=cp.GUROBI if solver is None else solver, verbose=verbose)
+fatal: could not read Username for 'https://github.com': No such device or address

@@ -1105,3 +1105,40 @@ Results written to outputs/results/im3_im3_S500_9253564_summer_h18.json
 Log written to logs/im3_im3_S500_9253564_summer_h18.log
 [2026-11-17 23:08:59] Job completed successfully.
 [2026-11-17 23:08:59] Pushing results to GitHub (branch hrithik_final)
+[hrithik_final 3a3ebc7] OSCAR results: job 9253564 on node2411
+ 34 files changed, 5972 insertions(+)
+ create mode 100644 logs/decentralized_dec_S500_9253564.log
+ create mode 100644 logs/im3_im3_S500_9253564_main.log
+ create mode 100644 logs/im3_im3_S500_9253564_oos.log
+ create mode 100644 logs/im3_im3_S500_9253564_paired.log
+ create mode 100644 logs/im3_im3_S500_9253564_summer_h18.log
+ create mode 100644 logs/im3_im3_S500_9253564_summer_h8.log
+ create mode 100644 logs/im3_im3_S500_9253564_winter_h18.log
+ create mode 100644 logs/im3_im3_S500_9253564_winter_h8.log
+ create mode 100644 logs/verify_cvar_pricing_gurobi.log
+ create mode 100644 logs/verify_theory_gurobi.log
+ create mode 100644 outputs/logs/zavala_im3_9252321.err
+ create mode 100644 outputs/logs/zavala_im3_9252321.out
+ create mode 100644 outputs/logs/zavala_im3_9252462.err
+ create mode 100644 outputs/logs/zavala_im3_9252462.out
+ create mode 100644 outputs/logs/zavala_im3_9252521.err
+ create mode 100644 outputs/logs/zavala_im3_9252521.log
+ create mode 100644 outputs/logs/zavala_im3_9252521.out
+ create mode 100644 outputs/logs/zavala_im3_9252850.err
+ create mode 100644 outputs/logs/zavala_im3_9252850.log
+ create mode 100644 outputs/logs/zavala_im3_9252850.out
+ create mode 100644 outputs/logs/zavala_im3_9253438.err
+ create mode 100644 outputs/logs/zavala_im3_9253438.log
+ create mode 100644 outputs/logs/zavala_im3_9253438.out
+ create mode 100644 outputs/logs/zavala_im3_9253564.err
+ create mode 100644 outputs/logs/zavala_im3_9253564.log
+ create mode 100644 outputs/logs/zavala_im3_9253564.out
+ create mode 100644 outputs/results/decentralized_dec_S500_9253564.json
+ create mode 100644 outputs/results/im3_im3_S500_9253564_main.json
+ create mode 100644 outputs/results/im3_im3_S500_9253564_oos.json
+ create mode 100644 outputs/results/im3_im3_S500_9253564_paired.json
+ create mode 100644 outputs/results/im3_im3_S500_9253564_summer_h18.json
+ create mode 100644 outputs/results/im3_im3_S500_9253564_summer_h8.json
+ create mode 100644 outputs/results/im3_im3_S500_9253564_winter_h18.json
+ create mode 100644 outputs/results/im3_im3_S500_9253564_winter_h8.json
+[2026-11-17 23:09:01] [WARN] git push failed — pull the results manually from OSCAR scratch.
