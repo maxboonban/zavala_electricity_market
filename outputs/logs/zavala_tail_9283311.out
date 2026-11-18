@@ -29,3 +29,16 @@ Set parameter LicenseID to value 2885856
 Academic license 2885856 - for non-commercial use only - registered to hr___@brown.edu
   [FAIL] model disagrees with the reference: SolverError: Solver 'GUROBI' failed. Try another solver, or solve with verbose=True for more information.
 [2026-11-18 10:39:49] Committing results (exit status 1; push happens on a login node)
+[hrithik_final 60896fd] OSCAR tail-welfare results: job 9283311 on node1817 (exit 1)
+ 4 files changed, 70 insertions(+)
+ create mode 100644 logs/tail_tail_9283311_main.log
+ create mode 100644 outputs/logs/zavala_tail_9283311.err
+ create mode 100644 outputs/logs/zavala_tail_9283311.log
+ create mode 100644 outputs/logs/zavala_tail_9283311.out
+[2026-11-18 10:39:49] 
+[2026-11-18 10:39:49]   ############################################################
+[2026-11-18 10:39:49]   #  RESULTS ARE COMMITTED BUT NOT PUSHED.                   #
+[2026-11-18 10:39:49]   #  From a LOGIN node, run:                                 #
+[2026-11-18 10:39:49]   #      cd /oscar/home/hnambia1/Desktop/zavala_electricity_market
+[2026-11-18 10:39:49]   #      ./push_results.sh                                   #
+[2026-11-18 10:39:49]   ############################################################
