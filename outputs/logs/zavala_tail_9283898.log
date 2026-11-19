@@ -7,3 +7,10 @@
 [2026-11-18 21:33:53] All stages finished.
 [2026-11-18 21:33:53] Done.
 [2026-11-18 21:33:53] Committing results (exit status 0; push happens on a login node)
+[2026-11-18 21:33:54] 
+[2026-11-18 21:33:54]   ############################################################
+[2026-11-18 21:33:54]   #  RESULTS ARE COMMITTED BUT NOT PUSHED.                   #
+[2026-11-18 21:33:54]   #  From a LOGIN node, run:                                 #
+[2026-11-18 21:33:55]   #      cd /oscar/home/hnambia1/Desktop/zavala_electricity_market
+[2026-11-18 21:33:55]   #      ./push_results.sh                                   #
+[2026-11-18 21:33:55]   ############################################################

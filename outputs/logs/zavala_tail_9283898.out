@@ -415,3 +415,43 @@ figures from outputs/results/tail_tail_9283898_rampext.json:
 [2026-11-18 21:33:53] All stages finished.
 [2026-11-18 21:33:53] Done.
 [2026-11-18 21:33:53] Committing results (exit status 0; push happens on a login node)
+[hrithik_final c159bb9] OSCAR tail-welfare results: job 9283898 on node1819 (exit 0)
+ 31 files changed, 10376 insertions(+)
+ create mode 100644 figures/tail/fig1_structural_ceiling.pdf
+ create mode 100644 figures/tail/fig1_structural_ceiling.png
+ create mode 100644 figures/tail/fig2_headline.pdf
+ create mode 100644 figures/tail/fig2_headline.png
+ create mode 100644 figures/tail/fig3_sweeps.pdf
+ create mode 100644 figures/tail/fig3_sweeps.png
+ create mode 100644 figures/tail/fig4_voll_robustness.pdf
+ create mode 100644 figures/tail/fig4_voll_robustness.png
+ create mode 100644 figures/tail/fig5_decomposition.pdf
+ create mode 100644 figures/tail/fig5_decomposition.png
+ create mode 100644 figures/tail/fig6_frontier.pdf
+ create mode 100644 figures/tail/fig6_frontier.png
+ create mode 100644 figures/tail/fig7_thesis_tail_heaviness.pdf
+ create mode 100644 figures/tail/fig7_thesis_tail_heaviness.png
+ create mode 100644 figures/tail_rampext/fig1_structural_ceiling.pdf
+ create mode 100644 figures/tail_rampext/fig1_structural_ceiling.png
+ create mode 100644 figures/tail_rampext/fig2_headline.pdf
+ create mode 100644 figures/tail_rampext/fig2_headline.png
+ create mode 100644 figures/tail_rampext/fig3_sweeps.pdf
+ create mode 100644 figures/tail_rampext/fig3_sweeps.png
+ create mode 100644 figures/tail_rampext/fig5_decomposition.pdf
+ create mode 100644 figures/tail_rampext/fig5_decomposition.png
+ create mode 100644 logs/tail_tail_9283898_beta99.log
+ create mode 100644 logs/tail_tail_9283898_main.log
+ create mode 100644 logs/tail_tail_9283898_rampext.log
+ create mode 100644 outputs/logs/zavala_tail_9283898.err
+ create mode 100644 outputs/logs/zavala_tail_9283898.log
+ create mode 100644 outputs/logs/zavala_tail_9283898.out
+ create mode 100644 outputs/results/tail_tail_9283898_beta99.json
+ create mode 100644 outputs/results/tail_tail_9283898_main.json
+ create mode 100644 outputs/results/tail_tail_9283898_rampext.json
+[2026-11-18 21:33:54] 
+[2026-11-18 21:33:54]   ############################################################
+[2026-11-18 21:33:54]   #  RESULTS ARE COMMITTED BUT NOT PUSHED.                   #
+[2026-11-18 21:33:54]   #  From a LOGIN node, run:                                 #
+[2026-11-18 21:33:55]   #      cd /oscar/home/hnambia1/Desktop/zavala_electricity_market
+[2026-11-18 21:33:55]   #      ./push_results.sh                                   #
+[2026-11-18 21:33:55]   ############################################################
