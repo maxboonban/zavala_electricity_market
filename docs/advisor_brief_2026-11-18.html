@@ -204,18 +204,19 @@ footer { margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--ru
 <div class="wrap">
 
 <header class="masthead">
-  <div class="eyebrow">Experimental status &middot; 18 November 2026 &middot; revision 2</div>
-  <h1>First full-scale Gurobi run of the risk-aware clearing experiments</h1>
+  <div class="eyebrow">Experimental status &middot; 19 November 2026 &middot; revision 5</div>
+  <h1>Full-scale Gurobi runs of the risk-aware clearing experiments</h1>
   <p class="lede">All verification suites pass; the decentralisation construction is confirmed
   numerically for the first time; every theorem in &sect;&sect;6&ndash;8 now has a measured residual.
-  This revision adds the full instance specification &mdash; how every scenario set is built, from
-  which data, with which seeds &mdash; the complete result tables behind each figure, and one
-  correction to the previous draft of this memo.</p>
+  This revision adds <strong>Part VI: the tail-welfare suite W0&ndash;W7 has landed</strong> &mdash;
+  the experiments carrying the paper's central claim &mdash; along with the full instance
+  specification, the complete result tables behind each figure, and two corrections to earlier
+  drafts of this memo.</p>
   <div class="meta">
-    <span>OSCAR job 9253564</span>
+    <span>OSCAR jobs 9253564 + 9283898</span>
     <span>node2411 &middot; 2 h 09 m</span>
-    <span>commit 35593dd</span>
-    <span>Gurobi 12.0 via cvxpy</span>
+    <span>node1819 &middot; 10 h 48 m</span>
+    <span>Gurobi 12.0 / 14.0 via cvxpy</span>
     <span>branch hrithik_final</span>
   </div>
 </header>
@@ -246,6 +247,15 @@ footer { margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--ru
   (corr = &minus;0.9999 with demand). The mechanism is a shift of the day-ahead commitment from the
   median to the 28th percentile of demand. The arithmetic is right; the economics is not the
   scarcity story &sect;9.2 tells. This needs a decision.</p>
+  <p><strong>6.</strong> <span class="ok">And &sect;V answers it.</span> The tail-welfare suite
+  W0&ndash;W7 has now run at full scale, and its instances <em>are</em> genuinely scarce
+  (CVaR<sub>0.95</sub>[unserved] = 234.35 MW, strictly positive). <strong>Let the W-suite carry the
+  tail story and demote IM3 to the pricing and decentralisation results.</strong> The headline is
+  +9.725% of reachable cost, 100% of seeds improved, Wilcoxon
+  p = 3.7&times;10<sup>&minus;9</sup>, and all four independent tail-heaviness drivers move it the
+  right way. One caveat dominates everything: <strong>W0 proves unserved energy is invariant to the
+  day-ahead policy</strong>, so 76.3% of tail cost is unreachable and this result is about
+  adjustment cost, never about adequacy.</p>
 </div>
 
 <h2>Contents</h2>
@@ -255,7 +265,9 @@ footer { margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--ru
   <li><strong>Part II</strong> &mdash; the results in full, one table per experiment</li>
   <li><strong>Part III</strong> &mdash; what changes in the paper, section by section</li>
   <li><strong>Part IV</strong> &mdash; limitations that must be stated or fixed before submission</li>
-  <li><strong>Part V</strong> &mdash; where the files are, and how to reproduce</li>
+  <li><strong>Part V</strong> &mdash; <span class="ok">new</span>: the tail-welfare suite
+  W0&ndash;W7, the paper's central claim, now run at full scale</li>
+  <li><strong>Part VI</strong> &mdash; where the files are, and how to reproduce</li>
 </ul>
 
 <hr class="rule-heavy">
@@ -751,17 +763,21 @@ social surplus flips the tail to exactly the economically meaningful one:</p>
   <em>peak</em>, which guarantees no scarcity can occur. Size against mean demand instead, or model
   thermal forced outages so g&#772; varies. The W-suite already sizes as
   <span class="mono">adequacy &times; mean demand</span> with <span class="mono">adequacy = 1.12</span>
-  and sweeps it down to 0.95, so it may not share this defect &mdash; unverified, and worth
-  checking the moment job 9283898 lands.</p>
+  and sweeps it down to 0.95. <strong class="ok">Now verified (&sect;V.1): the W-suite does not
+  share this defect</strong> &mdash; its CVaR<sub>0.95</sub>[unserved] is 234.35 MW, strictly
+  positive, and it already models both independent and common-mode forced outages.</p>
   <p><strong>(b) Report the tail of cost.</strong> Cleanest fix if the claim is about scarcity cost.
   Changes the optimisation, so every E-result would need re-running.</p>
   <p><strong>(c) Keep the welfare definition and say so plainly</strong> &mdash; that with inelastic,
   always-served demand the welfare tail is the low-demand tail, and the result is about deviation-cost
   positioning. Honest, but it is a much weaker paper.</p>
-  <p>My reading is <strong>(a)</strong>: it keeps the welfare formulation the theory is written in,
-  and it makes the tail an adequacy event, which is what the narrative promises. It is also the only
-  option under which the E2 incidence story becomes interesting, since thermal would finally acquire
-  scenario-dependent capacity.</p>
+  <p><strong class="ok">Superseded by &sect;V &mdash; there is now a fourth and better option.</strong>
+  Since the W-suite is already scarce, already models forced outages, and already carries the central
+  claim, the cleanest resolution is to <strong>let it carry the tail story and keep IM3 for the
+  pricing and decentralisation results (E1&ndash;E3, D1&ndash;D5), where its no-scarcity property
+  does no harm</strong>. That needs no re-running of IM3 at all. My earlier reading was (a); it is
+  still the right fix <em>if</em> you want IM3 itself to tell a scarcity story, but &sect;V shows
+  you do not have to.</p>
 </div>
 
 <h4>Eq. (94) without insurance, on this fleet</h4>
@@ -1317,30 +1333,166 @@ limitation; these two are claims that do not currently hold as described.</p>
   <li><strong>The load level is rescaled by a constant</strong> to a 15% reserve margin
   (&sect;I.5). The shape is untouched, but the absolute $/h figures are not WECC-scale.</li>
   <li><strong>E2's rows are bus labels, not fuel labels</strong> (&sect;I.2).</li>
-  <li><strong>Thermal has no scenario-dependent capacity</strong>, hence structurally zero tail
-  premium. Forced-outage modelling is the obvious extension.</li>
+  <li><strong>Thermal has no scenario-dependent capacity</strong> <em>in IM3</em>, hence structurally
+  zero tail premium there. <span class="ok">The W-suite already models it</span> &mdash; independent
+  forced outages at 5% plus common-mode events &mdash; so this limitation applies only to
+  E1&ndash;E3 and D1&ndash;D5, not to the tail results in &sect;V.</li>
   <li><strong>E1, E2, E3, E6 and the seasonal table are single-seed</strong> &mdash; no error bars.
   Only E4 and E5 are replicated.</li>
 </ul>
 
-<h2>Still in flight</h2>
+<hr class="rule-heavy">
 
-<p>The tail-welfare suite <strong>W0&ndash;W7</strong> &mdash; the experiments carrying the paper's
-central claim that the advantage of risk-aware clearing grows with supply tail-heaviness &mdash; is
-running now as a separate 14-hour job (9283898, started 10:45:56, cleared its model-equivalence
-preflight). Four earlier attempts failed; the causes are logged, and the last of them produced the
-T10 finding above.</p>
+<h2>Part V &nbsp;&middot;&nbsp; The tail-welfare suite has landed</h2>
+<div class="eyebrow">Added 19 Nov &middot; job 9283898, node1819, exit 0 &middot; replaces &ldquo;still in flight&rdquo;</div>
 
-<p>Until that job lands, <strong>every tail-welfare number currently in
-<code>docs/EXPERIMENT_LOG.md</code> comes from a local CLARABEL pilot at S=300 with 4 seeds, not
-from Gurobi at publishable scale.</strong> That includes the W7 table showing 2.1&times;&ndash;4.0&times;
-growth across four independent tail drivers with rank correlation 1.000 on all four. Those figures
-are the right shape but they are not yet publishable, and they will be replaced wholesale. Do not
-quote them as final.</p>
+<p>The W0&ndash;W7 suite &mdash; the experiments carrying the paper's central claim &mdash; completed
+on Gurobi at publishable scale: <strong>S = 500, 30 seeds, &epsilon; = 0.3, &beta; = 0.95</strong>,
+plus a &beta; = 0.99 robustness run (15 seeds). 29,416 s for the main run. The CLARABEL pilot
+numbers (S=300, 4 seeds) that Part II warned about are now superseded and should be deleted.</p>
+
+<p>The model-equivalence preflight <strong class="ok">passed</strong>:
+<span class="mono">d&rho;<sub>RA</sub> = 1.522&times;10<sup>&minus;6</sup></span>, attributed to the
+T10 day-ahead cap &mdash; the reference's own solution exceeds nameplate by 191.89 MW, so it is
+infeasible for us and our objective is higher with exactly the forced sign. That is the attribution
+logic from &sect;II.10 working on a real run for the first time.</p>
+
+<h3>V.1 &nbsp; The open question from &sect;II.1 is resolved: the W&#8209;suite <em>is</em> scarce</h3>
+
+<p>&sect;II.1 flagged that the headline IM3 instance is never short of capacity, so its &beta;-tail
+is the quietest evenings rather than an adequacy event, and asked whether the W-suite shared the
+defect. <strong>It does not.</strong></p>
+
+<div class="cols">
+  <div class="stat"><div class="v">234.35</div><div class="l">CVaR<sub>0.95</sub>[unserved], MW &mdash; strictly positive</div></div>
+  <div class="stat"><div class="v">418.94</div><div class="l">CVaR<sub>0.99</sub>[unserved], MW</div></div>
+  <div class="stat"><div class="v">0 of 500</div><div class="l">IM3 scenarios ever short, by contrast</div></div>
+</div>
+
+<p>IM3 sized load as <span class="mono">firm/(1+margin)/peak</span>, which makes a shortfall
+arithmetically impossible. <code>tail_scenarios.py</code> instead sizes thermal against
+<em>mean</em> demand (adequacy 1.12) and makes capacity scenario-dependent through independent
+forced outages (5%) and common-mode events (30% conditional probability, 35% of the fleet). That is
+what produces genuine scarcity, and it is why thermal finally has the scenario-dependent capacity
+whose absence Part IV lists as a limitation of the IM3 results.</p>
+
+<div class="verdict">
+  <div class="eyebrow">Recommendation</div>
+  <p><strong>Let the W-suite carry the tail story, and demote IM3 to the decentralisation and
+  pricing results (E1&ndash;E3, D1&ndash;D5), where its no-scarcity property does no harm.</strong>
+  This is a cleaner resolution than any of the three options in &sect;II.1, because it needs no
+  re-running of IM3 at all.</p>
+</div>
+
+<h3>V.2 &nbsp; The result that bounds every other number here</h3>
+
+<p>W0 was designed to find the ceiling on what risk-aware clearing can possibly do, and it found a
+sharp one. Because real-time capacity g&#772;(&omega;) is exogenous and VOLL &gg; mc, the planner
+always serves the physical maximum &mdash; so <em>how much load is shed is fixed by the scenario
+before any clearing happens</em>:</p>
+
+<pre><code>max |CVaR[unserved]_aware - CVaR[unserved]_neutral| = 3.411e-13 MW
+                                     on a base of     234.35 MW   (rel 1.46e-15)</code></pre>
+
+<div class="flag">
+  <div class="eyebrow">This must be in the paper, not left for a referee</div>
+  <p>Unserved energy is <strong>invariant to the day-ahead policy</strong>. Risk-aware clearing
+  cannot improve adequacy; it reallocates adjustment cost. Since lost load is
+  <strong>76.3%</strong> of tail cost (82.8% at &beta;=0.99), a gap quoted as X% of tail cost is
+  <strong>4.22&times;</strong> that as a share of the cost a policy can actually move.</p>
+  <p>So the honest headline is <strong>+9.7% of reachable cost</strong> &mdash; not &ldquo;+2.45% of
+  tail cost&rdquo;, and under no reading &ldquo;risk-aware clearing prevents blackouts&rdquo;.
+  Stating the ceiling ourselves converts the obvious objection into a contribution.</p>
+</div>
+
+<h3>V.3 &nbsp; W1 &mdash; the headline, paired on 29 seeds</h3>
+
+<div class="tscroll">
+<table>
+  <thead><tr><th>Risk-aware vs risk-neutral stochastic</th><th class="num">Mean</th><th class="num">95% CI</th><th class="num">p</th></tr></thead>
+  <tbody>
+    <tr><td class="k">CVaR welfare gain, % of <em>reachable</em> cost</td><td class="num ok">+9.725</td><td class="num">[+7.03, +12.42]</td><td class="num">&mdash;</td></tr>
+    <tr><td class="k">CVaR welfare gain, % of tail cost</td><td class="num">+2.4549</td><td class="num">[+2.08, +2.83]</td><td class="num">1.1e&minus;13</td></tr>
+    <tr><td class="k">CVaR welfare gain, $/MWh served</td><td class="num">+6.1415</td><td class="num">[+4.88, +7.40]</td><td class="num">9.7e&minus;11</td></tr>
+    <tr><td class="k">CVaR welfare gain, absolute $</td><td class="num ok">+6,128.03</td><td class="num">[+4,875.88, +7,380.18]</td><td class="num">9.1e&minus;11</td></tr>
+    <tr><td class="k">Expected-welfare change</td><td class="num bad">&minus;1,300.02</td><td class="num">[&minus;1,565.21, &minus;1,034.84]</td><td class="num">&mdash;</td></tr>
+  </tbody>
+  <caption><strong>100% of seeds improved; Wilcoxon p = 3.73&times;10<sup>&minus;9</sup>.</strong>
+  The &minus;1,300 is the premium paid for the tail gain &mdash; report it, don't hide it; the
+  negative sign is the risk&ndash;return trade-off behaving as the theory predicts. Against the
+  <em>deterministic</em> policy the gain is larger (+8,341.09) and expected welfare is flat, but
+  that comparison is weak: the deterministic policy never sees the scenario set. At &beta;=0.99 the
+  gain roughly triples to <strong>+21,371.41</strong> (+25.9% of reachable cost).</caption>
+</table>
+</div>
+
+<h3>V.4 &nbsp; W7 &mdash; the central claim, on four independent mechanisms</h3>
+
+<p>The thesis is that the advantage grows with the tail-heaviness of supply. Four physically
+distinct drivers were swept; agreement between them is what makes this a claim about tail-heaviness
+rather than about one knob.</p>
+
+<div class="tscroll">
+<table>
+  <thead><tr><th>Driver</th><th class="num">Spearman (gap $)</th><th class="num">Spearman (reach %)</th><th class="num">Growth</th></tr></thead>
+  <tbody>
+    <tr><td class="k"><code>p_stress</code> &nbsp; how often the stressed regime occurs</td><td class="num ok">+1.000</td><td class="num">+0.800</td><td class="num">4.5&times;</td></tr>
+    <tr><td class="k"><code>stress_shift</code> &nbsp; how severe it is</td><td class="num ok">+1.000</td><td class="num">+0.900</td><td class="num">2.8&times;</td></tr>
+    <tr><td class="k"><code>rho_wind</code> &nbsp; spatial correlation</td><td class="num">+0.700</td><td class="num">+0.600</td><td class="num">2.4&times;</td></tr>
+    <tr><td class="k"><code>common_mode_prob</code> &nbsp; correlated outages</td><td class="num ok">+1.000</td><td class="num">+0.900</td><td class="num">5.6&times;</td></tr>
+  </tbody>
+  <caption>The <code>rho_wind</code> row is <strong>contaminated</strong>: its 0.98 cell lost 11 of
+  30 seeds to solver limits (n=19) and is not comparable to the others. Re-run before quoting that
+  row. The other three stand.</caption>
+</table>
+</div>
+
+<p>W2 confirms the mechanism directly: the gain is monotone in the adjustment-cost asymmetry
+&alpha;<sup>+</sup>/mc (1,844 &rarr; 9,838 as it goes 0 &rarr; 4), which is what must happen if the
+day-ahead position is priced only through the deviation terms. W6's frontier in &epsilon; is clean
+and concave &mdash; dCVaR saturates at +12,477 while dE keeps falling to &minus;8,486 &mdash; and
+&epsilon;=1.0 is correctly absent, per theory note T11.</p>
+
+<h3>V.5 &nbsp; Three things in this run that are <em>not</em> ready to quote</h3>
+
+<div class="flag">
+  <div class="eyebrow">Found by auditing the run &mdash; all three now fixed in code</div>
+  <p><strong>1. The &ldquo;ramp extension&rdquo; stage never applied the ramp constraint.</strong>
+  <code>use_ramp</code> was computed and used only to print the EXTENSION banner; it was never
+  passed to the solver, which fell back to its <span class="mono">use_ramp=False</span> default. The
+  rampext JSON is byte-identical to the main run for W0, W1 and W5. <strong>5,986 s of compute
+  produced a duplicate, and <code>figures/tail_rampext/*</code> are copies of
+  <code>figures/tail/*</code>.</strong> Nothing from that stage says anything about start-up
+  constraints. A positive control now aborts the run unless the constrained objective is strictly
+  worse than the unconstrained one.</p>
+  <p><strong>2. The W5 decomposition table did not sum, and its worst row reads backwards.</strong>
+  The loss is <span class="mono">energy + dev_up + dev_dn + load_dev &minus; value</span>;
+  <span class="mono">unserved_cost</span> is <em>not</em> a term in it. W5 printed the four real
+  components plus <span class="mono">unserved_cost</span> and omitted <span class="mono">value</span>.
+  Its <span class="mono">unserved_cost &minus;4,500.7</span> row reads as $4.5k of lost load avoided
+  &mdash; which <strong>W0 rules out in the same run</strong>. It moves only because the &beta;-tail
+  of each policy is a different set of scenarios. It is a change of conditioning set, not a saving.
+  The real finding survives and is the interesting one: <strong><span class="mono">dev_up</span>
+  falls by 5,731</strong>, partly given back as <span class="mono">dev_dn</span> +1,263. That is
+  what risk aversion buys.</p>
+  <p><strong>3. 45 solves were lost to <span class="mono">status=user_limit</span></strong> &mdash;
+  barrier not reaching <span class="mono">BarConvTol=1e-12</span>, a tolerance chosen for
+  well-centred duals and never actually required. Seed 2037 failed 25 times; W7's
+  <code>rho_wind</code>=0.98 cell lost 11 seeds at once. A fallback ladder (1e&minus;12 &rarr;
+  1e&minus;9 &rarr; 1e&minus;8 + crossover) now retries convergence stalls only, and records which
+  rung was used so crossover duals are never reported as central ones.</p>
+</div>
+
+<div class="verdict">
+  <div class="eyebrow">Net</div>
+  <p>The headline (V.1&ndash;V.4) stands, subject to n=29 rather than 30. The ramp-extension
+  stage and the W5 table must be redone, and the <code>rho_wind</code> row re-run. None of that
+  touches the central claim.</p>
+</div>
 
 <hr class="rule-heavy">
 
-<h2>Part V &nbsp;&middot;&nbsp; Files and reproduction</h2>
+<h2>Part VI &nbsp;&middot;&nbsp; Files and reproduction</h2>
 
 <p>Everything is on <code>hrithik_final</code>. Nothing needs regenerating to be read.</p>
 
@@ -1354,8 +1506,20 @@ logs/              per-experiment human-readable narration, same basenames
                    verify_cvar_pricing_gurobi.log          Eq. (67),(69),(70),(107)
 outputs/logs/      zavala_im3_9253564.{out,err,log}        SLURM streams
 figures/im3/       six figures, PDF + PNG, IEEE two-column
+
+--- tail-welfare suite, job 9283898 (Part V) ---
+outputs/results/   tail_tail_9283898_main.json             W0-W7, beta=0.95
+                   tail_tail_9283898_beta99.json           W0-W2, beta=0.99
+                   tail_tail_9283898_rampext.json          DO NOT USE - see V.5
+logs/              tail_tail_9283898_{main,beta99,rampext}.log
+outputs/logs/      zavala_tail_9283898.{out,err,log}       SLURM streams
+figures/tail/      seven figures, PDF + PNG
+figures/tail_rampext/   DO NOT USE - byte-identical copies of figures/tail/
+
 docs/EXPERIMENT_LOG.md    full write-up, newest entry first
-docs/THEORY_ERRATA.md     T1-T11, each with its adjudicating test</code></pre>
+docs/THEORY_ERRATA.md     T1-T11, each with its adjudicating test
+check_tail_composition.py  IM3 scarcity/tail diagnostic (numpy only)
+check_w_suite_scarcity.py  the same for the W-suite (needs scipy)</code></pre>
 
 <p>To confirm the run <em>completed</em> rather than merely stopped:</p>
 <pre><code>./check_oscar_run.sh 9253564</code></pre>
