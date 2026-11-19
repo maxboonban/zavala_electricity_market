@@ -132,7 +132,17 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     rep = Reporter(str(Path("logs") / f"tail_{args.tag}.log"))
 
-    base_kw = dict(
+    # gen_kw goes to generate_tail_instance; base_kw is what the W* experiments
+    # forward to run_instance, which needs `use_ramp` ON TOP of the generator
+    # kwargs. Keeping them separate is the whole point: job 9283898 set
+    # ramp_limit_frac=0.03, printed the EXTENSION banner, and then never passed
+    # use_ramp to run_instance, so `solve_planner`/`evaluate_da` both took
+    # their default use_ramp=False. The ramp constraint was never applied and
+    # the "rampext" stage reproduced the unconstrained run byte for byte
+    # (W0, W1 and W5 were identical to the last digit). 5,986 s of compute
+    # produced a duplicate, and figures/tail_rampext/* are copies of
+    # figures/tail/*. See docs/EXPERIMENT_LOG.md 2026-11-19.
+    gen_kw = dict(
         ramp_premium=args.ramp_premium,
         backdown_discount=args.backdown_discount,
         adequacy=args.adequacy,
@@ -142,6 +152,7 @@ def main():
         ramp_limit_frac=args.ramp_limit_frac,
     )
     use_ramp = args.ramp_limit_frac is not None
+    base_kw = dict(gen_kw, use_ramp=use_ramp)
 
     rep("=" * 78)
     rep("Tail-welfare experiments for risk-aware market clearing")
@@ -158,12 +169,40 @@ def main():
         rep("  *** G_i(w) - g_i <= ramp_cap_i is an EXTENSION beyond the")
         rep("  *** paper's Eq. (63)-(65). Report these results separately.")
 
+        # POSITIVE CONTROL. The banner above is a claim about the model, and
+        # in job 9283898 it was false: use_ramp never reached the solver, so
+        # the "extension" run reproduced the unconstrained one exactly. A
+        # banner that cannot fail is worthless, so earn it: solve one small
+        # instance both ways and require the constrained objective to be
+        # strictly worse. The constrained feasible set is a subset, so
+        # rho_ramp >= rho_free always; equality means the constraint is not
+        # being applied (the bug) or is slack at this cap (not an extension
+        # worth reporting). Either way the run must stop.
+        from tail_scenarios import generate_tail_instance as _gen
+        from tail_model import solve_planner as _sp
+        _ctl = _gen(args.seed0, S=min(args.scenarios, 60), **gen_kw)
+        _free = _sp(_ctl, eps=args.eps, beta=args.beta, solver=solver,
+                    use_ramp=False)
+        _ramp = _sp(_ctl, eps=args.eps, beta=args.beta, solver=solver,
+                    use_ramp=True)
+        _d = float(_ramp["objective"] - _free["objective"])
+        _rel = _d / max(abs(float(_free["objective"])), 1e-9)
+        rep(f"  *** positive control: rho(ramp) - rho(free) = {_d:+.6e} "
+            f"({_rel:+.3e} relative)")
+        if _rel <= 1e-9:
+            rep("  *** [FAIL] the ramp constraint changed nothing. Either it is")
+            rep("  ***        not reaching the solver, or ramp_limit_frac is")
+            rep("  ***        slack. Refusing to report this as an extension.")
+            raise SystemExit(2)
+        rep("  *** [PASS] the constraint binds; these results really are the")
+        rep("  ***        constrained model.")
+
     if args.check_reference:
         rep("\nPreflight: vectorised model vs zavala_cvar")
         from tail_scenarios import generate_tail_instance
         from tail_model import assert_matches_reference
         inst = generate_tail_instance(args.seed0, S=min(args.scenarios, 60),
-                                      **base_kw)
+                                      **gen_kw)
         # Two kinds of failure, and they must not be conflated. If the REFERENCE
         # cannot be loaded at all -- zavala_funcs imports jax, which is fragile
         # across machines -- that says nothing about the model being reported,

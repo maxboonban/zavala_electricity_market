@@ -167,8 +167,12 @@ def _sweep(seeds, S, beta, solver, varying, base_kw, eps, use_ramp=False,
             kw = dict(base_kw)
             kw.update(level_kw)
             e = kw.pop("_eps", eps)
+            # base_kw now carries use_ramp (see run_tail_experiments.py), so
+            # take it from there and fall back to the parameter. Passing both
+            # would be a duplicate-keyword TypeError.
+            ur = kw.pop("use_ramp", use_ramp)
             try:
-                res = run_instance(sd, S, e, beta, solver, use_ramp=use_ramp,
+                res = run_instance(sd, S, e, beta, solver, use_ramp=ur,
                                    include_deterministic=False, **kw)
             except Exception as exc:                            # noqa: BLE001
                 rep(f"    [skip] level={level_name} seed={sd}: "
@@ -397,17 +401,59 @@ def W5_decomposition(seeds, S, eps, beta, solver, base_kw, rep=print):
             if pol in res:
                 acc.setdefault(pol, []).append(res[pol]["tail"])
 
-    keys = ("energy", "dev_up", "dev_dn", "load_dev", "unserved_cost")
+    # The loss is  energy + dev_up + dev_dn + load_dev - value  (tail_model
+    # `_losses`). `unserved_cost` is NOT one of its terms: it is the
+    # diagnostic  VOLL * (dbar - D)  that complements `value`.
+    #
+    # Job 9283898 printed the four real components plus `unserved_cost` and
+    # omitted `value`, so the column did not sum to anything and invited
+    # exactly the wrong reading. Its `unserved_cost  -4500.7` row looks like
+    # risk-aware clearing avoiding $4.5k of lost load, which W0 rules out in
+    # the same run: unserved energy is identical scenario by scenario to
+    # 1.5e-15 relative. The row moved because `tail_decomposition` conditions
+    # on each policy's OWN beta-tail, and the two tails are not the same set
+    # of scenarios. It is a change of conditioning set, not a saving.
+    #
+    # So: print the identity that closes, and print the conditioning
+    # diagnostics separately and labelled as such.
+    comp = ("energy", "dev_up", "dev_dn", "load_dev", "value")
+    diag = ("unserved_cost",)
+    keys = comp + diag
     means = {p: {k: float(np.mean([t[k] for t in rows])) for k in keys}
              for p, rows in acc.items()}
-    rep(f"\n  {'component':>14} " + "".join(f"{p:>16}" for p in means))
-    for k in keys:
-        rep(f"  {k:>14} " + "".join(f"{means[p][k]:>16.1f}" for p in means))
+    for p, m in means.items():
+        m["loss_check"] = (m["energy"] + m["dev_up"] + m["dev_dn"]
+                           + m["load_dev"] - m["value"])
+
+    def _table(title, rows_, sign=None):
+        rep(f"\n  {title}")
+        rep(f"  {'component':>14} " + "".join(f"{p:>16}" for p in means))
+        for k in rows_:
+            lab = f"-{k}" if sign and k in sign else k
+            rep(f"  {lab:>14} " + "".join(f"{means[p][k]:>16.1f}"
+                                          for p in means))
+
+    _table("loss components (these sum to the tail loss):", comp,
+           sign={"value"})
+    rep(f"  {'= tail loss':>14} " + "".join(f"{means[p]['loss_check']:>16.1f}"
+                                            for p in means))
+    _table("conditioning diagnostic (NOT a loss term; see W0):", diag)
+
     if "risk_neutral" in means and "risk_aware" in means:
         rep("\n  change, risk-aware minus risk-neutral:")
-        for k in keys:
+        for k in comp:
             d = means["risk_aware"][k] - means["risk_neutral"][k]
-            rep(f"    {k:>14} {d:>+14.1f}")
+            rep(f"    {k:>14} {d:>+14.1f}"
+                + ("   (enters the loss with a MINUS sign)"
+                   if k == "value" else ""))
+        d_loss = means["risk_aware"]["loss_check"] - means["risk_neutral"]["loss_check"]
+        rep(f"    {'= tail loss':>14} {d_loss:>+14.1f}   "
+            f"(negative = risk aversion helped)")
+        d_un = means["risk_aware"]["unserved_cost"] - means["risk_neutral"]["unserved_cost"]
+        rep(f"\n    {'unserved_cost':>14} {d_un:>+14.1f}   "
+            f"<- NOT a saving. W0 shows unserved energy is")
+        rep(f"    {'':>14} {'':>14}      policy-invariant; this is the beta-tail")
+        rep(f"    {'':>14} {'':>14}      conditioning on a different scenario set.")
     return dict(means=means)
 
 

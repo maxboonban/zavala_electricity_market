@@ -51,16 +51,56 @@ _SOLVE_KW = dict(
     BarConvTol=1e-12,
 )
 
+# Fallback ladder, tried in order when the step above returns `user_limit`.
+#
+# Job 9283898 lost 45 solves to `status=user_limit` -- barrier hitting its
+# iteration cap without reaching BarConvTol=1e-12. The losses were not
+# uniform: seed 2037 failed in 25 of 28 stages, and the rho_wind=0.98 cell of
+# W7 lost 11 of 30 seeds at once, which silently turned that cell into n=19
+# and dragged its Spearman statistic down. Near-perfect spatial correlation
+# makes the scenario matrix nearly rank-deficient and the LP badly degenerate,
+# so the central path is hard to follow to 1e-12.
+#
+# 1e-12 was never required. It was chosen to get well-centred duals for price
+# identification (Eq. 107), and 1e-9 is still two orders tighter than Gurobi's
+# default 1e-8. The last rung turns crossover back on, which gives a vertex
+# solution rather than a central one: the PRIMAL welfare quantities W0-W7
+# report are unaffected, but the duals are no longer interior, so anything
+# reading `rho_tilde` or `Pi` off that solve must say it was a crossover
+# solve. `_solve` records which rung was used in `prob._solve_rung`.
+_SOLVE_LADDER = (
+    ("barrier/1e-12", _SOLVE_KW),
+    ("barrier/1e-9", dict(_SOLVE_KW, BarConvTol=1e-9)),
+    ("barrier/1e-8+crossover", dict(_SOLVE_KW, BarConvTol=1e-8, Crossover=-1)),
+)
+
 
 def _solve(prob, solver, verbose=False):
     name = cp.GUROBI if solver is None else solver
-    if name == cp.GUROBI:
-        prob.solve(solver=cp.GUROBI, verbose=verbose, **_SOLVE_KW)
-    else:
+    if name != cp.GUROBI:
         prob.solve(solver=name, verbose=verbose)
-    if prob.status not in ("optimal", "optimal_inaccurate"):
-        raise RuntimeError(f"solve failed: status={prob.status}")
-    return prob
+        if prob.status not in ("optimal", "optimal_inaccurate"):
+            raise RuntimeError(f"solve failed: status={prob.status}")
+        prob._solve_rung = str(name)
+        return prob
+
+    last = None
+    for rung, kw in _SOLVE_LADDER:
+        try:
+            prob.solve(solver=cp.GUROBI, verbose=verbose, **kw)
+        except cp.error.SolverError as exc:                      # noqa: PERF203
+            last = f"SolverError on {rung}: {exc}"
+            continue
+        if prob.status in ("optimal", "optimal_inaccurate"):
+            prob._solve_rung = rung
+            return prob
+        last = f"status={prob.status} on {rung}"
+        # Only a convergence stall is worth retrying at a looser tolerance.
+        # Infeasible or unbounded means the model is wrong, and re-solving it
+        # three times would just hide that.
+        if prob.status not in ("user_limit", "solver_error"):
+            break
+    raise RuntimeError(f"solve failed: {last}")
 
 
 def _losses(Gr, Dr, g, d, mc, mv, dgp, dgn, ddp, ddn):
@@ -141,7 +181,7 @@ def solve_planner(inst, eps=0.0, beta=0.95, solver=None, verbose=False,
         link = None
         obj = expected
 
-    _solve(cp.Problem(cp.Minimize(obj), cons), solver, verbose)
+    _prob = _solve(cp.Problem(cp.Minimize(obj), cons), solver, verbose)
 
     g_v = np.asarray(g.value, float).reshape(-1)
     d_v = np.asarray(d.value, float).reshape(-1)
@@ -162,6 +202,11 @@ def solve_planner(inst, eps=0.0, beta=0.95, solver=None, verbose=False,
         p0=p0, Pi=Pi, gamma=gamma, rho_tilde=rho_tilde, support=support,
         eps=float(eps), beta=float(beta),
         objective=float(obj.value),
+        # Which rung of _SOLVE_LADDER produced this. Anything below the first
+        # rung used a looser BarConvTol, and the last rung used crossover, so
+        # the duals (Pi, rho_tilde, p0) are a vertex rather than a central
+        # solution. Price-identification results must report this.
+        solve_rung=getattr(_prob, "_solve_rung", "unknown"),
     )
 
 

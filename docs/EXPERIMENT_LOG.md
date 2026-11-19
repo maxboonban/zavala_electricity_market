@@ -5,7 +5,256 @@ cite directly in the paper. Newest entries first.
 
 ---
 
-## 2026-11-18 (latest) — Auditing job 9253564 for the advisor brief: four findings, one of them a retraction
+## 2026-11-19 (latest) — Job 9283898 lands: the W-suite is genuinely scarce, and two bugs that must be fixed before any of it is quoted
+
+Job **9283898** (node1819, started 2026-11-18 10:45:51, **exit 0**) ran the full
+W0–W7 tail-welfare suite at `S=500`, 30 seeds, `eps=0.3`, `beta=0.95`, plus a
+`beta=0.99` robustness run (15 seeds) and a "ramp extension" run. Total
+elapsed: 29,415.5 s (main) + 5,986.3 s (rampext) + 3,439.0 s (beta99).
+
+Artifacts: `outputs/results/tail_tail_9283898_{main,rampext,beta99}.json`,
+`logs/tail_tail_9283898_*.log`, `outputs/logs/zavala_tail_9283898.{out,err,log}`,
+figures in `figures/tail/` and `figures/tail_rampext/`.
+
+The preflight reference check **passed**: `d_rho_RA = 1.522e-06`, attributed to
+the T10 day-ahead cap (the reference's own solution exceeds nameplate by
+191.890 MW, 1.62e-01 relative, so it is infeasible for us and our objective is
+higher with exactly the forced sign). That is the attribution logic added in
+`78fc39b` doing its job on a real run for the first time.
+
+### 1. RESOLVED: the W-suite does **not** share the IM3 no-scarcity defect
+
+This was the open question left by the 2026-11-18 entry (item 6). The answer is
+in W0 and it is unambiguous:
+
+```
+beta=0.95   CVaR[unserved] = 234.35 MW   unserved x VOLL = 76.3% of tail cost
+beta=0.99   CVaR[unserved] = 418.94 MW   unserved x VOLL = 82.8% of tail cost
+```
+
+Unserved energy in the tail is **strictly positive**, so the W-suite tail is a
+real adequacy event. IM3's defect came from `load_scale = firm/(1+margin)/peak`,
+which makes shortfall impossible by construction; `tail_scenarios.py` instead
+sizes thermal as `adequacy * mean_demand` (1.12) and makes thermal capacity
+scenario-dependent through independent (`forced_outage_rate=0.05`) and
+common-mode (`common_mode_prob=0.30`, `common_mode_frac=0.35`) outages. That is
+what produces genuine scarcity.
+
+**Consequence for the paper: the W-suite, not IM3, should carry the tail story.**
+
+A local re-derivation of this without a solver (`check_w_suite_scarcity.py`, new
+in this commit) could not be run on the laptop: `scipy` is ABI-broken against
+`numpy 2.0.2` there, the same breakage that disables `pandas`. The script is
+committed and runs on OSCAR; the conclusion above rests on the job's own W0
+output, not on it.
+
+### 2. W0's other finding, which bounds everything: unserved energy is policy-invariant
+
+```
+max |CVaR[unserved]_aware - CVaR[unserved]_neutral| = 3.411e-13 MW
+                                      on a base of   234.35 MW   (rel 1.46e-15)
+```
+
+Because `gbar(w)` is exogenous and `VOLL >> mc`, the planner always serves the
+physical maximum, so shedding is fixed by the scenario before clearing happens.
+Risk-aware clearing **cannot improve adequacy**; it can only move adjustment
+cost. 76.3% of tail cost is therefore unreachable, and a gap quoted as X% of
+tail cost is **4.22x** that as a share of the cost a day-ahead policy can
+actually move (5.80x at `beta=0.99`).
+
+This must be stated in the paper rather than left for a referee. The honest
+headline is **+9.7% of reachable cost**, not "+2.45% of tail cost", and under no
+reading is it "risk-aware clearing prevents lost load".
+
+### 3. Headline results (main run, `beta=0.95`)
+
+W1, paired on the seed, risk-aware vs risk-neutral **stochastic** (the honest
+baseline), **n = 29** (seed 2037 lost to a solver limit — see item 6):
+
+| metric | mean | 95% CI | p |
+|---|---|---|---|
+| CVaR welfare gain, % of tail cost | +2.4549 | [+2.0794, +2.8305] | 1.08e-13 |
+| CVaR welfare gain, % of total welfare | +0.7980 | [+0.6278, +0.9681] | 2.31e-10 |
+| CVaR welfare gain, $/MWh served | +6.1415 | [+4.8829, +7.4002] | 9.73e-11 |
+| CVaR welfare gain, absolute $ | +6128.03 | [+4875.88, +7380.18] | 9.11e-11 |
+| Expected-welfare change | −1300.02 | [−1565.21, −1034.84] | — |
+
+**30 of 30 attempted seeds improved (100%), Wilcoxon p = 3.73e-09.** The
+expected-welfare loss of −1300.02 is the premium paid for the tail gain; that
+the sign is negative is the risk-return trade-off behaving as the theory
+predicts, and it should be reported, not hidden.
+
+Against the deterministic policy the gain is larger (+8341.09, +3.2124% of tail
+cost) and expected welfare is statistically flat (+241.32, CI [−47.54, +530.18]).
+That comparison is weaker and should stay secondary: the deterministic policy
+never sees the scenario set.
+
+At `beta=0.99` (15 seeds, n=14) the gain roughly triples to **+21,371.41**
+(+4.5529% of tail cost, +25.93% of reachable cost), with expected welfare
+−3582.20. Deeper tail, bigger prize, higher premium — the expected shape.
+
+### 4. W2–W7: the mechanism evidence holds, with two caveats
+
+**W2 (asymmetry sweep, the mechanism).** Monotone in `alpha+/mc`, as the theory
+requires, since the day-ahead position is priced only through the deviation
+terms:
+
+| `alpha+/mc` | 0 | 0.25 | 0.5 | 1 | 2 | 4 |
+|---|---|---|---|---|---|---|
+| gap $ | 1844.2 | 2758.1 | 2346.4 | 5591.5 | 8347.8 | 9838.1 |
+| % of reachable | +5.47 | +6.65 | +4.90 | +9.73 | +13.40 | +15.16 |
+
+Not strictly monotone at the bottom (0.25 > 0.5) but clean from 0.5 up. Note the
+gain is **non-zero at `alpha+ = 0`** (1844.2): symmetric deviation prices still
+leave `backdown_discount = 0.4` asymmetry in `alpha-`, so this is not a true
+null. A genuine null needs `ramp_premium = backdown_discount`.
+
+**W3 (adequacy).** Prediction was that the benefit vanishes at *both* ends.
+Observed:
+
+| adequacy | 0.95 | 1.0 | 1.05 | 1.12 | 1.2 | 1.3 |
+|---|---|---|---|---|---|---|
+| gap $ | 9019.6 | 9366.1 | 8473.5 | 5591.5 | 3750.1 | 3103.4 |
+
+The decay above 1.0 is clear. **The left-hand decay is not observed** — 0.95 is
+still near the maximum. The sweep does not go low enough. Needs extending to
+roughly 0.75–0.90 before the "vanishes at both ends" claim can be made; as it
+stands only half of it is supported.
+
+**W4 (VOLL).** The stated test was "roughly flat in VOLL". It is **not flat**:
+
+| VOLL | 200 | 500 | 1000 | 2000 | 5000 |
+|---|---|---|---|---|---|
+| $/MWh | 14.93 | 8.36 | 5.60 | 6.06 | 11.20 |
+
+It is U-shaped, varying 2.7x. The *conclusion* survives and is arguably
+stronger — the gain is **largest at the lowest VOLL**, so the result is
+certainly not a high-VOLL artefact — but the flatness test as written fails and
+the wording must change.
+
+**W6 (frontier).** Clean and monotone; `dCVaR` saturates while `dE` keeps
+falling, which is the expected concave frontier:
+
+| eps | 0.0 | 0.1 | 0.2 | 0.3 | 0.5 | 0.7 | 0.9 |
+|---|---|---|---|---|---|---|---|
+| dE | 0.0 | −90.3 | −413.9 | −1142.1 | −4022.7 | −6905.2 | −8485.6 |
+| dCVaR | 0.0 | +1606.6 | +3445.5 | +5591.5 | +9988.7 | +12027.3 | +12477.0 |
+| p0 | 138.82 | 187.44 | 234.93 | 279.04 | 367.24 | 461.09 | 545.02 |
+
+`eps = 1.0` is correctly absent (theory note T11).
+
+**W7 (the central claim).** All four independent tail-heaviness drivers move the
+gap the right way:
+
+| driver | Spearman(gap $) | Spearman(reach%) | growth |
+|---|---|---|---|
+| `p_stress` | +1.000 | +0.800 | 4.5x |
+| `stress_shift` | +1.000 | +0.900 | 2.8x |
+| `rho_wind` | +0.700 | +0.600 | 2.4x |
+| `common_mode_prob` | +1.000 | +0.900 | 5.6x |
+
+Four different physical mechanisms agreeing is the strongest evidence in the
+suite that the result is about tail-heaviness rather than one knob. **Caveat:**
+the `rho_wind` row is contaminated — its 0.98 cell lost 11 of 30 seeds to solver
+limits (n=19) and is not comparable to the other cells. Re-run before quoting.
+
+### 5. BUG — the "ramp extension" run never applied the ramp constraint
+
+`run_tail_experiments.py` computed `use_ramp = args.ramp_limit_frac is not None`
+and then used it **only to print the EXTENSION banner**. It was never passed to
+`run_instance`, so `solve_planner` and `evaluate_da` both took their default
+`use_ramp=False`. Verified directly:
+
+```
+main base_kw    ramp_limit_frac = None
+rampext base_kw ramp_limit_frac = 0.03
+W0: main == rampext ?  True
+W1: main == rampext ?  True
+W5: main == rampext ?  True
+```
+
+Byte-identical JSON. **5,986.3 s of compute produced a duplicate of the main
+run**, and `figures/tail_rampext/*` are copies of `figures/tail/*`. Nothing from
+the rampext stage may be cited; it says nothing about start-up constraints.
+
+Fixed in this commit:
+- `run_tail_experiments.py` now separates `gen_kw` (generator kwargs) from
+  `base_kw = dict(gen_kw, use_ramp=use_ramp)` (what the W* functions forward).
+- `tail_experiments.py::_sweep` pops `use_ramp` out of `kw` before calling
+  `run_instance`, which would otherwise be a duplicate-keyword `TypeError`.
+- **Positive control added.** When `ramp_limit_frac` is set, the run now solves
+  one small instance both ways and requires `rho(ramp) > rho(free)` strictly
+  (the constrained feasible set is a subset, so the sign is forced). Equality
+  means the constraint is not reaching the solver, or is slack, and the run
+  aborts with exit 2. A banner that cannot fail is worthless; this one can.
+
+### 6. BUG — the W5 decomposition table does not sum, and its `unserved_cost` row invites a false reading
+
+`tail_model._losses` defines
+
+```
+loss = energy + dev_up + dev_dn - value + load_dev
+```
+
+`unserved_cost = VOLL * (dbar - D)` is **not a term in the loss** — it is the
+diagnostic complementing `value`. W5 printed the four real components plus
+`unserved_cost` and **omitted `value`**, so the column summed to nothing. Its
+printed change row was:
+
+```
+energy -1135.2   dev_up -5731.0   dev_dn +1263.4   load_dev -1659.2
+unserved_cost -4500.7
+```
+
+That last row reads as risk-aware clearing avoiding $4,500 of lost load — which
+**W0 rules out in the same run**, having shown unserved energy is identical
+scenario by scenario to 1.5e-15 relative. The row moves because
+`tail_decomposition` conditions on *each policy's own* `beta`-tail and the two
+tails are different scenario sets. It is a change of conditioning set, not a
+saving.
+
+Fixed in this commit: W5 now prints the identity that closes (`energy + dev_up +
+dev_dn + load_dev − value = tail loss`, with a `= tail loss` row), prints
+`unserved_cost` in a separate block labelled as a conditioning diagnostic, and
+annotates the change row with the W0 cross-reference. The real components are
+unchanged and remain quotable: **`dev_up` falls by 5,731.0, which is where the
+gain comes from**, partly given back as `dev_dn` +1,263.4.
+
+### 7. 45 solves lost to `status=user_limit`
+
+Gurobi barrier hit its iteration cap without reaching `BarConvTol=1e-12`. The
+losses were not uniform:
+
+```
+seed 2037 failed 25 times (nearly every stage)
+seed 2036  5x;  2038, 2033, 2031, 2025  2x each;  seven more 1x
+W7 rho_wind=0.98 lost 11 of 30 seeds in a single cell  -> n=19
+```
+
+`1e-12` was never required. It was chosen for well-centred duals for price
+identification (Eq. 107); `1e-9` is still two orders tighter than Gurobi's
+default `1e-8`. Fixed in this commit with a fallback ladder in
+`tail_model._solve`:
+
+1. `barrier/1e-12` (unchanged first attempt)
+2. `barrier/1e-9`
+3. `barrier/1e-8+crossover`
+
+Only `user_limit` / `solver_error` retries; infeasible or unbounded breaks
+immediately, so a genuinely wrong model still fails loudly. The rung used is
+returned as `solve_rung` in `solve_planner`'s output — **anything reading
+`Pi`, `rho_tilde` or `p0` off a rung-3 solve must report that the duals are a
+crossover vertex, not a central solution.**
+
+### What to re-run
+
+The main-run numbers in items 2–4 stand (subject to the n=29 / n=19 caveats);
+the rampext stage must be redone and W5 reprinted. See the commands in the
+commit message.
+
+---
+
+## 2026-11-18 — Auditing job 9253564 for the advisor brief: four findings, one of them a retraction
 
 Writing the detailed instance specification for the advisor brief meant reading
 the scenario builders line by line and re-deriving the headline numbers from the
