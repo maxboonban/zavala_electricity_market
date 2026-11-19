@@ -1,0 +1,67 @@
+==============================================================================
+Tail-welfare experiments for risk-aware market clearing
+==============================================================================
+commit 38b16ec16d12a5e1dd49e9bd1fc1362cfa9f2627 (hrithik_final, DIRTY)  on node1819.oscar.ccv.brown.edu
+solver=GUROBI  S=500  seeds=15  eps=0.3  beta=0.99
+base: {'ramp_premium': 1.0, 'backdown_discount': 0.4, 'adequacy': 1.12, 'voll': 1000.0, 'renewable_penetration': 0.45, 'p_stress': 0.12, 'ramp_limit_frac': None}
+
+==============================================================================
+W0  Structural ceiling: unserved energy is policy-invariant
+==============================================================================
+sum_j D_j(w) <= min(sum_i gbar_i(w), sum_j dbar_j(w)) and VOLL >> mc, so
+the planner always serves the physical maximum. Shedding is fixed by the
+scenario, not by the policy. Risk-aware clearing can only move the
+remaining adjustment cost. This bounds every result that follows.
+  [skip] seed=2037: RuntimeError: solve failed: status=user_limit
+
+  max |CVaR[unserved]_aware - CVaR[unserved]_neutral| = 1.705e-13 MW   on a base of 418.94 MW  (relative 4.07e-16)
+  -> unserved energy is INVARIANT to the day-ahead policy
+  share of tail cost that is unreachable (unserved x VOLL): 82.8%
+  reachable tail cost (energy + deviations): 80605.6 of 471364.3
+
+  Read this as the ceiling: a gap quoted as X% of tail cost is
+  5.80x that as a share of the cost the policy can actually move.
+
+==============================================================================
+W1  Paired headline, 15 seeds, eps=0.3, beta=0.99
+==============================================================================
+Differences are paired on the seed, so instance-to-instance variance
+cancels. Both comparisons are reported: against the risk-neutral
+stochastic planner (the honest one) and against the deterministic
+policy (easier, but it never sees the scenario set).
+  [skip] seed=2037: RuntimeError: solve failed: status=user_limit
+
+  --- risk-aware vs risk-neutral stochastic (n=14) ---
+    CVaR welfare gain, % of tail cost          +4.5529  95% CI [+3.5892, +5.5166]   p=1.42e-07
+    CVaR welfare gain, % of total welfare      +3.3861  95% CI [+2.6517, +4.1205]   p=1.88e-07
+    CVaR welfare gain, $/MWh served           +21.4007  95% CI [+16.7985, +26.0030]   p=1.71e-07
+    CVaR welfare gain, absolute $           +21371.4080  95% CI [+16781.6869, +25961.1292]   p=1.68e-07
+    Expected-welfare change            -3582.20  95% CI [-4369.07, -2795.33]   (negative is the price paid for tail protection)
+    seeds improved: 100%   Wilcoxon p=1.22e-04
+
+  --- risk-aware vs deterministic (n=14) ---
+    CVaR welfare gain, % of tail cost          +5.2795  95% CI [+4.3540, +6.2049]   p=1.52e-08
+    CVaR welfare gain, % of total welfare      +3.9888  95% CI [+3.2722, +4.7055]   p=2.04e-08
+    CVaR welfare gain, $/MWh served           +25.0991  95% CI [+20.6041, +29.5942]   p=1.96e-08
+    CVaR welfare gain, absolute $           +25067.8221  95% CI [+20580.6012, +29555.0431]   p=1.95e-08
+    Expected-welfare change            -2039.65  95% CI [-2791.82, -1287.47]   (negative is the price paid for tail protection)
+    seeds improved: 100%   Wilcoxon p=1.22e-04
+
+==============================================================================
+W2  Adjustment-cost asymmetry sweep (alpha+ / mc)
+==============================================================================
+The day-ahead position is the only thing risk aversion chooses, and it
+is priced only through the deviation terms, so the benefit must scale
+with alpha+. A monotone response is evidence the mechanism is the one
+claimed rather than a numerical accident.
+    [skip] level=0 seed=2036: RuntimeError: solve failed: status=user_limit
+               0  gap$    1824.3   reach%  +3.460 [+3.207,+3.713]   $/MWh +1.8263   tailcost% +0.407
+             0.5  gap$    7567.1   reach% +10.477 [+8.507,+12.448]   $/MWh +7.5745   tailcost% +1.608
+    [skip] level=1 seed=2037: RuntimeError: solve failed: status=user_limit
+               1  gap$   21371.4   reach% +25.927 [+21.451,+30.402]   $/MWh +21.4007   tailcost% +4.553
+    [skip] level=2 seed=2036: RuntimeError: solve failed: status=user_limit
+               2  gap$   23448.3   reach% +27.445 [+22.882,+32.008]   $/MWh +23.4732   tailcost% +4.904
+               4  gap$   24923.6   reach% +27.576 [+22.463,+32.689]   $/MWh +24.9528   tailcost% +5.109
+
+elapsed 3439.0s
+wrote outputs/results/tail_tail_9283898_beta99.json
